@@ -44,9 +44,9 @@ func newCloud() (cloudprovider.Interface, error) {
 	vultr.SetUserAgent(fmt.Sprintf("vultr-cloud-controller-manager %s", vultr.UserAgent))
 
 	return &cloud{
-		client: vultr,
-		//instances:     n,
-		zones: newZones(vultr, region),
+		client:    vultr,
+		instances: newInstances(vultr),
+		zones:     newZones(vultr, region),
 		//loadbalancers: nil,
 	}, nil
 }
