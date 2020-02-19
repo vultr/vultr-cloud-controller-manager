@@ -12,6 +12,8 @@ import (
 	cloudprovider "k8s.io/cloud-provider"
 )
 
+const instanceShutdownStatus = "stopped"
+
 type instances struct {
 	client *govultr.Client
 }
@@ -20,14 +22,39 @@ func newInstances(client *govultr.Client) cloudprovider.Instances {
 	return &instances{client}
 }
 
-//TODO
+// NodeAddresses return all IPv4 addresses associated to a instance by nodeName.
 func (i *instances) NodeAddresses(ctx context.Context, name types.NodeName) ([]v1.NodeAddress, error) {
-	panic("implement me")
+	instance, err := vultrByName(ctx, i.client, name)
+	if err != nil {
+		return nil, err
+	}
+
+	addresses, err := i.nodeAddresses(instance)
+	if err != nil {
+		return nil, err
+	}
+
+	return addresses, nil
 }
 
-//TODO
+// NodeAddressesByProviderID return all IPv4 addresses associated to a instance by ProviderID.
 func (i *instances) NodeAddressesByProviderID(ctx context.Context, providerID string) ([]v1.NodeAddress, error) {
-	panic("implement me")
+	id, err := vultrIDFromProviderID(providerID)
+	if err != nil {
+		return nil, err
+	}
+
+	instance, err := vultrByID(ctx, i.client, id)
+	if err != nil {
+		return nil, err
+	}
+
+	addresses, err := i.nodeAddresses(instance)
+	if err != nil {
+		return nil, err
+	}
+
+	return addresses, nil
 }
 
 // InstanceID returns the instance ID of the droplet identified by nodeName.
@@ -90,9 +117,41 @@ func (i *instances) InstanceExistsByProviderID(ctx context.Context, providerID s
 	return false, nil
 }
 
-//todo
+// InstanceShutdownByProviderID returns true if the instance is turned off
 func (i *instances) InstanceShutdownByProviderID(ctx context.Context, providerID string) (bool, error) {
-	panic("implement me")
+	id, err := vultrIDFromProviderID(providerID)
+	if err != nil {
+		return false, err
+	}
+
+	instance, err := vultrByID(ctx, i.client, id)
+	if err != nil {
+		return false, err
+	}
+
+	return instance.PowerStatus == instanceShutdownStatus, nil
+}
+
+// nodeAddresses gathers public/private IP addresses and returns a []v1.NodeAddress .
+func (i *instances) nodeAddresses(instance *govultr.Server) ([]v1.NodeAddress, error) {
+	var addresses []v1.NodeAddress
+
+	addresses = append(addresses, v1.NodeAddress{
+		Type:    v1.NodeHostName,
+		Address: instance.Label,
+	})
+
+	// make sure we have either pubic and private ip
+	if instance.InternalIP == "" || instance.MainIP == "" {
+		return nil, errors.New("require both public and private IP")
+	}
+
+	// private IP
+	addresses = append(addresses, v1.NodeAddress{Type: v1.NodeInternalIP, Address: instance.InternalIP})
+	// public IP
+	addresses = append(addresses, v1.NodeAddress{Type: v1.NodeExternalIP, Address: instance.MainIP})
+
+	return addresses, nil
 }
 
 // vultrIDFromProviderID returns a vultr instance ID from providerID.
