@@ -3,6 +3,7 @@ module github.com/vultr/vultr-cloud-controller-manager
 go 1.13
 
 require (
+	github.com/pkg/errors v0.9.1 // indirect
 	github.com/vultr/govultr v0.2.0
 	k8s.io/api v0.0.0
 	k8s.io/apimachinery v0.0.0
