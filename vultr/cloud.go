@@ -47,7 +47,7 @@ func newCloud() (cloudprovider.Interface, error) {
 		client:    vultr,
 		instances: newInstances(vultr),
 		zones:     newZones(vultr, region),
-		//loadbalancers: nil,
+		loadbalancers: newLoadbalancers(vultr, region),
 	}, nil
 }
 
