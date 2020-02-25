@@ -81,7 +81,28 @@ func (l *loadbalancers) UpdateLoadBalancer(ctx context.Context, clusterName stri
 }
 
 func (l *loadbalancers) EnsureLoadBalancerDeleted(ctx context.Context, clusterName string, service *v1.Service) error {
-	panic("implement me")
+	_, exists, err :=  l.GetLoadBalancer(ctx, clusterName, service)
+	if err != nil {
+		return err
+	}
+
+	if !exists {
+		return nil
+	}
+
+	lbName := l.GetLoadBalancerName(ctx, clusterName, service)
+
+	lb, err := l.lbByName(ctx, lbName)
+	if err != nil {
+		return err
+	}
+
+	err = l.client.LoadBalancer.Delete(ctx, lb.ID)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func getLoadBalancerID(service *v1.Service) string {
