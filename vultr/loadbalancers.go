@@ -2,6 +2,7 @@ package vultr
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 
 	"github.com/pkg/errors"
@@ -30,6 +31,16 @@ const (
 
 	annoVultrStickySessionEnabled    = "service.beta.kubernetes.io/vultr-loadbalancer-sticky-session-enabled"
 	annoVultrStickySessionCookieName = "service.beta.kubernetes.io/vultr-loadbalancer-sticky-session-cookie-name"
+
+	// Supported Protocols
+	protocolHTTP  = "http"
+	protocolHTTPs = "https"
+	protocolTCP   = "tcp"
+
+	healthCheckInterval  = 15
+	healthCheckResponse  = 5
+	healthCheckUnhealthy = 5
+	healthCheckHealthy   = 5
 )
 
 var errLbNotFound = errors.New("loadbalancer not found")
@@ -160,9 +171,14 @@ func (l *loadbalancers) buildLoadBalancerRequest(ctx context.Context, service *v
 		return nil, err
 	}
 
+	healthCheck, err := buildHealthChecks(service)
+	if err != nil {
+		return nil, err
+	}
+
 	return &govultr.LBConfig{
 		GenericInfo:     *genericInfo,
-		HealthCheck:     govultr.HealthCheck{},
+		HealthCheck:     *healthCheck,
 		SSLInfo:         false,
 		ForwardingRules: govultr.ForwardingRules{},
 		InstanceList:    govultr.InstanceList{},
@@ -262,4 +278,158 @@ func getCookieName(service *v1.Service) (string, error) {
 	}
 
 	return name, nil
+}
+
+func buildHealthChecks(service *v1.Service) (*govultr.HealthCheck, error) {
+
+	healthCheckProtocol, err := getHealthCheckProtocol(service)
+	if err != nil {
+		return nil, err
+	}
+
+	port, err := getHealthCheckPort(service)
+	if err != nil {
+		return nil, err
+	}
+
+	path := getHealthCheckPath(service)
+
+	interval, err := getHealthCheckInterval(service)
+	if err != nil {
+		return nil, err
+	}
+
+	response, err := getHealthCheckResponse(service)
+	if err != nil {
+		return nil, err
+	}
+
+	unhealthy, err := getHealthCheckUnhealthy(service)
+	if err != nil {
+		return nil, err
+	}
+
+	healthy, err := getHealthCheckHealthy(service)
+	if err != nil {
+		return nil, err
+	}
+
+	return &govultr.HealthCheck{
+		Protocol:           healthCheckProtocol,
+		Port:               port,
+		Path:               path,
+		CheckInterval:      interval,
+		ResponseTimeout:    response,
+		UnhealthyThreshold: unhealthy,
+		HealthyThreshold:   healthy,
+	}, nil
+}
+
+// getHealthCheckProtocol returns the protocol for a health check
+// default is TCP
+func getHealthCheckProtocol(service *v1.Service) (string, error) {
+	protocol := service.Annotations[annoVultrHealthCheckProtocol]
+
+	// add in https
+	if protocol != "" {
+		if getHealthCheckPath(service) != "" {
+			return protocolHTTP, nil
+		}
+		return protocolTCP, nil
+	}
+
+	if protocol != protocolHTTP && protocol != protocolTCP {
+		return "", fmt.Errorf("invalid protocol : %s given in the anootation : %s", protocol, annoVultrHealthCheckProtocol)
+	}
+
+	return protocol, nil
+}
+
+// getHealthCheckPath returns the path for a health check
+func getHealthCheckPath(service *v1.Service) string {
+	path, ok := service.Annotations[annoVultrHealthCheckPath]
+	if !ok {
+		return ""
+	}
+
+	return path
+}
+
+func getHealthCheckPort(service *v1.Service) (int, error) {
+	port, ok := service.Annotations[annoVultrHealthCheckPort]
+	if !ok {
+		return int(service.Spec.Ports[0].NodePort), nil
+	}
+
+	portInt, err := strconv.Atoi(port)
+	if err != nil {
+		return 0, err
+	}
+
+	for _, v := range service.Spec.Ports {
+		if int(v.Port) == portInt {
+			return int(v.Port), nil
+		}
+		// The provided port does not exist
+		return 0, fmt.Errorf("provided health check port %d does not exist for service %s/%s", portInt, service.Namespace, service.Name)
+	}
+
+	// need to default a return here
+	return 0, nil
+}
+
+func getHealthCheckInterval(service *v1.Service) (int, error) {
+	interval, ok := service.Annotations[annoVultrHealthCheckInterval]
+	if !ok {
+		return healthCheckInterval, nil
+	}
+
+	intervalInt, err := strconv.Atoi(interval)
+	if err != nil {
+		return 0, fmt.Errorf("failed to retireve health check interval %s - %s", annoVultrHealthCheckInterval, err)
+	}
+
+	return intervalInt, err
+}
+
+func getHealthCheckResponse(service *v1.Service) (int, error) {
+	response, ok := service.Annotations[annoVultrHealthCheckResponseTimeout]
+	if !ok {
+		return healthCheckResponse, nil
+	}
+
+	responseInt, err := strconv.Atoi(response)
+	if err != nil {
+		return 0, fmt.Errorf("failed to retireve health check response timeout %s - %s", annoVultrHealthCheckResponseTimeout, err)
+	}
+
+	return responseInt, err
+}
+
+func getHealthCheckUnhealthy(service *v1.Service) (int, error) {
+	unhealthy, ok := service.Annotations[annoVultrHealthCheckUnhealthyThreshold]
+	if !ok {
+		return healthCheckUnhealthy, nil
+	}
+
+	unhealthyInt, err := strconv.Atoi(unhealthy)
+	if err != nil {
+		return 0, fmt.Errorf("failed to retireve health check unhealthy treshold %s - %s", annoVultrHealthCheckUnhealthyThreshold, err)
+	}
+
+	return unhealthyInt, err
+}
+
+func getHealthCheckHealthy(service *v1.Service) (int, error) {
+	healthy, ok := service.Annotations[annoVultrHealthCheckHealthyThreshold]
+	if !ok {
+		return healthCheckHealthy, nil
+	}
+
+	healthyInt, err := strconv.Atoi(healthy)
+	if err != nil {
+		return 0, fmt.Errorf("failed to retireve health check healthy treshold %s - %s", annoVultrHealthCheckHealthyThreshold, err)
+	}
+
+	return healthyInt, err
 }
