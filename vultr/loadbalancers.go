@@ -176,12 +176,19 @@ func (l *loadbalancers) buildLoadBalancerRequest(ctx context.Context, service *v
 		return nil, err
 	}
 
+	//Forwarding rules
+
+	instances, err := buildInstanceList(nodes)
+	if err != nil {
+		return nil, err
+	}
+
 	return &govultr.LBConfig{
 		GenericInfo:     *genericInfo,
 		HealthCheck:     *healthCheck,
 		SSLInfo:         false,
 		ForwardingRules: govultr.ForwardingRules{},
-		InstanceList:    govultr.InstanceList{},
+		InstanceList:    *instances,
 	}, nil
 }
 
@@ -432,4 +439,19 @@ func getHealthCheckHealthy(service *v1.Service) (int, error) {
 	}
 
 	return healthyInt, err
+}
+
+func buildInstanceList(nodes []*v1.Node) (*govultr.InstanceList, error) {
+	var list []string
+
+	for _, node := range nodes {
+		instanceID, err := vultrIDFromProviderID(node.Spec.ProviderID)
+		if err != nil {
+			return nil, fmt.Errorf("error getting the provider ID %s : %s", node.Spec.ProviderID, err)
+		}
+
+		list = append(list, instanceID)
+	}
+
+	return &govultr.InstanceList{InstanceList: list}, nil
 }
