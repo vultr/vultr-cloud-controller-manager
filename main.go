@@ -6,11 +6,11 @@ import (
 	"os"
 	"time"
 
+	_ "github.com/vultr/vultr-cloud-controller-manager/vultr"
 	"k8s.io/component-base/logs"
-	"k8s.io/kubernetes/cmd/cloud-controller-manager/app"
-
 	_ "k8s.io/component-base/metrics/prometheus/clientgo"
 	_ "k8s.io/component-base/metrics/prometheus/version" // for version metrics registration
+	"k8s.io/kubernetes/cmd/cloud-controller-manager/app"
 )
 
 func main() {
