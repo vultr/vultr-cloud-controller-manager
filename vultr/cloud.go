@@ -17,10 +17,10 @@ const (
 )
 
 type cloud struct {
-	client        *govultr.Client
-	instances     cloudprovider.Instances
-	zones         cloudprovider.Zones
-	loadbalancers cloudprovider.LoadBalancer
+	client    *govultr.Client
+	instances cloudprovider.Instances
+	zones     cloudprovider.Zones
+	//loadbalancers cloudprovider.LoadBalancer
 }
 
 func init() {
@@ -55,7 +55,7 @@ func (c *cloud) Initialize(clientBuilder cloudprovider.ControllerClientBuilder, 
 }
 
 func (c *cloud) LoadBalancer() (cloudprovider.LoadBalancer, bool) {
-	return c.loadbalancers, true
+	return nil, false
 }
 
 func (c *cloud) Instances() (cloudprovider.Instances, bool) {
