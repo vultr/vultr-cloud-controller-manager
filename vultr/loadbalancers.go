@@ -74,7 +74,7 @@ func (l *loadbalancers) GetLoadBalancer(ctx context.Context, clusterName string,
 	return &v1.LoadBalancerStatus{
 		Ingress: []v1.LoadBalancerIngress{
 			{
-				IP:       strconv.Itoa(lb.ID),
+				IP:       lb.IPV4,
 				Hostname: lb.Label,
 			},
 		},
