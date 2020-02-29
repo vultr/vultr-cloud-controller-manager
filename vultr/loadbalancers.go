@@ -3,19 +3,19 @@ package vultr
 import (
 	"context"
 	"fmt"
-	"strconv"
-
 	"github.com/pkg/errors"
 	"github.com/vultr/govultr"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
 	cloudprovider "k8s.io/cloud-provider"
+	"strconv"
 )
 
 const (
 	annoVultrLoadBalancerID = "kubernetes.vultr.com/load-balancer-id"
-
-	annoVultrProtocol = "service.beta.kubernetes.io/vultr-loadbalancer-protocol"
+	annoVultrLBProtocol     = "service.beta.kubernetes.io/vultr-loadbalancer-protocol"
+	// add in support for LB ports
+	// add in support for LB https
 
 	annoVultrHealthCheckPath               = "service.beta.kubernetes.io/vultr-loadbalancer-healthcheck-path"
 	annoVultrHealthCheckProtocol           = "service.beta.kubernetes.io/vultr-loadbalancer-healthcheck-protocol"
@@ -36,6 +36,9 @@ const (
 	protocolHTTP  = "http"
 	protocolHTTPs = "https"
 	protocolTCP   = "tcp"
+
+	portProtocolTCP = "TCP"
+	portProtocolUDP = "UDP"
 
 	healthCheckInterval  = 15
 	healthCheckResponse  = 5
@@ -95,12 +98,61 @@ func (l *loadbalancers) EnsureLoadBalancer(ctx context.Context, clusterName stri
 
 	// if exists is false and the err above was nil then this is errLbNotFound
 	if !exists {
-		// create the LB
-		// return from here
+		lb, lbName, err := l.buildLoadBalancerRequest(service, nodes)
+		if err != nil {
+			return nil, err
+		}
+		zone, err := strconv.Atoi(l.zone)
+		if err != nil {
+			return nil, err
+		}
+		lbID, err := l.client.LoadBalancer.Create(ctx, zone, &lb.GenericInfo, &lb.HealthCheck, lb.ForwardingRules.ForwardRuleList)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create load-balancer: %s", err)
+		}
 
+		err = l.client.LoadBalancer.SetLabel(ctx, lbID.ID, lbName)
+		if err != nil {
+			return nil, fmt.Errorf("failed to set load-balancer name: %s", err)
+		}
+
+		for _, node := range lb.InstanceList.InstanceList {
+			n, err := strconv.Atoi(node)
+			if err != nil {
+				return nil, err
+			}
+			err = l.client.LoadBalancer.AttachInstance(ctx, lbID.ID, n)
+			if err != nil {
+				return nil, fmt.Errorf("failed attach nodes to lb %s", err)
+			}
+		}
+
+
+		list, _ := l.client.LoadBalancer.List(ctx)
+		var l govultr.LoadBalancers
+		for _, v := range list {
+			if v.ID == lbID.ID {
+				l = v
+			}
+		}
+
+		return &v1.LoadBalancerStatus{
+			Ingress: []v1.LoadBalancerIngress{
+				{
+					IP: l.IPV4,
+					Hostname: l.Label,
+				},
+			},
+		}, nil
 	}
 
-	panic("implement me")
+	// update LB
+	lbStatus,_, err := l.GetLoadBalancer(ctx, clusterName, service)
+	if err != nil {
+		return nil, err
+	}
+
+	return lbStatus, nil
 }
 
 func (l *loadbalancers) UpdateLoadBalancer(ctx context.Context, clusterName string, service *v1.Service, nodes []*v1.Node) error {
@@ -161,35 +213,37 @@ func (l *loadbalancers) lbByName(ctx context.Context, lbName string) (*govultr.L
 	return nil, errLbNotFound
 }
 
-func (l *loadbalancers) buildLoadBalancerRequest(ctx context.Context, service *v1.Service, nodes []*v1.Node) (*govultr.LBConfig, error) {
+func (l *loadbalancers) buildLoadBalancerRequest(service *v1.Service, nodes []*v1.Node) (*govultr.LBConfig, string, error) {
 
-	//lbName := getDefaultLBName(service)
-	// make each section of the LB and add it part fo a global at the bottom
+	lbName := getDefaultLBName(service)
 
 	genericInfo, err := buildGenericInfo(service)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
 	healthCheck, err := buildHealthChecks(service)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
-	//Forwarding rules
+	rules, err := buildForwardingRules(service)
+	if err != nil {
+		return nil, "", err
+	}
 
 	instances, err := buildInstanceList(nodes)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
 	return &govultr.LBConfig{
 		GenericInfo:     *genericInfo,
 		HealthCheck:     *healthCheck,
 		SSLInfo:         false,
-		ForwardingRules: govultr.ForwardingRules{},
+		ForwardingRules: *rules,
 		InstanceList:    *instances,
-	}, nil
+	}, lbName, nil
 }
 
 func buildGenericInfo(service *v1.Service) (*govultr.GenericInfo, error) {
@@ -454,4 +508,47 @@ func buildInstanceList(nodes []*v1.Node) (*govultr.InstanceList, error) {
 	}
 
 	return &govultr.InstanceList{InstanceList: list}, nil
+}
+
+func buildForwardingRules(service *v1.Service) (*govultr.ForwardingRules, error) {
+	var rules govultr.ForwardingRules
+
+	// flush this out with HTTPS and better handling
+	protocol := getLBProtocol(service)
+
+	for _, port := range service.Spec.Ports {
+		rule, err := buildForwardingRule(&port, protocol)
+		if err != nil {
+			return nil, err
+		}
+
+		rules.ForwardRuleList = append(rules.ForwardRuleList, *rule)
+	}
+
+	return &rules, nil
+}
+
+func buildForwardingRule(port *v1.ServicePort, protocol string) (*govultr.ForwardingRule, error) {
+	var rule govultr.ForwardingRule
+
+	if port.Protocol == portProtocolUDP {
+		return nil, fmt.Errorf("TCP protocol is only supported: recieved %s", port.Protocol)
+	}
+
+	rule.FrontendProtocol = protocol
+	rule.BackendProtocol = protocol
+
+	rule.FrontendPort = int(port.Port)
+	rule.BackendPort = int(port.NodePort)
+
+	return &rule, nil
+}
+
+func getLBProtocol(service *v1.Service) string {
+	protocol, ok := service.Annotations[annoVultrLBProtocol]
+	if !ok {
+		return protocolHTTP
+	}
+
+	return protocol
 }
