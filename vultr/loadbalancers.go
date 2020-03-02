@@ -44,6 +44,8 @@ const (
 	healthCheckResponse  = 5
 	healthCheckUnhealthy = 5
 	healthCheckHealthy   = 5
+
+	lbStatusActive = "active"
 )
 
 var errLbNotFound = errors.New("loadbalancer not found")
@@ -136,6 +138,10 @@ func (l *loadbalancers) EnsureLoadBalancer(ctx context.Context, clusterName stri
 			}
 		}
 
+		if l.Status != lbStatusActive {
+			return nil, fmt.Errorf("load-balancer is not yet active - current status: %s", l.Status)
+		}
+
 		return &v1.LoadBalancerStatus{
 			Ingress: []v1.LoadBalancerIngress{
 				{
@@ -144,6 +150,21 @@ func (l *loadbalancers) EnsureLoadBalancer(ctx context.Context, clusterName stri
 				},
 			},
 		}, nil
+	}
+
+	lbName := l.GetLoadBalancerName(ctx, clusterName, service)
+
+	lb, err := l.lbByName(ctx, lbName)
+	if err != nil {
+		if err == errLbNotFound {
+			return nil, errLbNotFound
+		}
+
+		return nil, err
+	}
+
+	if lb.Status != lbStatusActive {
+		return nil, fmt.Errorf("load-balancer is not yet active - current status: %s", lb.Status)
 	}
 
 	// update LB
