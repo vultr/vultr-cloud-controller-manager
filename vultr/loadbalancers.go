@@ -185,7 +185,7 @@ func (l *loadbalancers) EnsureLoadBalancerDeleted(ctx context.Context, clusterNa
 	if err != nil {
 		return err
 	}
-
+	// This is the same as if we were to check if err == errLbNotFound {
 	if !exists {
 		return nil
 	}
@@ -413,7 +413,7 @@ func getHealthCheckProtocol(service *v1.Service) (string, error) {
 	protocol := service.Annotations[annoVultrHealthCheckProtocol]
 
 	// add in https
-	if protocol != "" {
+	if protocol == "" {
 		if getHealthCheckPath(service) != "" {
 			return protocolHTTP, nil
 		}
