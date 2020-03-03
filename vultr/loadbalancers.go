@@ -9,13 +9,21 @@ import (
 	"k8s.io/client-go/kubernetes"
 	cloudprovider "k8s.io/cloud-provider"
 	"strconv"
+	"strings"
 )
 
 const (
 	annoVultrLoadBalancerID = "kubernetes.vultr.com/load-balancer-id"
-	annoVultrLBProtocol     = "service.beta.kubernetes.io/vultr-loadbalancer-protocol"
-	// add in support for LB ports
-	// add in support for LB https
+
+	// annoVultrLBProtocol is the annotation used to specify
+	// which protocol should be used for a Load Balancer.
+	// Note that if annoVultrLBHTTPSPorts is defined then this will be overridden to HTTPS
+	annoVultrLBProtocol = "service.beta.kubernetes.io/vultr-loadbalancer-protocol"
+
+	// annoVultrLBHTTPSPorts is the annotation used to specify
+	// which ports should be used for HTTPS.
+	// You can pass in a comma seperated list: 443,8443
+	annoVultrLbHttpsPorts = "service.beta.kubernetes.io/vultr-loadbalancer-https-ports"
 
 	annoVultrHealthCheckPath               = "service.beta.kubernetes.io/vultr-loadbalancer-healthcheck-path"
 	annoVultrHealthCheckProtocol           = "service.beta.kubernetes.io/vultr-loadbalancer-healthcheck-protocol"
@@ -129,7 +137,6 @@ func (l *loadbalancers) EnsureLoadBalancer(ctx context.Context, clusterName stri
 			}
 		}
 
-
 		list, _ := l.client.LoadBalancer.List(ctx)
 		var l govultr.LoadBalancers
 		for _, v := range list {
@@ -145,7 +152,7 @@ func (l *loadbalancers) EnsureLoadBalancer(ctx context.Context, clusterName stri
 		return &v1.LoadBalancerStatus{
 			Ingress: []v1.LoadBalancerIngress{
 				{
-					IP: l.IPV4,
+					IP:       l.IPV4,
 					Hostname: l.Label,
 				},
 			},
@@ -168,7 +175,7 @@ func (l *loadbalancers) EnsureLoadBalancer(ctx context.Context, clusterName stri
 	}
 
 	// update LB
-	lbStatus,_, err := l.GetLoadBalancer(ctx, clusterName, service)
+	lbStatus, _, err := l.GetLoadBalancer(ctx, clusterName, service)
 	if err != nil {
 		return nil, err
 	}
@@ -534,10 +541,21 @@ func buildInstanceList(nodes []*v1.Node) (*govultr.InstanceList, error) {
 func buildForwardingRules(service *v1.Service) (*govultr.ForwardingRules, error) {
 	var rules govultr.ForwardingRules
 
-	// flush this out with HTTPS and better handling
-	protocol := getLBProtocol(service)
+	defaultProtocol := getLBProtocol(service)
+
+	httpsPorts, err := getHttpsPorts(service)
+	if err != nil {
+		return nil, err
+	}
 
 	for _, port := range service.Spec.Ports {
+		// default the port
+		protocol := defaultProtocol
+
+		if httpsPorts[port.Port] {
+			protocol = protocolHTTPs
+		}
+
 		rule, err := buildForwardingRule(&port, protocol)
 		if err != nil {
 			return nil, err
@@ -572,4 +590,23 @@ func getLBProtocol(service *v1.Service) string {
 	}
 
 	return protocol
+}
+
+func getHttpsPorts(service *v1.Service) (map[int32]bool, error) {
+	ports, ok := service.Annotations[annoVultrLbHttpsPorts]
+	if !ok {
+		return nil, nil
+	}
+
+	portStrings := strings.Split(ports, ",")
+	portInt := map[int32]bool{}
+
+	for _, port := range portStrings {
+		p, err := strconv.Atoi(port)
+		if err != nil {
+			return nil, err
+		}
+		portInt[int32(p)] = true
+	}
+	return portInt, nil
 }
