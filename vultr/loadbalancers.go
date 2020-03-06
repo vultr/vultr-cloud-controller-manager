@@ -8,6 +8,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
 	cloudprovider "k8s.io/cloud-provider"
+	"k8s.io/klog"
 	"strconv"
 	"strings"
 )
@@ -100,7 +101,6 @@ func getDefaultLBName(service *v1.Service) string {
 }
 
 func (l *loadbalancers) EnsureLoadBalancer(ctx context.Context, clusterName string, service *v1.Service, nodes []*v1.Node) (*v1.LoadBalancerStatus, error) {
-
 	_, exists, err := l.GetLoadBalancer(ctx, clusterName, service)
 	if err != nil {
 		return nil, err
@@ -127,11 +127,8 @@ func (l *loadbalancers) EnsureLoadBalancer(ctx context.Context, clusterName stri
 		}
 
 		for _, node := range lb.InstanceList.InstanceList {
-			n, err := strconv.Atoi(node)
-			if err != nil {
-				return nil, err
-			}
-			err = l.client.LoadBalancer.AttachInstance(ctx, lbID.ID, n)
+
+			err = l.client.LoadBalancer.AttachInstance(ctx, lbID.ID, node)
 			if err != nil {
 				return nil, fmt.Errorf("failed attach nodes to lb %s", err)
 			}
@@ -174,7 +171,11 @@ func (l *loadbalancers) EnsureLoadBalancer(ctx context.Context, clusterName stri
 		return nil, fmt.Errorf("load-balancer is not yet active - current status: %s", lb.Status)
 	}
 
-	// update LB
+	err = l.UpdateLoadBalancer(ctx, clusterName, service, nodes)
+	if err != nil {
+		return nil, err
+	}
+
 	lbStatus, _, err := l.GetLoadBalancer(ctx, clusterName, service)
 	if err != nil {
 		return nil, err
@@ -184,7 +185,87 @@ func (l *loadbalancers) EnsureLoadBalancer(ctx context.Context, clusterName stri
 }
 
 func (l *loadbalancers) UpdateLoadBalancer(ctx context.Context, clusterName string, service *v1.Service, nodes []*v1.Node) error {
-	panic("implement me")
+	klog.V(3).Info("Called UpdateLoadBalancers")
+	_, _, err := l.GetLoadBalancer(ctx, clusterName, service)
+	if err != nil {
+		return err
+	}
+
+	lb, lbName, err := l.buildLoadBalancerRequest(service, nodes)
+	if err != nil {
+		return fmt.Errorf("failed to create load balancer request: %s", err)
+	}
+
+	lbList, _ := l.client.LoadBalancer.List(ctx)
+	var lbID int
+	for _, v := range lbList {
+		if v.Label == lbName {
+			lbID = v.ID
+		}
+	}
+
+	// generic info
+	err = l.client.LoadBalancer.UpdateGenericInfo(ctx, lbID, lbName, &lb.GenericInfo)
+	if err != nil {
+		return fmt.Errorf("failed to update LB generic info: %s", err)
+	}
+
+	// health check
+	err = l.client.LoadBalancer.SetHealthCheck(ctx, lbID, &lb.HealthCheck)
+	if err != nil {
+		return fmt.Errorf("failed to update LB health check: %s", err)
+	}
+
+	// forwarding rules
+
+	// attach new instance nodes
+	currentlyAttached, err := l.client.LoadBalancer.AttachedInstances(ctx, lbID)
+	if err != nil {
+		return err
+	}
+
+	// Check if instances need to be attached
+	for _, n := range lb.InstanceList.InstanceList {
+		exists := false
+		for _, c := range currentlyAttached.InstanceList {
+			if c == n {
+				exists = true
+				break
+			}
+		}
+
+		if !exists {
+			err = l.client.LoadBalancer.AttachInstance(ctx, lbID, n)
+			if err != nil {
+				return fmt.Errorf("failed attach nodes to lb %s", err)
+			}
+		}
+	}
+
+	currentlyAttached1, err := l.client.LoadBalancer.AttachedInstances(ctx, lbID)
+	if err != nil {
+		return err
+	}
+
+	// Check if instances need to be removed
+	for _, c := range currentlyAttached1.InstanceList {
+		removed := true
+		for _, n := range lb.InstanceList.InstanceList {
+			if n == c {
+				removed = false
+				break
+			}
+		}
+
+		if removed {
+			err = l.client.LoadBalancer.DetachInstance(ctx, lbID, c)
+			if err != nil {
+				return fmt.Errorf("failed detach nodes to lb %s", err)
+			}
+		}
+	}
+
+	return nil
 }
 
 func (l *loadbalancers) EnsureLoadBalancerDeleted(ctx context.Context, clusterName string, service *v1.Service) error {
@@ -299,9 +380,9 @@ func getAlgorithm(service *v1.Service) string {
 	algorithm := service.Annotations[annoVultrAlgorithm]
 
 	if algorithm == "least_connections" {
-		return "least_connections"
+		return "leastconn"
 	} else {
-		return "round_robin"
+		return "roundrobin"
 	}
 }
 
@@ -524,7 +605,7 @@ func getHealthCheckHealthy(service *v1.Service) (int, error) {
 }
 
 func buildInstanceList(nodes []*v1.Node) (*govultr.InstanceList, error) {
-	var list []string
+	var list []int
 
 	for _, node := range nodes {
 		instanceID, err := vultrIDFromProviderID(node.Spec.ProviderID)
@@ -532,7 +613,12 @@ func buildInstanceList(nodes []*v1.Node) (*govultr.InstanceList, error) {
 			return nil, fmt.Errorf("error getting the provider ID %s : %s", node.Spec.ProviderID, err)
 		}
 
-		list = append(list, instanceID)
+		instance, err := strconv.Atoi(instanceID)
+		if err != nil {
+			return nil, err
+		}
+
+		list = append(list, instance)
 	}
 
 	return &govultr.InstanceList{InstanceList: list}, nil
