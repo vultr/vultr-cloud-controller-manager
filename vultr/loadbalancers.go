@@ -239,6 +239,28 @@ func (l *loadbalancers) UpdateLoadBalancer(ctx context.Context, clusterName stri
 		}
 	}
 
+	currentlyRules, err := l.client.LoadBalancer.ListForwardingRules(ctx, lbID)
+	if err != nil {
+		return err
+	}
+
+	for _, v := range currentlyRules.ForwardRuleList {
+		removed := true
+		for _, c := range lb.ForwardRuleList {
+			if c.BackendPort == v.BackendPort && c.BackendProtocol == v.BackendProtocol && c.FrontendPort == v.FrontendPort && c.FrontendProtocol == v.FrontendProtocol {
+				removed = false
+				break
+			}
+		}
+
+		if removed {
+			err := l.client.LoadBalancer.DeleteForwardingRule(ctx, lbID, v.RuleID)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
 	// attach new instance nodes
 	currentlyAttached, err := l.client.LoadBalancer.AttachedInstances(ctx, lbID)
 	if err != nil {
