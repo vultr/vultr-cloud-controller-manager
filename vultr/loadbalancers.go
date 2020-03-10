@@ -29,11 +29,15 @@ const (
 	// You can pass in a comma seperated list: 443,8443
 	annoVultrLbHttpsPorts = "service.beta.kubernetes.io/vultr-loadbalancer-https-ports"
 
+	// annoVultrLBSSLPassthrough is the annotation used to specify
+	// whether or not you do not wish to have SSL termination on the load balancer
+	// default is false to enable set to true
+
 	annoVultrLBSSLPassthrough = "service.beta.kubernetes.io/vultr-loadbalancer-ssl-pass-through"
 
 	// annoVultrLBSSL is the annotation used to specify
 	// which TLS secret you want to be used for your load balancers SSL
-	annoVultrLBSSL            = "service.beta.kubernetes.io/vultr-loadbalancer-ssl"
+	annoVultrLBSSL = "service.beta.kubernetes.io/vultr-loadbalancer-ssl"
 
 	annoVultrHealthCheckPath               = "service.beta.kubernetes.io/vultr-loadbalancer-healthcheck-path"
 	annoVultrHealthCheckProtocol           = "service.beta.kubernetes.io/vultr-loadbalancer-healthcheck-protocol"
@@ -221,28 +225,7 @@ func (l *loadbalancers) UpdateLoadBalancer(ctx context.Context, clusterName stri
 	}
 
 	// forwarding rules
-	currentRules, err := l.client.LoadBalancer.ListForwardingRules(ctx, lbID)
-	if err != nil {
-		return err
-	}
-
-	for _, v := range lb.ForwardRuleList {
-		exists := false
-		for _, current := range currentRules.ForwardRuleList {
-			if current.BackendPort == v.BackendPort && current.BackendProtocol == v.BackendProtocol && current.FrontendPort == v.FrontendPort && current.FrontendProtocol == v.FrontendProtocol {
-				exists = true
-				break
-			}
-		}
-
-		if !exists {
-			_, err = l.client.LoadBalancer.CreateForwardingRule(ctx, lbID, &v)
-			if err != nil {
-				return err
-			}
-		}
-	}
-
+	// delete
 	currentlyRules, err := l.client.LoadBalancer.ListForwardingRules(ctx, lbID)
 	if err != nil {
 		return err
@@ -259,6 +242,30 @@ func (l *loadbalancers) UpdateLoadBalancer(ctx context.Context, clusterName stri
 
 		if removed {
 			err := l.client.LoadBalancer.DeleteForwardingRule(ctx, lbID, v.RuleID)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	// Forwarding Rules
+	// Create
+	currentRules, err := l.client.LoadBalancer.ListForwardingRules(ctx, lbID)
+	if err != nil {
+		return err
+	}
+
+	for _, v := range lb.ForwardRuleList {
+		exists := false
+		for _, current := range currentRules.ForwardRuleList {
+			if current.BackendPort == v.BackendPort && current.BackendProtocol == v.BackendProtocol && current.FrontendPort == v.FrontendPort && current.FrontendProtocol == v.FrontendProtocol {
+				exists = true
+				break
+			}
+		}
+
+		if !exists {
+			_, err = l.client.LoadBalancer.CreateForwardingRule(ctx, lbID, &v)
 			if err != nil {
 				return err
 			}
@@ -703,7 +710,11 @@ func buildForwardingRules(service *v1.Service) (*govultr.ForwardingRules, error)
 		protocol := defaultProtocol
 
 		if httpsPorts[port.Port] {
-			protocol = protocolHTTPs
+			if getSSLPassthrough(service) {
+				protocol = protocolTCP
+			} else {
+				protocol = protocolHTTPs
+			}
 		}
 
 		rule, err := buildForwardingRule(&port, protocol)
@@ -776,8 +787,6 @@ func (l *loadbalancers) GetSSL(service *v1.Service, secretName string) (*govultr
 	cert := string(secret.Data[v1.TLSCertKey])
 	cert = strings.TrimSpace(cert)
 
-	klog.V(3).Info(cert)
-
 	key := string(secret.Data[v1.TLSPrivateKeyKey])
 	key = strings.TrimSpace(key)
 
@@ -810,4 +819,17 @@ func (l *loadbalancers) GetKubeClient() error {
 	}
 
 	return nil
+}
+
+func getSSLPassthrough(service *v1.Service) bool {
+	passThrough, ok := service.Annotations[annoVultrLBSSLPassthrough]
+	if !ok {
+		return false
+	}
+
+	pass, err := strconv.ParseBool(passThrough)
+	if err != nil {
+		return false
+	}
+	return pass
 }
