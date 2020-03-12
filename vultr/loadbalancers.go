@@ -3,14 +3,17 @@ package vultr
 import (
 	"context"
 	"fmt"
+	"strconv"
+	"strings"
+
 	"github.com/pkg/errors"
 	"github.com/vultr/govultr"
 	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 	cloudprovider "k8s.io/cloud-provider"
 	"k8s.io/klog"
-	"strconv"
-	"strings"
 )
 
 const (
@@ -25,6 +28,16 @@ const (
 	// which ports should be used for HTTPS.
 	// You can pass in a comma seperated list: 443,8443
 	annoVultrLbHttpsPorts = "service.beta.kubernetes.io/vultr-loadbalancer-https-ports"
+
+	// annoVultrLBSSLPassthrough is the annotation used to specify
+	// whether or not you do not wish to have SSL termination on the load balancer
+	// default is false to enable set to true
+
+	annoVultrLBSSLPassthrough = "service.beta.kubernetes.io/vultr-loadbalancer-ssl-pass-through"
+
+	// annoVultrLBSSL is the annotation used to specify
+	// which TLS secret you want to be used for your load balancers SSL
+	annoVultrLBSSL = "service.beta.kubernetes.io/vultr-loadbalancer-ssl"
 
 	annoVultrHealthCheckPath               = "service.beta.kubernetes.io/vultr-loadbalancer-healthcheck-path"
 	annoVultrHealthCheckProtocol           = "service.beta.kubernetes.io/vultr-loadbalancer-healthcheck-protocol"
@@ -108,7 +121,7 @@ func (l *loadbalancers) EnsureLoadBalancer(ctx context.Context, clusterName stri
 
 	// if exists is false and the err above was nil then this is errLbNotFound
 	if !exists {
-		lb, lbName, err := l.buildLoadBalancerRequest(service, nodes)
+		lb, lbName, ssl, err := l.buildLoadBalancerRequest(service, nodes)
 		if err != nil {
 			return nil, err
 		}
@@ -116,14 +129,9 @@ func (l *loadbalancers) EnsureLoadBalancer(ctx context.Context, clusterName stri
 		if err != nil {
 			return nil, err
 		}
-		lbID, err := l.client.LoadBalancer.Create(ctx, zone, &lb.GenericInfo, &lb.HealthCheck, lb.ForwardingRules.ForwardRuleList)
+		lbID, err := l.client.LoadBalancer.Create(ctx, zone, lbName, &lb.GenericInfo, &lb.HealthCheck, lb.ForwardingRules.ForwardRuleList, ssl)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create load-balancer: %s", err)
-		}
-
-		err = l.client.LoadBalancer.SetLabel(ctx, lbID.ID, lbName)
-		if err != nil {
-			return nil, fmt.Errorf("failed to set load-balancer name: %s", err)
 		}
 
 		for _, node := range lb.InstanceList.InstanceList {
@@ -191,7 +199,7 @@ func (l *loadbalancers) UpdateLoadBalancer(ctx context.Context, clusterName stri
 		return err
 	}
 
-	lb, lbName, err := l.buildLoadBalancerRequest(service, nodes)
+	lb, lbName, ssl, err := l.buildLoadBalancerRequest(service, nodes)
 	if err != nil {
 		return fmt.Errorf("failed to create load balancer request: %s", err)
 	}
@@ -217,6 +225,52 @@ func (l *loadbalancers) UpdateLoadBalancer(ctx context.Context, clusterName stri
 	}
 
 	// forwarding rules
+	// delete
+	currentlyRules, err := l.client.LoadBalancer.ListForwardingRules(ctx, lbID)
+	if err != nil {
+		return err
+	}
+
+	for _, v := range currentlyRules.ForwardRuleList {
+		removed := true
+		for _, c := range lb.ForwardRuleList {
+			if c.BackendPort == v.BackendPort && c.BackendProtocol == v.BackendProtocol && c.FrontendPort == v.FrontendPort && c.FrontendProtocol == v.FrontendProtocol {
+				removed = false
+				break
+			}
+		}
+
+		if removed {
+			err := l.client.LoadBalancer.DeleteForwardingRule(ctx, lbID, v.RuleID)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	// Forwarding Rules
+	// Create
+	currentRules, err := l.client.LoadBalancer.ListForwardingRules(ctx, lbID)
+	if err != nil {
+		return err
+	}
+
+	for _, v := range lb.ForwardRuleList {
+		exists := false
+		for _, current := range currentRules.ForwardRuleList {
+			if current.BackendPort == v.BackendPort && current.BackendProtocol == v.BackendProtocol && current.FrontendPort == v.FrontendPort && current.FrontendProtocol == v.FrontendProtocol {
+				exists = true
+				break
+			}
+		}
+
+		if !exists {
+			_, err = l.client.LoadBalancer.CreateForwardingRule(ctx, lbID, &v)
+			if err != nil {
+				return err
+			}
+		}
+	}
 
 	// attach new instance nodes
 	currentlyAttached, err := l.client.LoadBalancer.AttachedInstances(ctx, lbID)
@@ -262,6 +316,13 @@ func (l *loadbalancers) UpdateLoadBalancer(ctx context.Context, clusterName stri
 			if err != nil {
 				return fmt.Errorf("failed detach nodes to lb %s", err)
 			}
+		}
+	}
+
+	if ssl != nil {
+		err := l.client.LoadBalancer.AddSSL(ctx, lbID, ssl)
+		if err != nil {
+			return err
 		}
 	}
 
@@ -322,28 +383,38 @@ func (l *loadbalancers) lbByName(ctx context.Context, lbName string) (*govultr.L
 	return nil, errLbNotFound
 }
 
-func (l *loadbalancers) buildLoadBalancerRequest(service *v1.Service, nodes []*v1.Node) (*govultr.LBConfig, string, error) {
+func (l *loadbalancers) buildLoadBalancerRequest(service *v1.Service, nodes []*v1.Node) (*govultr.LBConfig, string, *govultr.SSL, error) {
 
 	lbName := getDefaultLBName(service)
 
 	genericInfo, err := buildGenericInfo(service)
 	if err != nil {
-		return nil, "", err
+		return nil, "", nil, err
 	}
 
 	healthCheck, err := buildHealthChecks(service)
 	if err != nil {
-		return nil, "", err
+		return nil, "", nil, err
 	}
 
 	rules, err := buildForwardingRules(service)
 	if err != nil {
-		return nil, "", err
+		return nil, "", nil, err
 	}
 
 	instances, err := buildInstanceList(nodes)
 	if err != nil {
-		return nil, "", err
+		return nil, "", nil, err
+	}
+
+	ssl := &govultr.SSL{}
+	if secretName, ok := service.Annotations[annoVultrLBSSL]; ok {
+		ssl, err = l.GetSSL(service, secretName)
+		if err != nil {
+			return nil, "", nil, err
+		}
+	} else {
+		ssl = nil
 	}
 
 	return &govultr.LBConfig{
@@ -352,7 +423,7 @@ func (l *loadbalancers) buildLoadBalancerRequest(service *v1.Service, nodes []*v
 		SSLInfo:         false,
 		ForwardingRules: *rules,
 		InstanceList:    *instances,
-	}, lbName, nil
+	}, lbName, ssl, nil
 }
 
 func buildGenericInfo(service *v1.Service) (*govultr.GenericInfo, error) {
@@ -639,7 +710,11 @@ func buildForwardingRules(service *v1.Service) (*govultr.ForwardingRules, error)
 		protocol := defaultProtocol
 
 		if httpsPorts[port.Port] {
-			protocol = protocolHTTPs
+			if getSSLPassthrough(service) {
+				protocol = protocolTCP
+			} else {
+				protocol = protocolHTTPs
+			}
 		}
 
 		rule, err := buildForwardingRule(&port, protocol)
@@ -695,4 +770,66 @@ func getHttpsPorts(service *v1.Service) (map[int32]bool, error) {
 		portInt[int32(p)] = true
 	}
 	return portInt, nil
+}
+
+func (l *loadbalancers) GetSSL(service *v1.Service, secretName string) (*govultr.SSL, error) {
+
+	err := l.GetKubeClient()
+	if err != nil {
+		return nil, err
+	}
+
+	secret, err := l.kubeClient.CoreV1().Secrets(service.Namespace).Get(secretName, metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	cert := string(secret.Data[v1.TLSCertKey])
+	cert = strings.TrimSpace(cert)
+
+	key := string(secret.Data[v1.TLSPrivateKeyKey])
+	key = strings.TrimSpace(key)
+
+	ssl := govultr.SSL{
+		PrivateKey:  key,
+		Certificate: cert,
+	}
+	return &ssl, nil
+}
+
+// TODO allow kubeConfig from input
+func (l *loadbalancers) GetKubeClient() error {
+	if l.kubeClient != nil {
+		return nil
+	}
+
+	var (
+		kubeConfig *rest.Config
+		err        error
+	)
+
+	kubeConfig, err = rest.InClusterConfig()
+	if err != nil {
+		return err
+	}
+
+	l.kubeClient, err = kubernetes.NewForConfig(kubeConfig)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func getSSLPassthrough(service *v1.Service) bool {
+	passThrough, ok := service.Annotations[annoVultrLBSSLPassthrough]
+	if !ok {
+		return false
+	}
+
+	pass, err := strconv.ParseBool(passThrough)
+	if err != nil {
+		return false
+	}
+	return pass
 }
