@@ -740,7 +740,7 @@ func buildForwardingRule(port *v1.ServicePort, protocol string) (*govultr.Forwar
 func getLBProtocol(service *v1.Service) string {
 	protocol, ok := service.Annotations[annoVultrLBProtocol]
 	if !ok {
-		return protocolHTTP
+		return protocolTCP
 	}
 
 	return protocol
