@@ -369,13 +369,6 @@ func (l *loadbalancers) lbByName(ctx context.Context, lbName string) (*govultr.L
 		for _, v := range lbs {
 			if v.Label == lbName {
 				return &v, nil
-				// grab the full config
-				//lb, err := l.client.LoadBalancer.GetFullConfig(ctx, v.ID)
-				//if err != nil {
-				//	return nil, err
-				//}
-				//
-				//return lb, nil
 			}
 		}
 	}
