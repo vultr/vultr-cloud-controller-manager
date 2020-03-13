@@ -4,9 +4,10 @@ go 1.13
 
 require (
 	github.com/pkg/errors v0.9.1
-	github.com/vultr/govultr v0.2.0
+	github.com/vultr/govultr v0.3.1
 	k8s.io/api v0.17.3
 	k8s.io/apimachinery v0.17.3
+	k8s.io/client-go v0.17.3
 	k8s.io/cloud-provider v0.17.3
 	k8s.io/component-base v0.17.3
 	k8s.io/klog v1.0.0
