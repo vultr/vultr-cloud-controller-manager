@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    service.beta.kubernetes.io/vultr-loadbalancer-protocol: "http"
+    service.beta.kubernetes.io/vultr-loadbalancer-https-ports: "443"
+    # You will need to have created a TLS Secret and pass in the name as the value
+    service.beta.kubernetes.io/vultr-loadbalancer-ssl: "ssl-secret"
+  name: vultr-lb-https
+spec:
+  type: LoadBalancer
+  selector:
+    app: app-name
+  ports:
+    - port: 80
+      name: "http"
+    - port: 443
+      name: "https"
+
+
