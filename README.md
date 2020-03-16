@@ -3,7 +3,7 @@
 The Vultr Cloud Controller Manager (ccm) provides a fully supported experience of Vultr features in your Kubernetes cluster.
 
 - Node resources are assigned their respective Vultr instance hostnames, Region, PlanID and public/private IPs.
-- Node resources get put into their proper state if they are shutdown or removed. This allows for Kubernetes to properly reschdule pods
+- Node resources get put into their proper state if they are shutdown or removed. This allows for Kubernetes to properly reschedule pods
 - Vultr LoadBalancers are automatically deployed when a LoadBalancer service is deployed.
 
 This plugin is in active development and you can track progress in the [Milestones](https://github.com/vultr/vultr-cloud-controller-manager/milestone/1).
