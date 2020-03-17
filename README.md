@@ -14,8 +14,7 @@ More information about running Vultr cloud controller manager can be found [here
 
 Examples can also be found [here](docs/examples)
 
-###**Note** 
-###**do not modify vultr load-balancers manually**
+### **Note: do not modify vultr load-balancers manually**
 When a load-balancer is created through the CCM (Loadbalancer service type), you should not modify the load-balancer. Your changes will eventually get reverted back due to the CCM validating state.
 
 Any changes to the load-balancer should be done through the service object.
