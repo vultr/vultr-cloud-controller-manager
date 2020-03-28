@@ -2,7 +2,6 @@ package vultr
 
 import (
 	"context"
-	"fmt"
 	"reflect"
 	"testing"
 
@@ -31,7 +30,7 @@ func TestZones_GetZoneByProviderID(t *testing.T) {
 
 	expected := cloudprovider.Zone{Region: "1"}
 
-	actual, err := zone.GetZoneByProviderID(context.Background(), fmt.Sprintf("vultr://%s", "576965"))
+	actual, err := zone.GetZoneByProviderID(context.Background(), "vultr://576965")
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
