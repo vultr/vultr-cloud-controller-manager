@@ -335,7 +335,9 @@ func (l *fakeLB) GetFullConfig(ctx context.Context, ID int) (*govultr.LBConfig, 
 	panic("implement me")
 }
 
-func (l *fakeLB) HasSSL(ctx context.Context, ID int) (*struct{ SSLInfo bool `json:"has_ssl"` }, error) {
+func (l *fakeLB) HasSSL(ctx context.Context, ID int) (*struct {
+	SSLInfo bool `json:"has_ssl"`
+}, error) {
 	panic("implement me")
 }
 

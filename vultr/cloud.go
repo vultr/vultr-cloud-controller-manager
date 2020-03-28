@@ -17,9 +17,9 @@ const (
 )
 
 type cloud struct {
-	client    *govultr.Client
-	instances cloudprovider.Instances
-	zones     cloudprovider.Zones
+	client        *govultr.Client
+	instances     cloudprovider.Instances
+	zones         cloudprovider.Zones
 	loadbalancers cloudprovider.LoadBalancer
 }
 
@@ -44,9 +44,9 @@ func newCloud() (cloudprovider.Interface, error) {
 	vultr.SetUserAgent(fmt.Sprintf("vultr-cloud-controller-manager %s", vultr.UserAgent))
 
 	return &cloud{
-		client:    vultr,
-		instances: newInstances(vultr),
-		zones:     newZones(vultr, region),
+		client:        vultr,
+		instances:     newInstances(vultr),
+		zones:         newZones(vultr, region),
 		loadbalancers: newLoadbalancers(vultr, region),
 	}, nil
 }
