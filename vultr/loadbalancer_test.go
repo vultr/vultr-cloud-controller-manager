@@ -2,7 +2,6 @@ package vultr
 
 import (
 	"context"
-	"fmt"
 	"reflect"
 	"testing"
 
@@ -82,8 +81,8 @@ func TestLoadbalancers_GetLoadBalancerName(t *testing.T) {
 
 	actual := lb.GetLoadBalancerName(context.Background(), "cluster-name", svc)
 
-	if actual != "lbname" {
-		fmt.Errorf("expected lbname got %s", actual)
+	if actual != "albname" {
+		t.Errorf("expected lbname got %s", actual)
 	}
 }
 
