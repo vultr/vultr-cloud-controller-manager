@@ -26,3 +26,7 @@ docker-push:
 .PHONY: clean
 clean:
 	go clean -i -x ./...
+
+.PHONY: test
+test:
+	go test -race github.com/vultr/vultr-cloud-controller-manager/vultr -v
