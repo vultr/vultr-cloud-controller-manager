@@ -1,3 +1,4 @@
+![Unit Tests](https://github.com/vultr/vultr-cloud-controller-manager/workflows/Unit%20Tests/badge.svg)
 # Kubernetes Cloud Controller Manager for Vultr
 
 The Vultr Cloud Controller Manager (ccm) provides a fully supported experience of Vultr features in your Kubernetes cluster.
