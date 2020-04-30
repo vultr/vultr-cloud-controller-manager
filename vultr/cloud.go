@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/vultr/govultr"
+	"github.com/vultr/metadata"
 	cloudprovider "k8s.io/cloud-provider"
 	"k8s.io/klog"
 )
@@ -35,9 +36,10 @@ func newCloud() (cloudprovider.Interface, error) {
 		return nil, fmt.Errorf("%s must be set in the environment (use a k8s secret)", accessTokenEnv)
 	}
 
-	region := os.Getenv(regionEnv)
-	if region == "" {
-		return nil, fmt.Errorf("%s must be set in the environment (use a k8s secret)", regionEnv)
+	mClient := metadata.NewClient()
+	meta, err := mClient.Metadata()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve region from metadata: %v", meta)
 	}
 
 	vultr := govultr.NewClient(nil, apiToken)
@@ -46,8 +48,8 @@ func newCloud() (cloudprovider.Interface, error) {
 	return &cloud{
 		client:        vultr,
 		instances:     newInstances(vultr),
-		zones:         newZones(vultr, region),
-		loadbalancers: newLoadbalancers(vultr, region),
+		zones:         newZones(vultr, metadata.RegionCodeToID(meta.Region.RegionCode)),
+		loadbalancers: newLoadbalancers(vultr, metadata.RegionCodeToID(meta.Region.RegionCode)),
 	}, nil
 }
 
