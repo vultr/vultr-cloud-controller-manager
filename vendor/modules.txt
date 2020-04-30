@@ -118,6 +118,8 @@ github.com/spf13/cobra
 github.com/spf13/pflag
 # github.com/vultr/govultr v0.3.1
 github.com/vultr/govultr
+# github.com/vultr/metadata v1.0.0
+github.com/vultr/metadata
 # go.etcd.io/etcd v0.0.0-20191023171146-3cf2f69b5738
 go.etcd.io/etcd/auth/authpb
 go.etcd.io/etcd/clientv3
