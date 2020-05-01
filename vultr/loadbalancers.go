@@ -129,17 +129,9 @@ func (l *loadbalancers) EnsureLoadBalancer(ctx context.Context, clusterName stri
 		if err != nil {
 			return nil, err
 		}
-		lbID, err := l.client.LoadBalancer.Create(ctx, zone, lbName, &lb.GenericInfo, &lb.HealthCheck, lb.ForwardingRules.ForwardRuleList, ssl)
+		lbID, err := l.client.LoadBalancer.Create(ctx, zone, lbName, &lb.GenericInfo, &lb.HealthCheck, lb.ForwardingRules.ForwardRuleList, ssl, &lb.InstanceList)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create load-balancer: %s", err)
-		}
-
-		for _, node := range lb.InstanceList.InstanceList {
-
-			err = l.client.LoadBalancer.AttachInstance(ctx, lbID.ID, node)
-			if err != nil {
-				return nil, fmt.Errorf("failed attach nodes to lb %s", err)
-			}
 		}
 
 		list, _ := l.client.LoadBalancer.List(ctx)
