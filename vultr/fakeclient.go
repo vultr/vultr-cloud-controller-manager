@@ -341,7 +341,7 @@ func (l *fakeLB) HasSSL(ctx context.Context, ID int) (*struct {
 	panic("implement me")
 }
 
-func (l *fakeLB) Create(ctx context.Context, region int, label string, genericInfo *govultr.GenericInfo, healthCheck *govultr.HealthCheck, rules []govultr.ForwardingRule, ssl *govultr.SSL) (*govultr.LoadBalancers, error) {
+func (l *fakeLB) Create(ctx context.Context, region int, label string, genericInfo *govultr.GenericInfo, healthCheck *govultr.HealthCheck, rules []govultr.ForwardingRule, ssl *govultr.SSL, instances *govultr.InstanceList) (*govultr.LoadBalancers, error) {
 	panic("implement me")
 }
 
