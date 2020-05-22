@@ -1,5 +1,14 @@
 # Change Log
 
+## v0.0.3 (2020-05-21)
+* Updated Kubernetes dependency to 1.17.5
+* Updated GoVultr dependency to v0.4.1
+* Added Metadata client dependency which removes need to define region ID in yaml 
+* Added a more defined RBAC
+
+[CCM Container v0.0.3](https://hub.docker.com/layers/vultr/vultr-cloud-controller-manager/v0.0.3/images/sha256-bde33d08802dd9211d3faa66007639e605eded89d13d77ba9cd4cfae9161f6e9?context=repo)
+
+
 ## v0.0.2 (2020-03-13)
 * Support LoadBalancer
 
