@@ -120,7 +120,7 @@ github.com/spf13/pflag
 # github.com/vultr/govultr v0.4.1
 ## explicit
 github.com/vultr/govultr
-# github.com/vultr/metadata v1.0.0
+# github.com/vultr/metadata v1.0.1
 ## explicit
 github.com/vultr/metadata
 # go.etcd.io/etcd v0.0.0-20191023171146-3cf2f69b5738
