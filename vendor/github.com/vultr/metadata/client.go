@@ -14,11 +14,13 @@ const (
 	basePath = "http://169.254.169.254"
 )
 
+// Client ...
 type Client struct {
 	client  *http.Client
-	baseUrl *url.URL
+	baseURL *url.URL
 }
 
+// NewClient creates a client to interact with the metdata
 func NewClient() *Client {
 
 	u, err := url.Parse(basePath)
@@ -30,7 +32,7 @@ func NewClient() *Client {
 		client: &http.Client{
 			Timeout: timeout,
 		},
-		baseUrl: u,
+		baseURL: u,
 	}
 
 	return c
@@ -49,8 +51,7 @@ func (c *Client) Metadata() (*MetaData, error) {
 }
 
 func (c *Client) doRequest(uri string, meta *MetaData) error {
-
-	resp, err := c.client.Get(fmt.Sprintf("%s%s", c.baseUrl, uri))
+	resp, err := c.client.Get(fmt.Sprintf("%s%s", c.baseURL, uri))
 	if err != nil {
 		return err
 	}
@@ -71,13 +72,14 @@ func (c *Client) doRequest(uri string, meta *MetaData) error {
 	return nil
 }
 
-func (c *Client) SetBaseURL(baseUrl string) error {
-	updatedURL, err := url.Parse(baseUrl)
+// SetBaseURL lets you change the default metadata url
+func (c *Client) SetBaseURL(baseURL string) error {
+	updatedURL, err := url.Parse(baseURL)
 	if err != nil {
 		return err
 	}
 
-	c.baseUrl = updatedURL
+	c.baseURL = updatedURL
 	return nil
 }
 
@@ -98,6 +100,7 @@ func RegionCodeToID(code string) string {
 		"YTO": "22",
 		"CDG": "24",
 		"NRT": "25",
+		"ICN": "34",
 		"MIA": "39",
 		"SGP": "40",
 	}
