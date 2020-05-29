@@ -1,5 +1,10 @@
 # Change Log
 
+## v0.0.4 (2020-06-01)
+* Bumping Vultr Metadata client to v1.0.1 to support new Region South Korea 
+
+[CCM Container v0.0.4](https://hub.docker.com/layers/vultr/vultr-cloud-controller-manager/v0.0.4/images/sha256-050a3bf2cf1726caa1295831a6f50b24efc10da2d76ea98a24f79d20bf8c294b?context=repo)
+
 ## v0.0.3 (2020-05-21)
 * Updated Kubernetes dependency to 1.17.5
 * Updated GoVultr dependency to v0.4.1
