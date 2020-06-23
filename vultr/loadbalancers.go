@@ -764,7 +764,7 @@ func (l *loadbalancers) GetSSL(service *v1.Service, secretName string) (*govultr
 		return nil, err
 	}
 
-	secret, err := l.kubeClient.CoreV1().Secrets(service.Namespace).Get(secretName, metav1.GetOptions{})
+	secret, err := l.kubeClient.CoreV1().Secrets(service.Namespace).Get(context.Background(), secretName, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
