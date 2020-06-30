@@ -1,5 +1,10 @@
 # Change Log
 
+## v0.0.5 (2020-06-30)
+* Bumping Kubernetes dependencies from 1.17.5 to 1.18.5 
+
+[CCM Container v0.0.5](https://hub.docker.com/layers/vultr/vultr-cloud-controller-manager/v0.0.5/images/sha256-db70482087faa632e4852ddd69ad1586f2efdf0876daae2ace158d7f0721cf2f?context=repo)
+
 ## v0.0.4 (2020-06-01)
 * Bumping Vultr Metadata client to v1.0.1 to support new Region South Korea 
 
