@@ -216,7 +216,7 @@ func (f *fakeLB) Get(ctx context.Context, ID string) (*govultr.LoadBalancer, err
 	return &govultr.LoadBalancer{
 		ID:        "6334f227-6d96-4cbd-9bcb-5be0759354fa",
 		Region:    "ewr",
-		Label:     "lbname",
+		Label:     "albname",
 		Status:    "active",
 		IPV4:      "192.168.0.1",
 		Instances: []string{"0c51cc3d-529e-4e03-ad86-fd0af47467ba", "ca9a74cb-2d9f-4786-9bb0-094398c593a2"},
@@ -224,7 +224,7 @@ func (f *fakeLB) Get(ctx context.Context, ID string) (*govultr.LoadBalancer, err
 }
 
 func (f *fakeLB) Update(ctx context.Context, ID string, updateReq *govultr.LoadBalancerReq) error {
-	panic("implement me")
+	return nil
 }
 
 func (f *fakeLB) Delete(ctx context.Context, ID string) error {
@@ -236,7 +236,7 @@ func (f *fakeLB) List(ctx context.Context, options *govultr.ListOptions) ([]govu
 			{
 				ID:     "6334f227-6d96-4cbd-9bcb-5be0759354fa",
 				Region: "ewr",
-				Label:  "lbname",
+				Label:  "albname",
 				Status: "active",
 				IPV4:   "192.168.0.1",
 			},
@@ -266,7 +266,7 @@ func (f *fakeLB) ListForwardingRules(ctx context.Context, ID string, options *go
 			RuleID:           "1234",
 			FrontendProtocol: "tcp",
 			FrontendPort:     80,
-			BackendProtocol:  "tco",
+			BackendProtocol:  "tcp",
 			BackendPort:      80,
 		}}, &govultr.Meta{
 			Total: 0,

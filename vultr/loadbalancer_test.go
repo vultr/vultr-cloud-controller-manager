@@ -12,7 +12,7 @@ import (
 func TestLoadbalancers_GetLoadBalancer(t *testing.T) {
 	client := newFakeClient()
 
-	lb := newLoadbalancers(client, "1")
+	lb := newLoadbalancers(client, "ewr")
 
 	svc := &v1.Service{
 		ObjectMeta: metav1.ObjectMeta{
@@ -40,7 +40,7 @@ func TestLoadbalancers_GetLoadBalancer(t *testing.T) {
 		},
 	}}
 
-	actual, exists, err := lb.GetLoadBalancer(context.TODO(), "albname", svc)
+	actual, exists, err := lb.GetLoadBalancer(context.TODO(), "lbname", svc)
 
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
