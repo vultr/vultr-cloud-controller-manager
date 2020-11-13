@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
-	"github.com/vultr/govultr"
+	"github.com/vultr/govultr/v2"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	cloudprovider "k8s.io/cloud-provider"
@@ -64,7 +64,7 @@ func (i *instances) InstanceID(ctx context.Context, nodeName types.NodeName) (st
 		return "", err
 	}
 
-	return instance.InstanceID, nil
+	return instance.ID, nil
 }
 
 // InstanceType returns the type of instance for given name.
@@ -74,7 +74,7 @@ func (i *instances) InstanceType(ctx context.Context, name types.NodeName) (stri
 		return "", err
 	}
 
-	return instance.PlanID, nil
+	return instance.Plan, nil
 }
 
 // InstanceTypeByProviderID returns the instance type for given providerID.
@@ -89,7 +89,7 @@ func (i *instances) InstanceTypeByProviderID(ctx context.Context, providerID str
 		return "", err
 	}
 
-	return instance.PlanID, nil
+	return instance.Plan, nil
 }
 
 // AddSSHKeyToAllInstances is not implemented.
@@ -133,7 +133,7 @@ func (i *instances) InstanceShutdownByProviderID(ctx context.Context, providerID
 }
 
 // nodeAddresses gathers public/private IP addresses and returns a []v1.NodeAddress .
-func (i *instances) nodeAddresses(instance *govultr.Server) ([]v1.NodeAddress, error) {
+func (i *instances) nodeAddresses(instance *govultr.Instance) ([]v1.NodeAddress, error) {
 	var addresses []v1.NodeAddress
 
 	addresses = append(addresses, v1.NodeAddress{
@@ -172,8 +172,8 @@ func vultrIDFromProviderID(providerID string) (string, error) {
 }
 
 // vultrByID returns a vultr instance for the given id.
-func vultrByID(ctx context.Context, client *govultr.Client, id string) (*govultr.Server, error) {
-	instance, err := client.Server.GetServer(ctx, id)
+func vultrByID(ctx context.Context, client *govultr.Client, id string) (*govultr.Instance, error) {
+	instance, err := client.Instance.Get(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -182,10 +182,28 @@ func vultrByID(ctx context.Context, client *govultr.Client, id string) (*govultr
 
 // vultrByName returns a vultr instance for a given NodeName.
 // Note that if multiple nodes with the same name exist and error will be thrown.
-func vultrByName(ctx context.Context, client *govultr.Client, nodeName types.NodeName) (*govultr.Server, error) {
-	instances, err := client.Server.ListByLabel(ctx, string(nodeName))
-	if err != nil {
-		return nil, err
+func vultrByName(ctx context.Context, client *govultr.Client, nodeName types.NodeName) (*govultr.Instance, error) {
+
+	listOptions := &govultr.ListOptions{}
+	var instances []govultr.Instance
+	for {
+		i, meta, err := client.Instance.List(ctx, listOptions)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, v := range i {
+			if v.Label == string(nodeName) {
+				instances = append(instances, v)
+			}
+		}
+
+		if meta.Links.Next == "" {
+			break
+		} else {
+			listOptions.Cursor = meta.Links.Next
+			continue
+		}
 	}
 
 	if len(instances) == 0 {

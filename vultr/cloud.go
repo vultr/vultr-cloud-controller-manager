@@ -1,12 +1,15 @@
 package vultr
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
+	"strings"
 
-	"github.com/vultr/govultr"
+	"github.com/vultr/govultr/v2"
 	"github.com/vultr/metadata"
+	"golang.org/x/oauth2"
 	cloudprovider "k8s.io/cloud-provider"
 	"k8s.io/klog"
 )
@@ -42,14 +45,19 @@ func newCloud() (cloudprovider.Interface, error) {
 		return nil, fmt.Errorf("failed to retrieve region from metadata: %v", meta)
 	}
 
-	vultr := govultr.NewClient(nil, apiToken)
+	tokenSrc := oauth2.StaticTokenSource(&oauth2.Token{
+		AccessToken: apiToken,
+	})
+	client := oauth2.NewClient(context.Background(), tokenSrc)
+
+	vultr := govultr.NewClient(client)
 	vultr.SetUserAgent(fmt.Sprintf("vultr-cloud-controller-manager %s", vultr.UserAgent))
 
 	return &cloud{
 		client:        vultr,
 		instances:     newInstances(vultr),
-		zones:         newZones(vultr, metadata.RegionCodeToID(meta.Region.RegionCode)),
-		loadbalancers: newLoadbalancers(vultr, metadata.RegionCodeToID(meta.Region.RegionCode)),
+		zones:         newZones(vultr, strings.ToLower(meta.Region.RegionCode)),
+		loadbalancers: newLoadbalancers(vultr, strings.ToLower(meta.Region.RegionCode)),
 	}, nil
 }
 

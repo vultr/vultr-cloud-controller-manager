@@ -60,7 +60,7 @@ func TestInstances_InstanceTypeByProviderID(t *testing.T) {
 		t.Errorf("unexpected error: %v", err)
 	}
 
-	if actual != "204" {
+	if actual != "vc2-4c-8gb" {
 		t.Errorf("expcted %+v got %+v", "204", actual)
 	}
 }

@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
-	"github.com/vultr/govultr"
+	"github.com/vultr/govultr/v2"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -121,25 +121,15 @@ func (l *loadbalancers) EnsureLoadBalancer(ctx context.Context, clusterName stri
 
 	// if exists is false and the err above was nil then this is errLbNotFound
 	if !exists {
-		lb, lbName, ssl, err := l.buildLoadBalancerRequest(service, nodes)
+		lbReq, err := l.buildLoadBalancerRequest(service, nodes)
 		if err != nil {
 			return nil, err
-		}
-		zone, err := strconv.Atoi(l.zone)
-		if err != nil {
-			return nil, err
-		}
-		lbID, err := l.client.LoadBalancer.Create(ctx, zone, lbName, &lb.GenericInfo, &lb.HealthCheck, lb.ForwardingRules.ForwardRuleList, ssl, &lb.InstanceList)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create load-balancer: %s", err)
 		}
 
-		list, _ := l.client.LoadBalancer.List(ctx)
-		var l govultr.LoadBalancers
-		for _, v := range list {
-			if v.ID == lbID.ID {
-				l = v
-			}
+		lbReq.Region = l.zone
+		l, err := l.client.LoadBalancer.Create(ctx, lbReq)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create load-balancer: %s", err)
 		}
 
 		if l.Status != lbStatusActive {
@@ -157,7 +147,6 @@ func (l *loadbalancers) EnsureLoadBalancer(ctx context.Context, clusterName stri
 	}
 
 	lbName := l.GetLoadBalancerName(ctx, clusterName, service)
-
 	lb, err := l.lbByName(ctx, lbName)
 	if err != nil {
 		if err == errLbNotFound {
@@ -171,8 +160,7 @@ func (l *loadbalancers) EnsureLoadBalancer(ctx context.Context, clusterName stri
 		return nil, fmt.Errorf("load-balancer is not yet active - current status: %s", lb.Status)
 	}
 
-	err = l.UpdateLoadBalancer(ctx, clusterName, service, nodes)
-	if err != nil {
+	if err := l.UpdateLoadBalancer(ctx, clusterName, service, nodes); err != nil {
 		return nil, err
 	}
 
@@ -186,136 +174,23 @@ func (l *loadbalancers) EnsureLoadBalancer(ctx context.Context, clusterName stri
 
 func (l *loadbalancers) UpdateLoadBalancer(ctx context.Context, clusterName string, service *v1.Service, nodes []*v1.Node) error {
 	klog.V(3).Info("Called UpdateLoadBalancers")
-	_, _, err := l.GetLoadBalancer(ctx, clusterName, service)
+	if _, _, err := l.GetLoadBalancer(ctx, clusterName, service); err != nil {
+		return err
+	}
+
+	lbName := l.GetLoadBalancerName(ctx, clusterName, service)
+	lb, err := l.lbByName(ctx, lbName)
 	if err != nil {
 		return err
 	}
 
-	lb, lbName, ssl, err := l.buildLoadBalancerRequest(service, nodes)
+	lbReq, err := l.buildLoadBalancerRequest(service, nodes)
 	if err != nil {
 		return fmt.Errorf("failed to create load balancer request: %s", err)
 	}
 
-	lbList, _ := l.client.LoadBalancer.List(ctx)
-	var lbID int
-	for _, v := range lbList {
-		if v.Label == lbName {
-			lbID = v.ID
-		}
-	}
-
-	// generic info
-	err = l.client.LoadBalancer.UpdateGenericInfo(ctx, lbID, lbName, &lb.GenericInfo)
-	if err != nil {
-		return fmt.Errorf("failed to update LB generic info: %s", err)
-	}
-
-	// health check
-	err = l.client.LoadBalancer.SetHealthCheck(ctx, lbID, &lb.HealthCheck)
-	if err != nil {
-		return fmt.Errorf("failed to update LB health check: %s", err)
-	}
-
-	// forwarding rules
-	// delete
-	currentlyRules, err := l.client.LoadBalancer.ListForwardingRules(ctx, lbID)
-	if err != nil {
-		return err
-	}
-
-	for _, v := range currentlyRules.ForwardRuleList {
-		removed := true
-		for _, c := range lb.ForwardRuleList {
-			if c.BackendPort == v.BackendPort && c.BackendProtocol == v.BackendProtocol && c.FrontendPort == v.FrontendPort && c.FrontendProtocol == v.FrontendProtocol {
-				removed = false
-				break
-			}
-		}
-
-		if removed {
-			err := l.client.LoadBalancer.DeleteForwardingRule(ctx, lbID, v.RuleID)
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	// Forwarding Rules
-	// Create
-	currentRules, err := l.client.LoadBalancer.ListForwardingRules(ctx, lbID)
-	if err != nil {
-		return err
-	}
-
-	for _, v := range lb.ForwardRuleList {
-		exists := false
-		for _, current := range currentRules.ForwardRuleList {
-			if current.BackendPort == v.BackendPort && current.BackendProtocol == v.BackendProtocol && current.FrontendPort == v.FrontendPort && current.FrontendProtocol == v.FrontendProtocol {
-				exists = true
-				break
-			}
-		}
-
-		if !exists {
-			_, err = l.client.LoadBalancer.CreateForwardingRule(ctx, lbID, &v)
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	// attach new instance nodes
-	currentlyAttached, err := l.client.LoadBalancer.AttachedInstances(ctx, lbID)
-	if err != nil {
-		return err
-	}
-
-	// Check if instances need to be attached
-	for _, n := range lb.InstanceList.InstanceList {
-		exists := false
-		for _, c := range currentlyAttached.InstanceList {
-			if c == n {
-				exists = true
-				break
-			}
-		}
-
-		if !exists {
-			err = l.client.LoadBalancer.AttachInstance(ctx, lbID, n)
-			if err != nil {
-				return fmt.Errorf("failed attach nodes to lb %s", err)
-			}
-		}
-	}
-
-	currentlyAttached1, err := l.client.LoadBalancer.AttachedInstances(ctx, lbID)
-	if err != nil {
-		return err
-	}
-
-	// Check if instances need to be removed
-	for _, c := range currentlyAttached1.InstanceList {
-		removed := true
-		for _, n := range lb.InstanceList.InstanceList {
-			if n == c {
-				removed = false
-				break
-			}
-		}
-
-		if removed {
-			err = l.client.LoadBalancer.DetachInstance(ctx, lbID, c)
-			if err != nil {
-				return fmt.Errorf("failed detach nodes to lb %s", err)
-			}
-		}
-	}
-
-	if ssl != nil {
-		err := l.client.LoadBalancer.AddSSL(ctx, lbID, ssl)
-		if err != nil {
-			return err
-		}
+	if err := l.client.LoadBalancer.Update(ctx, lb.ID, lbReq); err != nil {
+		return fmt.Errorf("failed to update LB: %s", err)
 	}
 
 	return nil
@@ -350,92 +225,85 @@ func getLoadBalancerID(service *v1.Service) string {
 	return service.ObjectMeta.Annotations[annoVultrLoadBalancerID]
 }
 
-func (l *loadbalancers) lbByName(ctx context.Context, lbName string) (*govultr.LoadBalancers, error) {
-	lbs, err := l.client.LoadBalancer.List(ctx)
-	if err != nil {
-		return nil, err
+func (l *loadbalancers) lbByName(ctx context.Context, lbName string) (*govultr.LoadBalancer, error) {
+
+	listOptions := &govultr.ListOptions{
+		PerPage: 25,
 	}
 
-	// go through the list and find the matching LB
-	if len(lbs) > 0 {
+	for {
+		lbs, meta, err := l.client.LoadBalancer.List(ctx, listOptions)
+		if err != nil {
+			return nil, err
+		}
+
 		for _, v := range lbs {
 			if v.Label == lbName {
 				return &v, nil
 			}
+		}
+
+		if meta.Links.Next == "" {
+			break
+		} else {
+			listOptions.Cursor = meta.Links.Next
 		}
 	}
 
 	return nil, errLbNotFound
 }
 
-func (l *loadbalancers) buildLoadBalancerRequest(service *v1.Service, nodes []*v1.Node) (*govultr.LBConfig, string, *govultr.SSL, error) {
+func (l *loadbalancers) buildLoadBalancerRequest(service *v1.Service, nodes []*v1.Node) (*govultr.LoadBalancerReq, error) {
 
-	lbName := getDefaultLBName(service)
-
-	genericInfo, err := buildGenericInfo(service)
+	//todo validate stickysession behavior
+	stickySession, err := buildStickySession(service)
 	if err != nil {
-		return nil, "", nil, err
+		return nil, err
 	}
 
 	healthCheck, err := buildHealthChecks(service)
 	if err != nil {
-		return nil, "", nil, err
+		return nil, err
 	}
 
 	rules, err := buildForwardingRules(service)
 	if err != nil {
-		return nil, "", nil, err
+		return nil, err
 	}
 
 	instances, err := buildInstanceList(nodes)
 	if err != nil {
-		return nil, "", nil, err
+		return nil, err
 	}
 
 	ssl := &govultr.SSL{}
 	if secretName, ok := service.Annotations[annoVultrLBSSL]; ok {
 		ssl, err = l.GetSSL(service, secretName)
 		if err != nil {
-			return nil, "", nil, err
+			return nil, err
 		}
 	} else {
 		ssl = nil
 	}
 
-	return &govultr.LBConfig{
-		GenericInfo:     *genericInfo,
-		HealthCheck:     *healthCheck,
-		SSLInfo:         false,
-		ForwardingRules: *rules,
-		InstanceList:    *instances,
-	}, lbName, ssl, nil
-}
-
-func buildGenericInfo(service *v1.Service) (*govultr.GenericInfo, error) {
-	// balancing algorithm
-	algo := getAlgorithm(service)
-
-	// ssl redirect
-	redirect := getSSLRedirect(service)
-
-	// stickSession
-	stickySession, err := buildStickySession(service)
-	if err != nil {
-		return nil, err
-	}
-	return &govultr.GenericInfo{
-		BalancingAlgorithm: algo,
-		SSLRedirect:        &redirect,
-		StickySessions:     stickySession,
+	//todo check algos are correct
+	return &govultr.LoadBalancerReq{
+		Label:              getDefaultLBName(service), // will always be set
+		Instances:          instances,                 // will always be set
+		HealthCheck:        healthCheck,               // will always be set
+		StickySessions:     stickySession,             // need to check
+		ForwardingRules:    rules,                     // all always be set
+		SSL:                ssl,                       // will always be set
+		SSLRedirect:        getSSLRedirect(service),   // need to check
+		ProxyProtocol:      false,                     // need to check
+		BalancingAlgorithm: getAlgorithm(service),     // will always be set
 	}, nil
 }
 
 // getAlgorithm returns the algorithm to be used for load balancer service
 // defaults to round_robin if no algorithm is provided.
 func getAlgorithm(service *v1.Service) string {
-	algorithm := service.Annotations[annoVultrAlgorithm]
-
-	if algorithm == "least_connections" {
+	if service.Annotations[annoVultrAlgorithm] == "least_connections" {
 		return "leastconn"
 	} else {
 		return "roundrobin"
@@ -459,12 +327,11 @@ func getSSLRedirect(service *v1.Service) bool {
 }
 
 func buildStickySession(service *v1.Service) (*govultr.StickySessions, error) {
-
 	enabled := getStickySessionEnabled(service)
 
 	if enabled == "off" {
 		return &govultr.StickySessions{
-			StickySessionsEnabled: "off",
+			CookieName: "",
 		}, nil
 	}
 
@@ -474,8 +341,7 @@ func buildStickySession(service *v1.Service) (*govultr.StickySessions, error) {
 	}
 
 	return &govultr.StickySessions{
-		StickySessionsEnabled: enabled,
-		CookieName:            cookieName,
+		CookieName: cookieName,
 	}, nil
 }
 
@@ -507,7 +373,6 @@ func getCookieName(service *v1.Service) (string, error) {
 }
 
 func buildHealthChecks(service *v1.Service) (*govultr.HealthCheck, error) {
-
 	healthCheckProtocol, err := getHealthCheckProtocol(service)
 	if err != nil {
 		return nil, err
@@ -660,8 +525,9 @@ func getHealthCheckHealthy(service *v1.Service) (int, error) {
 	return healthyInt, err
 }
 
-func buildInstanceList(nodes []*v1.Node) (*govultr.InstanceList, error) {
-	var list []int
+// buildInstanceList create list of nodes to be attached to a load balancer
+func buildInstanceList(nodes []*v1.Node) ([]string, error) {
+	var list []string
 
 	for _, node := range nodes {
 		instanceID, err := vultrIDFromProviderID(node.Spec.ProviderID)
@@ -669,19 +535,14 @@ func buildInstanceList(nodes []*v1.Node) (*govultr.InstanceList, error) {
 			return nil, fmt.Errorf("error getting the provider ID %s : %s", node.Spec.ProviderID, err)
 		}
 
-		instance, err := strconv.Atoi(instanceID)
-		if err != nil {
-			return nil, err
-		}
-
-		list = append(list, instance)
+		list = append(list, instanceID)
 	}
 
-	return &govultr.InstanceList{InstanceList: list}, nil
+	return list, nil
 }
 
-func buildForwardingRules(service *v1.Service) (*govultr.ForwardingRules, error) {
-	var rules govultr.ForwardingRules
+func buildForwardingRules(service *v1.Service) ([]govultr.ForwardingRule, error) {
+	var rules []govultr.ForwardingRule
 
 	defaultProtocol := getLBProtocol(service)
 
@@ -707,10 +568,10 @@ func buildForwardingRules(service *v1.Service) (*govultr.ForwardingRules, error)
 			return nil, err
 		}
 
-		rules.ForwardRuleList = append(rules.ForwardRuleList, *rule)
+		rules = append(rules, *rule)
 	}
 
-	return &rules, nil
+	return rules, nil
 }
 
 func buildForwardingRule(port *v1.ServicePort, protocol string) (*govultr.ForwardingRule, error) {
@@ -758,9 +619,7 @@ func getHttpsPorts(service *v1.Service) (map[int32]bool, error) {
 }
 
 func (l *loadbalancers) GetSSL(service *v1.Service, secretName string) (*govultr.SSL, error) {
-
-	err := l.GetKubeClient()
-	if err != nil {
+	if err := l.GetKubeClient(); err != nil {
 		return nil, err
 	}
 

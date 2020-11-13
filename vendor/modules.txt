@@ -56,6 +56,8 @@ github.com/google/go-cmp/cmp/internal/diff
 github.com/google/go-cmp/cmp/internal/flags
 github.com/google/go-cmp/cmp/internal/function
 github.com/google/go-cmp/cmp/internal/value
+# github.com/google/go-querystring v1.0.0
+github.com/google/go-querystring/query
 # github.com/google/gofuzz v1.1.0
 github.com/google/gofuzz
 # github.com/google/uuid v1.1.1
@@ -121,6 +123,9 @@ github.com/spf13/pflag
 # github.com/vultr/govultr v0.4.2
 ## explicit
 github.com/vultr/govultr
+# github.com/vultr/govultr/v2 v2.0.0-beta4
+## explicit
+github.com/vultr/govultr/v2
 # github.com/vultr/metadata v1.0.1
 ## explicit
 github.com/vultr/metadata
