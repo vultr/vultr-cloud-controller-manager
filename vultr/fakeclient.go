@@ -79,8 +79,13 @@ func (f *FakeInstance) List(ctx context.Context, options *govultr.ListOptions) (
 				Label:        "ccm-test",
 				InternalIP:   "10.1.95.4",
 			},
-		},
-		nil, nil
+		}, &govultr.Meta{
+			Total: 0,
+			Links: &govultr.Links{
+				Next: "",
+				Prev: "",
+			},
+		}, nil
 }
 
 func (f *FakeInstance) Start(ctx context.Context, instanceID string) error {
@@ -228,14 +233,20 @@ func (f *fakeLB) Delete(ctx context.Context, ID string) error {
 
 func (f *fakeLB) List(ctx context.Context, options *govultr.ListOptions) ([]govultr.LoadBalancer, *govultr.Meta, error) {
 	return []govultr.LoadBalancer{
-		{
-			ID:     "6334f227-6d96-4cbd-9bcb-5be0759354fa",
-			Region: "ewr",
-			Label:  "lbname",
-			Status: "active",
-			IPV4:   "192.168.0.1",
-		},
-	}, nil, nil
+			{
+				ID:     "6334f227-6d96-4cbd-9bcb-5be0759354fa",
+				Region: "ewr",
+				Label:  "lbname",
+				Status: "active",
+				IPV4:   "192.168.0.1",
+			},
+		}, &govultr.Meta{
+			Total: 0,
+			Links: &govultr.Links{
+				Next: "",
+				Prev: "",
+			},
+		}, nil
 }
 
 func (f *fakeLB) CreateForwardingRule(ctx context.Context, ID string, rule *govultr.ForwardingRule) (*govultr.ForwardingRule, error) {
@@ -252,10 +263,16 @@ func (f *fakeLB) DeleteForwardingRule(ctx context.Context, ID string, RuleID str
 
 func (f *fakeLB) ListForwardingRules(ctx context.Context, ID string, options *govultr.ListOptions) ([]govultr.ForwardingRule, *govultr.Meta, error) {
 	return []govultr.ForwardingRule{{
-		RuleID:           "1234",
-		FrontendProtocol: "tcp",
-		FrontendPort:     80,
-		BackendProtocol:  "tco",
-		BackendPort:      80,
-	}}, nil, nil
+			RuleID:           "1234",
+			FrontendProtocol: "tcp",
+			FrontendPort:     80,
+			BackendProtocol:  "tco",
+			BackendPort:      80,
+		}}, &govultr.Meta{
+			Total: 0,
+			Links: &govultr.Links{
+				Next: "",
+				Prev: "",
+			},
+		}, nil
 }
