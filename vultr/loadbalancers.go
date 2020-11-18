@@ -71,6 +71,7 @@ const (
 )
 
 var errLbNotFound = errors.New("loadbalancer not found")
+var _ cloudprovider.LoadBalancer = &loadbalancers{}
 
 type loadbalancers struct {
 	client *govultr.Client
@@ -303,7 +304,8 @@ func (l *loadbalancers) buildLoadBalancerRequest(service *v1.Service, nodes []*v
 // getAlgorithm returns the algorithm to be used for load balancer service
 // defaults to round_robin if no algorithm is provided.
 func getAlgorithm(service *v1.Service) string {
-	if service.Annotations[annoVultrAlgorithm] == "least_connections" {
+	algo := service.Annotations[annoVultrAlgorithm]
+	if algo == "least_connections" {
 		return "leastconn"
 	} else {
 		return "roundrobin"

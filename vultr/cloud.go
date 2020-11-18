@@ -20,6 +20,7 @@ const (
 	regionEnv      = "VULTR_REGION"
 )
 
+
 type cloud struct {
 	client        *govultr.Client
 	instances     cloudprovider.Instances
@@ -70,6 +71,11 @@ func (c *cloud) LoadBalancer() (cloudprovider.LoadBalancer, bool) {
 
 func (c *cloud) Instances() (cloudprovider.Instances, bool) {
 	return c.instances, true
+}
+
+func (c *cloud) InstancesV2() (cloudprovider.InstancesV2, bool) {
+	// TODO we will need to implement this but for now it is not required and experimental
+	return nil, false
 }
 
 func (c *cloud) Zones() (cloudprovider.Zones, bool) {

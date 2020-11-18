@@ -2,11 +2,12 @@ package vultr
 
 import (
 	"context"
-
 	"github.com/vultr/govultr/v2"
 	"k8s.io/apimachinery/pkg/types"
 	cloudprovider "k8s.io/cloud-provider"
 )
+
+var _ cloudprovider.Zones = &zones{}
 
 type zones struct {
 	client *govultr.Client

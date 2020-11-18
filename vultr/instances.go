@@ -14,6 +14,8 @@ import (
 
 const instanceShutdownStatus = "stopped"
 
+var _ cloudprovider.Instances= &instances{}
+
 type instances struct {
 	client *govultr.Client
 }
