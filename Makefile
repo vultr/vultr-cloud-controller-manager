@@ -7,7 +7,7 @@ deploy: clean build-linux docker-build docker-push
 .PHONY: build
 build:
 	@echo "building vultr ccm"
-	go build -o dist/vultr-cloud-controller-manager-v2 .
+	go build -o dist/vultr-cloud-controller-manager .
 
 .PHONY: build-linux
 build-linux:
