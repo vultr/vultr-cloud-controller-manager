@@ -4,7 +4,7 @@ go 1.15
 
 require (
 	github.com/pkg/errors v0.9.1
-	github.com/vultr/govultr/v2 v2.0.0-beta5
+	github.com/vultr/govultr/v2 v2.0.0
 	github.com/vultr/metadata v1.0.1
 	golang.org/x/oauth2 v0.0.0-20191202225959-858c2ad4c8b6
 	k8s.io/api v0.19.4
