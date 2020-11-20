@@ -10,9 +10,9 @@ import (
 
 func TestZones_GetZoneByNodeName(t *testing.T) {
 	client := newFakeClient()
-	zone := newZones(client, "1")
+	zone := newZones(client, "ewr")
 
-	expected := cloudprovider.Zone{Region: "1"}
+	expected := cloudprovider.Zone{Region: "ewr"}
 	actual, err := zone.GetZoneByNodeName(context.TODO(), "ccm-test")
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
@@ -26,9 +26,9 @@ func TestZones_GetZoneByNodeName(t *testing.T) {
 
 func TestZones_GetZoneByProviderID(t *testing.T) {
 	client := newFakeClient()
-	zone := newZones(client, "1")
+	zone := newZones(client, "ewr")
 
-	expected := cloudprovider.Zone{Region: "1"}
+	expected := cloudprovider.Zone{Region: "ewr"}
 
 	actual, err := zone.GetZoneByProviderID(context.Background(), "vultr://576965")
 	if err != nil {
