@@ -22,7 +22,7 @@ Any changes to the load-balancer should be done through the service object.
 
 ## Development 
 
-Go minimum version `1.12.0`
+Go minimum version `1.15.0`
 
 The `vultr-cloud-controller-manager` uses go modules for its dependencies.
 
