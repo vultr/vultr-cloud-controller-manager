@@ -60,7 +60,7 @@ func TestInstances_InstanceTypeByProviderID(t *testing.T) {
 		t.Errorf("unexpected error: %v", err)
 	}
 
-	if actual != "204" {
+	if actual != "vc2-4c-8gb" {
 		t.Errorf("expcted %+v got %+v", "204", actual)
 	}
 }
@@ -84,7 +84,7 @@ func TestInstances_NodeAddressesByProviderID(t *testing.T) {
 		},
 	}
 
-	actual, err := instances.NodeAddresses(context.TODO(), "576965")
+	actual, err := instances.NodeAddresses(context.TODO(), "ccm-test")
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
@@ -132,8 +132,8 @@ func TestInstances_InstanceType(t *testing.T) {
 		t.Errorf("unexpected error: %v", err)
 	}
 
-	if actual != "204" {
-		t.Errorf("expcted %+v got %+v", "204", actual)
+	if actual != "vc2-4c-8gb" {
+		t.Errorf("expcted %+v got %+v", "vc2-4c-8gb", actual)
 	}
 }
 
@@ -146,8 +146,8 @@ func TestInstances_InstanceID(t *testing.T) {
 		t.Errorf("unexpected error: %v", err)
 	}
 
-	if actual != "576965" {
-		t.Errorf("expcted %+v got %+v", "204", actual)
+	if actual != "75b95d83-47e2-4c0f-b273-cc9ce2b456f8" {
+		t.Errorf("expcted %+v got %+v", "75b95d83-47e2-4c0f-b273-cc9ce2b456f8", actual)
 	}
 }
 

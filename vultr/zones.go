@@ -2,11 +2,12 @@ package vultr
 
 import (
 	"context"
-
-	"github.com/vultr/govultr"
+	"github.com/vultr/govultr/v2"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/cloud-provider"
+	cloudprovider "k8s.io/cloud-provider"
 )
+
+var _ cloudprovider.Zones = &zones{}
 
 type zones struct {
 	client *govultr.Client
@@ -31,7 +32,7 @@ func (z zones) GetZoneByProviderID(ctx context.Context, providerID string) (clou
 		return cloudprovider.Zone{}, err
 	}
 
-	return cloudprovider.Zone{Region: vultr.RegionID}, nil
+	return cloudprovider.Zone{Region: vultr.Region}, nil
 }
 
 func (z zones) GetZoneByNodeName(ctx context.Context, nodeName types.NodeName) (cloudprovider.Zone, error) {
@@ -40,5 +41,5 @@ func (z zones) GetZoneByNodeName(ctx context.Context, nodeName types.NodeName) (
 		return cloudprovider.Zone{}, nil
 	}
 
-	return cloudprovider.Zone{Region: vultr.RegionID}, nil
+	return cloudprovider.Zone{Region: vultr.Region}, nil
 }

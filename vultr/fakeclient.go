@@ -3,33 +3,32 @@ package vultr
 import (
 	"context"
 
-	"github.com/vultr/govultr"
+	"github.com/vultr/govultr/v2"
 )
 
 func newFakeClient() *govultr.Client {
 	fakeInstance := FakeInstance{client: nil}
-	fakeLoadBalancer := fakeLB{nil}
+	fakeLoadBalancer := fakeLB{client: nil}
 	return &govultr.Client{
-		Server:       &fakeInstance,
+		Instance:     &fakeInstance,
 		LoadBalancer: &fakeLoadBalancer,
 	}
 }
 
-func newFakeInstance() *govultr.Server {
-	return &govultr.Server{
-		InstanceID:  "576965",
-		MainIP:      "149.28.225.110",
-		VPSCpus:     "4",
-		Location:    "New Jersey",
-		RegionID:    "1",
-		Status:      "running",
-		NetmaskV4:   "255.255.254.0",
-		GatewayV4:   "149.28.224.1",
-		PowerStatus: "",
-		ServerState: "",
-		PlanID:      "204",
-		Label:       "cluster-name",
-		InternalIP:  "10.1.95.4",
+func newFakeInstance() *govultr.Instance {
+	return &govultr.Instance{
+		ID:           "5b95d83-47e2-4c0f-b273-cc9ce2b456f8",
+		MainIP:       "149.28.225.110",
+		VCPUCount:    4,
+		Region:       "ewr",
+		Status:       "running",
+		NetmaskV4:    "255.255.254.0",
+		GatewayV4:    "149.28.224.1",
+		PowerStatus:  "",
+		ServerStatus: "",
+		Plan:         "vc2-4c-8gb",
+		Label:        "cluster-name",
+		InternalIP:   "10.1.95.4",
 	}
 }
 
@@ -37,148 +36,56 @@ type FakeInstance struct {
 	client *govultr.Client
 }
 
-func (f *FakeInstance) ChangeApp(ctx context.Context, instanceID, appID string) error {
+func (f *FakeInstance) Create(ctx context.Context, instanceReq *govultr.InstanceCreateReq) (*govultr.Instance, error) {
 	panic("implement me")
 }
 
-func (f *FakeInstance) ListApps(ctx context.Context, instanceID string) ([]govultr.Application, error) {
+func (f *FakeInstance) Get(ctx context.Context, instanceID string) (*govultr.Instance, error) {
+	return &govultr.Instance{
+		ID:           "75b95d83-47e2-4c0f-b273-cc9ce2b456f8",
+		MainIP:       "149.28.225.110",
+		VCPUCount:    4,
+		Region:       "ewr",
+		Status:       "running",
+		NetmaskV4:    "255.255.254.0",
+		GatewayV4:    "149.28.224.1",
+		ServerStatus: "",
+		Plan:         "vc2-4c-8gb",
+		Label:        "ccm-test",
+		InternalIP:   "10.1.95.4",
+	}, nil
+}
+
+func (f *FakeInstance) Update(ctx context.Context, instanceID string, instanceReq *govultr.InstanceUpdateReq) error {
 	panic("implement me")
 }
 
-func (f *FakeInstance) AppInfo(ctx context.Context, instanceID string) (*govultr.AppInfo, error) {
+func (f *FakeInstance) Delete(ctx context.Context, instanceID string) error {
 	panic("implement me")
 }
 
-func (f *FakeInstance) EnableBackup(ctx context.Context, instanceID string) error {
-	panic("implement me")
-}
-
-func (f *FakeInstance) DisableBackup(ctx context.Context, instanceID string) error {
-	panic("implement me")
-}
-
-func (f *FakeInstance) GetBackupSchedule(ctx context.Context, instanceID string) (*govultr.BackupSchedule, error) {
-	panic("implement me")
-}
-
-func (f *FakeInstance) SetBackupSchedule(ctx context.Context, instanceID string, backup *govultr.BackupSchedule) error {
-	panic("implement me")
-}
-
-func (f *FakeInstance) RestoreBackup(ctx context.Context, instanceID, backupID string) error {
-	panic("implement me")
-}
-
-func (f *FakeInstance) RestoreSnapshot(ctx context.Context, instanceID, snapshotID string) error {
-	panic("implement me")
-}
-
-func (f *FakeInstance) SetLabel(ctx context.Context, instanceID, label string) error {
-	panic("implement me")
-}
-
-func (f *FakeInstance) SetTag(ctx context.Context, instanceID, tag string) error {
-	panic("implement me")
-}
-
-func (f *FakeInstance) Neighbors(ctx context.Context, instanceID string) ([]int, error) {
-	panic("implement me")
-}
-
-func (f *FakeInstance) EnablePrivateNetwork(ctx context.Context, instanceID, networkID string) error {
-	panic("implement me")
-}
-
-func (f *FakeInstance) DisablePrivateNetwork(ctx context.Context, instanceID, networkID string) error {
-	panic("implement me")
-}
-
-func (f *FakeInstance) ListPrivateNetworks(ctx context.Context, instanceID string) ([]govultr.PrivateNetwork, error) {
-	panic("implement me")
-}
-
-func (f *FakeInstance) ListUpgradePlan(ctx context.Context, instanceID string) ([]int, error) {
-	panic("implement me")
-}
-
-func (f *FakeInstance) UpgradePlan(ctx context.Context, instanceID, vpsPlanID string) error {
-	panic("implement me")
-}
-
-func (f *FakeInstance) ListOS(ctx context.Context, instanceID string) ([]govultr.OS, error) {
-	panic("implement me")
-}
-
-func (f *FakeInstance) ChangeOS(ctx context.Context, instanceID, osID string) error {
-	panic("implement me")
-}
-
-func (f *FakeInstance) IsoAttach(ctx context.Context, instanceID, isoID string) error {
-	panic("implement me")
-}
-
-func (f *FakeInstance) IsoDetach(ctx context.Context, instanceID string) error {
-	panic("implement me")
-}
-
-func (f *FakeInstance) IsoStatus(ctx context.Context, instanceID string) (*govultr.ServerIso, error) {
-	panic("implement me")
-}
-
-func (f *FakeInstance) SetFirewallGroup(ctx context.Context, instanceID, firewallGroupID string) error {
-	panic("implement me")
-}
-
-func (f *FakeInstance) GetUserData(ctx context.Context, instanceID string) (*govultr.UserData, error) {
-	panic("implement me")
-}
-
-func (f *FakeInstance) SetUserData(ctx context.Context, instanceID, userData string) error {
-	panic("implement me")
-}
-
-func (f *FakeInstance) IPV4Info(ctx context.Context, instanceID string, public bool) ([]govultr.IPV4, error) {
-	panic("implement me")
-}
-
-func (f *FakeInstance) IPV6Info(ctx context.Context, instanceID string) ([]govultr.IPV6, error) {
-	panic("implement me")
-}
-
-func (f *FakeInstance) AddIPV4(ctx context.Context, instanceID string) error {
-	panic("implement me")
-}
-
-func (f *FakeInstance) DestroyIPV4(ctx context.Context, instanceID, ip string) error {
-	panic("implement me")
-}
-
-func (f *FakeInstance) EnableIPV6(ctx context.Context, instanceID string) error {
-	panic("implement me")
-}
-
-func (f *FakeInstance) Bandwidth(ctx context.Context, instanceID string) ([]map[string]string, error) {
-	panic("implement me")
-}
-
-func (f *FakeInstance) ListReverseIPV6(ctx context.Context, instanceID string) ([]govultr.ReverseIPV6, error) {
-	panic("implement me")
-}
-
-func (f *FakeInstance) SetDefaultReverseIPV4(ctx context.Context, instanceID, ip string) error {
-	panic("implement me")
-}
-
-func (f *FakeInstance) DeleteReverseIPV6(ctx context.Context, instanceID, ip string) error {
-	panic("implement me")
-}
-
-func (f *FakeInstance) SetReverseIPV4(ctx context.Context, instanceID, ipv4, entry string) error {
-	panic("implement me")
-}
-
-func (f *FakeInstance) SetReverseIPV6(ctx context.Context, instanceID, ipv6, entry string) error {
-	panic("implement me")
+func (f *FakeInstance) List(ctx context.Context, options *govultr.ListOptions) ([]govultr.Instance, *govultr.Meta, error) {
+	return []govultr.Instance{
+			{
+				ID:           "75b95d83-47e2-4c0f-b273-cc9ce2b456f8",
+				MainIP:       "149.28.225.110",
+				VCPUCount:    4,
+				Region:       "ewr",
+				Status:       "running",
+				NetmaskV4:    "255.255.254.0",
+				GatewayV4:    "149.28.224.1",
+				ServerStatus: "",
+				Plan:         "vc2-4c-8gb",
+				Label:        "ccm-test",
+				InternalIP:   "10.1.95.4",
+			},
+		}, &govultr.Meta{
+			Total: 0,
+			Links: &govultr.Links{
+				Next: "",
+				Prev: "",
+			},
+		}, nil
 }
 
 func (f *FakeInstance) Start(ctx context.Context, instanceID string) error {
@@ -197,162 +104,175 @@ func (f *FakeInstance) Reinstall(ctx context.Context, instanceID string) error {
 	panic("implement me")
 }
 
-func (f *FakeInstance) Delete(ctx context.Context, instanceID string) error {
+func (f *FakeInstance) MassStart(ctx context.Context, instanceList []string) error {
 	panic("implement me")
 }
 
-func (f *FakeInstance) Create(ctx context.Context, regionID, vpsPlanID, osID int, options *govultr.ServerOptions) (*govultr.Server, error) {
+func (f *FakeInstance) MassHalt(ctx context.Context, instanceList []string) error {
 	panic("implement me")
 }
 
-func (f *FakeInstance) List(ctx context.Context) ([]govultr.Server, error) {
+func (f *FakeInstance) MassReboot(ctx context.Context, instanceList []string) error {
 	panic("implement me")
 }
 
-func (f *FakeInstance) ListByLabel(ctx context.Context, label string) ([]govultr.Server, error) {
-
-	return []govultr.Server{
-		{
-			InstanceID:  "576965",
-			MainIP:      "149.28.225.110",
-			VPSCpus:     "4",
-			Location:    "New Jersey",
-			RegionID:    "1",
-			Status:      "running",
-			NetmaskV4:   "255.255.254.0",
-			GatewayV4:   "149.28.224.1",
-			PowerStatus: "",
-			ServerState: "",
-			PlanID:      "204",
-			Label:       "ccm-test",
-			InternalIP:  "10.1.95.4",
-		},
-	}, nil
-}
-
-func (f *FakeInstance) ListByMainIP(ctx context.Context, mainIP string) ([]govultr.Server, error) {
+func (f *FakeInstance) Restore(ctx context.Context, instanceID string, restoreReq *govultr.RestoreReq) error {
 	panic("implement me")
 }
 
-func (f *FakeInstance) ListByTag(ctx context.Context, tag string) ([]govultr.Server, error) {
+func (f *FakeInstance) GetBandwidth(ctx context.Context, instanceID string) (*govultr.Bandwidth, error) {
 	panic("implement me")
 }
 
-func (f *FakeInstance) GetServer(ctx context.Context, instanceID string) (*govultr.Server, error) {
-	return &govultr.Server{
-		InstanceID:  "576965",
-		MainIP:      "149.28.225.110",
-		VPSCpus:     "4",
-		Location:    "New Jersey",
-		RegionID:    "1",
-		Status:      "running",
-		NetmaskV4:   "255.255.254.0",
-		GatewayV4:   "149.28.224.1",
-		PowerStatus: "",
-		ServerState: "",
-		PlanID:      "204",
-		Label:       "ccm-test",
-		InternalIP:  "10.1.95.4",
-	}, nil
+func (f *FakeInstance) GetNeighbors(ctx context.Context, instanceID string) (*govultr.Neighbors, error) {
+	panic("implement me")
+}
+
+func (f *FakeInstance) ListPrivateNetworks(ctx context.Context, instanceID string) ([]govultr.PrivateNetwork, *govultr.Meta, error) {
+	panic("implement me")
+}
+
+func (f *FakeInstance) AttachPrivateNetwork(ctx context.Context, instanceID, networkID string) error {
+	panic("implement me")
+}
+
+func (f *FakeInstance) DetachPrivateNetwork(ctx context.Context, instanceID, networkID string) error {
+	panic("implement me")
+}
+
+func (f *FakeInstance) ISOStatus(ctx context.Context, instanceID string) (*govultr.Iso, error) {
+	panic("implement me")
+}
+
+func (f *FakeInstance) AttachISO(ctx context.Context, instanceID, isoID string) error {
+	panic("implement me")
+}
+
+func (f *FakeInstance) DetachISO(ctx context.Context, instanceID string) error {
+	panic("implement me")
+}
+
+func (f *FakeInstance) GetBackupSchedule(ctx context.Context, instanceID string) (*govultr.BackupSchedule, error) {
+	panic("implement me")
+}
+
+func (f *FakeInstance) SetBackupSchedule(ctx context.Context, instanceID string, backup *govultr.BackupScheduleReq) error {
+	panic("implement me")
+}
+
+func (f *FakeInstance) CreateIPv4(ctx context.Context, instanceID string, reboot bool) (*govultr.IPv4, error) {
+	panic("implement me")
+}
+
+func (f *FakeInstance) ListIPv4(ctx context.Context, instanceID string, option *govultr.ListOptions) ([]govultr.IPv4, *govultr.Meta, error) {
+	panic("implement me")
+}
+
+func (f *FakeInstance) DeleteIPv4(ctx context.Context, instanceID, ip string) error {
+	panic("implement me")
+}
+
+func (f *FakeInstance) ListIPv6(ctx context.Context, instanceID string, option *govultr.ListOptions) ([]govultr.IPv6, *govultr.Meta, error) {
+	panic("implement me")
+}
+
+func (f *FakeInstance) CreateReverseIPv6(ctx context.Context, instanceID string, reverseReq *govultr.ReverseIP) error {
+	panic("implement me")
+}
+
+func (f *FakeInstance) ListReverseIPv6(ctx context.Context, instanceID string) ([]govultr.ReverseIP, error) {
+	panic("implement me")
+}
+
+func (f *FakeInstance) DeleteReverseIPv6(ctx context.Context, instanceID, ip string) error {
+	panic("implement me")
+}
+
+func (f *FakeInstance) CreateReverseIPv4(ctx context.Context, instanceID string, reverseReq *govultr.ReverseIP) error {
+	panic("implement me")
+}
+
+func (f *FakeInstance) DefaultReverseIPv4(ctx context.Context, instanceID, ip string) error {
+	panic("implement me")
+}
+
+func (f *FakeInstance) GetUserData(ctx context.Context, instanceID string) (*govultr.UserData, error) {
+	panic("implement me")
+}
+
+func (f *FakeInstance) GetUpgrades(ctx context.Context, instanceID string) (*govultr.Upgrades, error) {
+	panic("implement me")
 }
 
 type fakeLB struct {
 	client *govultr.Client
 }
 
-func (l *fakeLB) List(ctx context.Context) ([]govultr.LoadBalancers, error) {
-	return []govultr.LoadBalancers{
-		{
-			ID:       12345,
-			RegionID: 1,
-			Label:    "albname",
-			Status:   "active",
-			IPV4:     "192.168.0.1",
-		},
+func (f *fakeLB) Create(ctx context.Context, createReq *govultr.LoadBalancerReq) (*govultr.LoadBalancer, error) {
+	panic("implement me")
+}
+
+func (f *fakeLB) Get(ctx context.Context, ID string) (*govultr.LoadBalancer, error) {
+	return &govultr.LoadBalancer{
+		ID:        "6334f227-6d96-4cbd-9bcb-5be0759354fa",
+		Region:    "ewr",
+		Label:     "albname",
+		Status:    "active",
+		IPV4:      "192.168.0.1",
+		Instances: []string{"0c51cc3d-529e-4e03-ad86-fd0af47467ba", "ca9a74cb-2d9f-4786-9bb0-094398c593a2"},
 	}, nil
 }
 
-func (l *fakeLB) Delete(ctx context.Context, ID int) error {
-	panic("implement me")
-}
-
-func (l *fakeLB) SetLabel(ctx context.Context, ID int, label string) error {
-	panic("implement me")
-}
-
-func (l *fakeLB) AttachedInstances(ctx context.Context, ID int) (*govultr.InstanceList, error) {
-	return &govultr.InstanceList{
-		InstanceList: []int{
-			123,
-			124,
-		},
-	}, nil
-}
-
-func (l *fakeLB) AttachInstance(ctx context.Context, ID, backendNode int) error {
-	panic("implement me")
-}
-
-func (l *fakeLB) DetachInstance(ctx context.Context, ID, backendNode int) error {
-	panic("implement me")
-}
-
-func (l *fakeLB) GetHealthCheck(ctx context.Context, ID int) (*govultr.HealthCheck, error) {
-	panic("implement me")
-}
-
-func (l *fakeLB) SetHealthCheck(ctx context.Context, ID int, healthConfig *govultr.HealthCheck) error {
+func (f *fakeLB) Update(ctx context.Context, ID string, updateReq *govultr.LoadBalancerReq) error {
 	return nil
 }
 
-func (l *fakeLB) GetGenericInfo(ctx context.Context, ID int) (*govultr.GenericInfo, error) {
+func (f *fakeLB) Delete(ctx context.Context, ID string) error {
 	panic("implement me")
 }
 
-func (l *fakeLB) ListForwardingRules(ctx context.Context, ID int) (*govultr.ForwardingRules, error) {
-	return &govultr.ForwardingRules{
-		ForwardRuleList: []govultr.ForwardingRule{
+func (f *fakeLB) List(ctx context.Context, options *govultr.ListOptions) ([]govultr.LoadBalancer, *govultr.Meta, error) {
+	return []govultr.LoadBalancer{
 			{
-				RuleID:           "1234",
-				FrontendProtocol: "tcp",
-				FrontendPort:     80,
-				BackendProtocol:  "tcp",
-				BackendPort:      8080,
+				ID:     "6334f227-6d96-4cbd-9bcb-5be0759354fa",
+				Region: "ewr",
+				Label:  "albname",
+				Status: "active",
+				IPV4:   "192.168.0.1",
 			},
-		},
-	}, nil
+		}, &govultr.Meta{
+			Total: 0,
+			Links: &govultr.Links{
+				Next: "",
+				Prev: "",
+			},
+		}, nil
 }
 
-func (l *fakeLB) DeleteForwardingRule(ctx context.Context, ID int, RuleID string) error {
+func (f *fakeLB) CreateForwardingRule(ctx context.Context, ID string, rule *govultr.ForwardingRule) (*govultr.ForwardingRule, error) {
 	panic("implement me")
 }
 
-func (l *fakeLB) CreateForwardingRule(ctx context.Context, ID int, rule *govultr.ForwardingRule) (*govultr.ForwardingRule, error) {
+func (f *fakeLB) GetForwardingRule(ctx context.Context, ID string, ruleID string) (*govultr.ForwardingRule, error) {
 	panic("implement me")
 }
 
-func (l *fakeLB) GetFullConfig(ctx context.Context, ID int) (*govultr.LBConfig, error) {
+func (f *fakeLB) DeleteForwardingRule(ctx context.Context, ID string, RuleID string) error {
 	panic("implement me")
 }
 
-func (l *fakeLB) HasSSL(ctx context.Context, ID int) (*struct {
-	SSLInfo bool `json:"has_ssl"`
-}, error) {
-	panic("implement me")
-}
-
-func (l *fakeLB) Create(ctx context.Context, region int, label string, genericInfo *govultr.GenericInfo, healthCheck *govultr.HealthCheck, rules []govultr.ForwardingRule, ssl *govultr.SSL, instances *govultr.InstanceList) (*govultr.LoadBalancers, error) {
-	panic("implement me")
-}
-
-func (l *fakeLB) UpdateGenericInfo(ctx context.Context, ID int, label string, genericInfo *govultr.GenericInfo) error {
-	return nil
-}
-
-func (l *fakeLB) AddSSL(ctx context.Context, ID int, ssl *govultr.SSL) error {
-	panic("implement me")
-}
-
-func (l *fakeLB) RemoveSSL(ctx context.Context, ID int) error {
-	panic("implement me")
+func (f *fakeLB) ListForwardingRules(ctx context.Context, ID string, options *govultr.ListOptions) ([]govultr.ForwardingRule, *govultr.Meta, error) {
+	return []govultr.ForwardingRule{{
+			RuleID:           "1234",
+			FrontendProtocol: "tcp",
+			FrontendPort:     80,
+			BackendProtocol:  "tcp",
+			BackendPort:      80,
+		}}, &govultr.Meta{
+			Total: 0,
+			Links: &govultr.Links{
+				Next: "",
+				Prev: "",
+			},
+		}, nil
 }
