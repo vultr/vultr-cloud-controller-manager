@@ -1,5 +1,12 @@
 # Change Log
 
+## v0.1.0 (2020-11-24)
+* Bumping Kubernetes dependencies from 1.18.5 to 1.19.4 
+* Bumped GoVultr to v2.0.0 - This will use UUIDs for node IDs and not work on clusters provisioned by a CCM prior to v0.1.0
+
+[CCM Container v0.1.0](https://hub.docker.com/repository/docker/vultr/vultr-cloud-controller-manager)
+
+
 ## v0.0.5 (2020-06-30)
 * Bumping Kubernetes dependencies from 1.17.5 to 1.18.5 
 
