@@ -1,5 +1,13 @@
 # Change Log
 
+## v0.1.1 (2020-12-24)
+* Bumped GoVultr from v2.0.0 - v2.2.0 
+* Adding proxy protocol support for Load Balancer service [24](https://github.com/vultr/vultr-cloud-controller-manager/pull/34)
+* Adding nightly yaml
+
+[CCM Container v0.1.1](https://hub.docker.com/repository/docker/vultr/vultr-cloud-controller-manager)
+
+
 ## v0.1.0 (2020-11-24)
 * Bumping Kubernetes dependencies from 1.18.5 to 1.19.4 
 * Bumped GoVultr to v2.0.0 - This will use UUIDs for node IDs and not work on clusters provisioned by a CCM prior to v0.1.0
