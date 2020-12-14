@@ -73,7 +73,7 @@ github.com/googleapis/gnostic/openapiv2
 github.com/grpc-ecosystem/go-grpc-prometheus
 # github.com/hashicorp/go-cleanhttp v0.5.1
 github.com/hashicorp/go-cleanhttp
-# github.com/hashicorp/go-retryablehttp v0.6.6
+# github.com/hashicorp/go-retryablehttp v0.6.8
 github.com/hashicorp/go-retryablehttp
 # github.com/hashicorp/golang-lru v0.5.1
 github.com/hashicorp/golang-lru
@@ -128,7 +128,7 @@ github.com/sirupsen/logrus
 github.com/spf13/cobra
 # github.com/spf13/pflag v1.0.5
 github.com/spf13/pflag
-# github.com/vultr/govultr/v2 v2.0.0
+# github.com/vultr/govultr/v2 v2.2.0
 ## explicit
 github.com/vultr/govultr/v2
 # github.com/vultr/metadata v1.0.1
