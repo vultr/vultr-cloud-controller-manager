@@ -18,7 +18,7 @@ Annotation (Suffix) | Values | Default | Description
 `https-ports` | string | | Defines which ports should be used for HTTPS. You can pass in a comma separated list: 443,8443
 `ssl` | string | | The string you provide should be the name of a Kubernetes TLS Secret which store your cert + key
 `ssl-pass-through` | `true`, `false` | `false` | If you want SSL termination to happen on your `pods` or `ingress` then this must be enabled. This is to be used with the `https-ports` annotation
-`proxy-protocol` | `true`, `false` | `false` | Indicates whether Proxy protocol should be enabled.q
+`proxy-protocol` | `true`, `false` | `false` | Indicates whether Proxy protocol should be enabled.
 `healthcheck-protocol` | `tcp` `http` | `tcp` | The protocol to be used for your LoadBalancer HealthCheck
 `healthcheck-path` | string | `/` | The URL path to check on the back-end during health checks
 `healthcheck-port` | int | `defaults to what kubernetes defines` | The port that should be called for health checks
