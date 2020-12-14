@@ -256,7 +256,6 @@ func (l *loadbalancers) lbByName(ctx context.Context, lbName string) (*govultr.L
 
 func (l *loadbalancers) buildLoadBalancerRequest(service *v1.Service, nodes []*v1.Node) (*govultr.LoadBalancerReq, error) {
 
-	//todo validate stickysession behavior
 	stickySession, err := buildStickySession(service)
 	if err != nil {
 		return nil, err
@@ -287,17 +286,16 @@ func (l *loadbalancers) buildLoadBalancerRequest(service *v1.Service, nodes []*v
 		ssl = nil
 	}
 
-	//todo check algos are correct
 	return &govultr.LoadBalancerReq{
-		Label:              getDefaultLBName(service), // will always be set
-		Instances:          instances,                 // will always be set
-		HealthCheck:        healthCheck,               // will always be set
-		StickySessions:     stickySession,             // need to check
-		ForwardingRules:    rules,                     // all always be set
-		SSL:                ssl,                       // will always be set
-		SSLRedirect:        getSSLRedirect(service),   // need to check
-		ProxyProtocol:      false,                     // need to check
-		BalancingAlgorithm: getAlgorithm(service),     // will always be set
+		Label:              getDefaultLBName(service),                        // will always be set
+		Instances:          instances,                                        // will always be set
+		HealthCheck:        healthCheck,                                      // will always be set
+		StickySessions:     stickySession,                                    // need to check
+		ForwardingRules:    rules,                                            // all always be set
+		SSL:                ssl,                                              // will always be set
+		SSLRedirect:        govultr.BoolToBoolPtr(getSSLRedirect(service)),   // need to check
+		ProxyProtocol:      govultr.BoolToBoolPtr(getProxyProtocol(service)), // need to check
+		BalancingAlgorithm: getAlgorithm(service),                            // will always be set
 	}, nil
 }
 
@@ -677,5 +675,19 @@ func getSSLPassthrough(service *v1.Service) bool {
 	if err != nil {
 		return false
 	}
+	return pass
+}
+
+func getProxyProtocol(service *v1.Service) bool {
+	proxy, ok := service.Annotations[annoVultrProxyProtocol]
+	if !ok {
+		return false
+	}
+
+	pass, err := strconv.ParseBool(proxy)
+	if err != nil {
+		return false
+	}
+
 	return pass
 }

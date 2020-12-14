@@ -160,7 +160,7 @@ func (f *FakeInstance) SetBackupSchedule(ctx context.Context, instanceID string,
 	panic("implement me")
 }
 
-func (f *FakeInstance) CreateIPv4(ctx context.Context, instanceID string, reboot bool) (*govultr.IPv4, error) {
+func (f *FakeInstance) CreateIPv4(ctx context.Context, instanceID string, reboot *bool) (*govultr.IPv4, error) {
 	panic("implement me")
 }
 
