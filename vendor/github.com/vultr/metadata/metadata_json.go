@@ -1,9 +1,12 @@
 package metadata
 
+// MetaData represents metadata about a Vultr instance
+// https://www.vultr.com/metadata/
 type MetaData struct {
-	Hostname   string `json:"hostname,omitempty"`
-	InstanceID string `json:"instanceid,omitempty"`
-	PublicKeys string `json:"public-keys,omitempty"`
+	Hostname     string   `json:"hostname,omitempty"`
+	InstanceV2ID string   `json:"instance-v2-id,omitempty"`
+	InstanceID   string   `json:"instanceid,omitempty"`
+	PublicKeys   []string `json:"public-keys,omitempty"`
 
 	Region struct {
 		RegionCode string `json:"regioncode,omitempty"`
@@ -44,6 +47,7 @@ type MetaData struct {
 			Prefix  string `json:"prefix,omitempty"`
 		} `json:"ipv6,omitempty"`
 		Mac         string `json:"mac,omitempty"`
+		NetworkV2ID string `json:"network-v2-id,omitempty"`
 		NetworkType string `json:"network-type,omitempty"`
 		NetworkID   string `json:"networkid,omitempty"`
 	} `json:"interfaces,omitempty"`
