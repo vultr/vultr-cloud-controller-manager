@@ -143,6 +143,7 @@ spec:
       hostNetwork: true
       containers:
         - image: vultr/vultr-cloud-controller-manager:v0.1.2
+          imagePullPolicy: Always
           name: vultr-cloud-controller-manager
           command:
             - "/vultr-cloud-controller-manager"
