@@ -20,7 +20,7 @@ type Client struct {
 	baseURL *url.URL
 }
 
-// NewClient creates a client to interact with the metdata
+// NewClient creates a client to interact with the metadata
 func NewClient() *Client {
 
 	u, err := url.Parse(basePath)
