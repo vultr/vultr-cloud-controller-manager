@@ -43,7 +43,7 @@ func newCloud() (cloudprovider.Interface, error) {
 	mClient := metadata.NewClient()
 	meta, err := mClient.Metadata()
 	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve region from metadata: %v", meta)
+		return nil, fmt.Errorf("failed to retrieve metadata: %v", err)
 	}
 
 	tokenSrc := oauth2.StaticTokenSource(&oauth2.Token{
