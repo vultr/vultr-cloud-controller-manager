@@ -1,5 +1,11 @@
 # Change Log
 
+## v0.1.3 (2021-04-26)
+* Fix error message on metadata retrieval 
+
+[CCM Container v0.1.3](https://hub.docker.com/repository/docker/vultr/vultr-cloud-controller-manager)
+
+
 ## v0.1.2 (2021-03-25)
 * Bumped vultr/metadata from v1.0.2 - v1.0.3
 
