@@ -3,6 +3,7 @@ package vultr
 import (
 	"context"
 	"fmt"
+	"net"
 	"strconv"
 	"strings"
 
@@ -53,6 +54,8 @@ const (
 
 	annoVultrStickySessionEnabled    = "service.beta.kubernetes.io/vultr-loadbalancer-sticky-session-enabled"
 	annoVultrStickySessionCookieName = "service.beta.kubernetes.io/vultr-loadbalancer-sticky-session-cookie-name"
+
+	annoVultrFirewallRules = "service.beta.kubernetes.io/vultr-loadbalancer-firewall-rules"
 
 	// Supported Protocols
 	protocolHTTP  = "http"
@@ -286,6 +289,11 @@ func (l *loadbalancers) buildLoadBalancerRequest(service *v1.Service, nodes []*v
 		ssl = nil
 	}
 
+	firewallRules, err := buildFirewallRules(service)
+	if err != nil {
+		return nil, err
+	}
+
 	return &govultr.LoadBalancerReq{
 		Label:              getDefaultLBName(service),                        // will always be set
 		Instances:          instances,                                        // will always be set
@@ -296,6 +304,7 @@ func (l *loadbalancers) buildLoadBalancerRequest(service *v1.Service, nodes []*v
 		SSLRedirect:        govultr.BoolToBoolPtr(getSSLRedirect(service)),   // need to check
 		ProxyProtocol:      govultr.BoolToBoolPtr(getProxyProtocol(service)), // need to check
 		BalancingAlgorithm: getAlgorithm(service),                            // will always be set
+		FirewallRules:      firewallRules,                                    // need to check
 	}, nil
 }
 
@@ -690,4 +699,46 @@ func getProxyProtocol(service *v1.Service) bool {
 	}
 
 	return pass
+}
+
+func buildFirewallRules(service *v1.Service) ([]govultr.LBFirewallRule, error) {
+	lbFWRules := []govultr.LBFirewallRule{}
+	fwRules := getFirewallRules(service)
+	if fwRules == "" {
+		return lbFWRules, nil
+	}
+
+	for _, v := range strings.Split(fwRules, ";") {
+		fwRule := govultr.LBFirewallRule{}
+
+		rules := strings.Split(v, ",")
+		if len(rules) != 2 {
+			return nil, fmt.Errorf("loadbalancer fw rules : %s invalid configuration", rules)
+		}
+		source := rules[0]
+		_, _, err := net.ParseCIDR(source)
+		if err != nil {
+			return nil, fmt.Errorf("loadbalancer fw rules : source %s is invalid", source)
+		}
+
+		port, err := strconv.Atoi(rules[1])
+		if err != nil {
+			return nil, fmt.Errorf("loadbalancer fw rules : port %d is invalid", port)
+		}
+
+		fwRule.Source = source
+		fwRule.IPType = "v4"
+		fwRule.Port = port
+		lbFWRules = append(lbFWRules, fwRule)
+	}
+	return lbFWRules, nil
+}
+
+func getFirewallRules(service *v1.Service) string {
+	fwRules, ok := service.Annotations[annoVultrFirewallRules]
+	if !ok {
+		return ""
+	}
+
+	return fwRules
 }

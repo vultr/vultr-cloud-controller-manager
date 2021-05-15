@@ -128,7 +128,7 @@ func (f *FakeInstance) GetNeighbors(ctx context.Context, instanceID string) (*go
 	panic("implement me")
 }
 
-func (f *FakeInstance) ListPrivateNetworks(ctx context.Context, instanceID string) ([]govultr.PrivateNetwork, *govultr.Meta, error) {
+func (f *FakeInstance) ListPrivateNetworks(context.Context, string, *govultr.ListOptions) ([]govultr.PrivateNetwork, *govultr.Meta, error) {
 	panic("implement me")
 }
 
@@ -276,3 +276,12 @@ func (f *fakeLB) ListForwardingRules(ctx context.Context, ID string, options *go
 			},
 		}, nil
 }
+
+func (f *fakeLB)ListFirewallRules(ctx context.Context, ID string, options *govultr.ListOptions) ([]govultr.LBFirewallRule, *govultr.Meta, error) {
+	return nil, nil, nil
+}
+
+func (f *fakeLB) GetFirewallRule(ctx context.Context, ID string, ruleID string) (*govultr.LBFirewallRule, error) {
+	return nil, nil
+}
+
