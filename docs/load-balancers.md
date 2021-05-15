@@ -30,4 +30,5 @@ Annotation (Suffix) | Values | Default | Description
 `ssl-redirect` | `true`, `false`| `false` | Force HTTP to HTTPS
 `sticky-session-enabled` | `on`, `off`| `off` | Enables Sticky Sessions. If enabled you must provide `sticky-session-cookie-name`
 `sticky-session-cookie-name"` | string |  | Name of sticky session
-`firewall-rules` | string | | This is used to let you define your firewall rules. They must be supplied with "ip-with-with-subnet,port" format with `;` breaking up firewall rules. Example: `0.0.0.0/0,80;0.0.0.0/0,90`| 
+`firewall-rules` | string | | This is used to let you define your firewall rules. They must be supplied with "ip-with-with-subnet,port" format with `;` breaking up firewall rules. Example: `0.0.0.0/0,80;0.0.0.0/0,90`
+`private-network` | string | | This is used to attach your load balancer to a private network. You must supply a valid private network ID

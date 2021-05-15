@@ -55,7 +55,8 @@ const (
 	annoVultrStickySessionEnabled    = "service.beta.kubernetes.io/vultr-loadbalancer-sticky-session-enabled"
 	annoVultrStickySessionCookieName = "service.beta.kubernetes.io/vultr-loadbalancer-sticky-session-cookie-name"
 
-	annoVultrFirewallRules = "service.beta.kubernetes.io/vultr-loadbalancer-firewall-rules"
+	annoVultrFirewallRules  = "service.beta.kubernetes.io/vultr-loadbalancer-firewall-rules"
+	annoVultrPrivateNetwork = "service.beta.kubernetes.io/vultr-loadbalancer-private-network"
 
 	// Supported Protocols
 	protocolHTTP  = "http"
@@ -295,16 +296,17 @@ func (l *loadbalancers) buildLoadBalancerRequest(service *v1.Service, nodes []*v
 	}
 
 	return &govultr.LoadBalancerReq{
-		Label:              getDefaultLBName(service),                        // will always be set
-		Instances:          instances,                                        // will always be set
-		HealthCheck:        healthCheck,                                      // will always be set
-		StickySessions:     stickySession,                                    // need to check
-		ForwardingRules:    rules,                                            // all always be set
-		SSL:                ssl,                                              // will always be set
-		SSLRedirect:        govultr.BoolToBoolPtr(getSSLRedirect(service)),   // need to check
-		ProxyProtocol:      govultr.BoolToBoolPtr(getProxyProtocol(service)), // need to check
-		BalancingAlgorithm: getAlgorithm(service),                            // will always be set
-		FirewallRules:      firewallRules,                                    // need to check
+		Label:              getDefaultLBName(service),                             // will always be set
+		Instances:          instances,                                             // will always be set
+		HealthCheck:        healthCheck,                                           // will always be set
+		StickySessions:     stickySession,                                         // need to check
+		ForwardingRules:    rules,                                                 // all always be set
+		SSL:                ssl,                                                   // will always be set
+		SSLRedirect:        govultr.BoolToBoolPtr(getSSLRedirect(service)),        // need to check
+		ProxyProtocol:      govultr.BoolToBoolPtr(getProxyProtocol(service)),      // need to check
+		BalancingAlgorithm: getAlgorithm(service),                                 // will always be set
+		FirewallRules:      firewallRules,                                         // need to check
+		PrivateNetwork:     govultr.StringToStringPtr(getPrivateNetwork(service)), // need to check
 	}, nil
 }
 
@@ -741,4 +743,12 @@ func getFirewallRules(service *v1.Service) string {
 	}
 
 	return fwRules
+}
+
+func getPrivateNetwork(service *v1.Service) string {
+	privateNetwork, ok := service.Annotations[annoVultrPrivateNetwork]
+	if !ok {
+		return ""
+	}
+	return privateNetwork
 }
