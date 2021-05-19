@@ -1,5 +1,11 @@
 # Change Log
 
+## v0.2.0 (2021-05-19)
+* Bumped GoVultr from v2.2.0 - v2.5.1
+* Load Balancers updates - support for firewalls + private networks
+
+[CCM Container v0.1.4](https://hub.docker.com/repository/docker/vultr/vultr-cloud-controller-manager)
+
 ## v0.1.3 (2021-04-26)
 * Fix error message on metadata retrieval 
 
