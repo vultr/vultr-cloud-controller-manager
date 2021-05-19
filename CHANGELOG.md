@@ -3,6 +3,7 @@
 ## v0.2.0 (2021-05-19)
 * Bumped GoVultr from v2.2.0 - v2.5.1
 * Load Balancers updates - support for firewalls + private networks
+* Bump to build with go version 1.16
 
 [CCM Container v0.1.4](https://hub.docker.com/repository/docker/vultr/vultr-cloud-controller-manager)
 
