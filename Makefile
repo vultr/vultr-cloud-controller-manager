@@ -2,7 +2,7 @@ VERSION ?= $VERSION
 REGISTRY ?= $REGISTRY
 
 .PHONY: deploy
-deploy: clean build-linux docker-build docker-push
+deploy: clean docker-build docker-push
 
 .PHONY: build
 build:
