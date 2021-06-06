@@ -9,6 +9,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/vultr/govultr/v2"
+	"github.com/vultr/metadata"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -294,19 +295,23 @@ func (l *loadbalancers) buildLoadBalancerRequest(service *v1.Service, nodes []*v
 	if err != nil {
 		return nil, err
 	}
+	privateNetwork, err := getPrivateNetwork(service)
+	if err != nil {
+		return nil, err
+	}
 
 	return &govultr.LoadBalancerReq{
-		Label:              getDefaultLBName(service),                             // will always be set
-		Instances:          instances,                                             // will always be set
-		HealthCheck:        healthCheck,                                           // will always be set
-		StickySessions:     stickySession,                                         // need to check
-		ForwardingRules:    rules,                                                 // all always be set
-		SSL:                ssl,                                                   // will always be set
-		SSLRedirect:        govultr.BoolToBoolPtr(getSSLRedirect(service)),        // need to check
-		ProxyProtocol:      govultr.BoolToBoolPtr(getProxyProtocol(service)),      // need to check
-		BalancingAlgorithm: getAlgorithm(service),                                 // will always be set
-		FirewallRules:      firewallRules,                                         // need to check
-		PrivateNetwork:     govultr.StringToStringPtr(getPrivateNetwork(service)), // need to check
+		Label:              getDefaultLBName(service),                        // will always be set
+		Instances:          instances,                                        // will always be set
+		HealthCheck:        healthCheck,                                      // will always be set
+		StickySessions:     stickySession,                                    // need to check
+		ForwardingRules:    rules,                                            // all always be set
+		SSL:                ssl,                                              // will always be set
+		SSLRedirect:        govultr.BoolToBoolPtr(getSSLRedirect(service)),   // need to check
+		ProxyProtocol:      govultr.BoolToBoolPtr(getProxyProtocol(service)), // need to check
+		BalancingAlgorithm: getAlgorithm(service),                            // will always be set
+		FirewallRules:      firewallRules,                                    // need to check
+		PrivateNetwork:     govultr.StringToStringPtr(privateNetwork),        // need to check
 	}, nil
 }
 
@@ -745,10 +750,29 @@ func getFirewallRules(service *v1.Service) string {
 	return fwRules
 }
 
-func getPrivateNetwork(service *v1.Service) string {
+func getPrivateNetwork(service *v1.Service) (string, error) {
 	privateNetwork, ok := service.Annotations[annoVultrPrivateNetwork]
 	if !ok {
-		return ""
+		return "", nil
 	}
-	return privateNetwork
+
+	if strings.ToLower(privateNetwork) == "false" {
+		return "", nil
+	}
+
+	meta := metadata.NewClient()
+	m, err := meta.Metadata()
+	if err != nil {
+		return "", fmt.Errorf("error getting metadata for private_network: %v", err.Error())
+	}
+
+	pnID := ""
+	for _, v := range m.Interfaces {
+		if v.NetworkV2ID != "" {
+			pnID = v.NetworkV2ID
+			break
+		}
+	}
+
+	return pnID, nil
 }
