@@ -4,7 +4,7 @@
 
 Kubernetes Services type `LoadBalancer` will be deployed through [Vultr Load Balancers](https://www.vultr.com/products/load-balancers/). This is provisioned by the Cloud Controller Manager. For generic info and faq please visit the [Vultr LoadBalancer Doc](https://www.vultr.com/docs/vultr-load-balancers).
 
-Examples of `LoadBalancer` resources can be found [here](examples) 
+Examples of `LoadBalancer` resources can be found [here](examples)
 
 ## Annotations
 
@@ -26,9 +26,9 @@ Annotation (Suffix) | Values | Default | Description
 `healthcheck-response-timeout` | int | `5` | Response timeout (in seconds)
 `healthcheck-unhealthy-threshold` | int | `5` | Number of unhealthy requests before a back-end is removed
 `healthcheck-healthy-threshold` | int | `5` | Number of healthy requests before a back-end is added back in
-`algorithm` | `least_connections`, `roundrobin` | `roundrobin` | Balancing algorithm 
+`algorithm` | `least_connections`, `roundrobin` | `roundrobin` | Balancing algorithm
 `ssl-redirect` | `true`, `false`| `false` | Force HTTP to HTTPS
 `sticky-session-enabled` | `on`, `off`| `off` | Enables Sticky Sessions. If enabled you must provide `sticky-session-cookie-name`
 `sticky-session-cookie-name"` | string |  | Name of sticky session
 `firewall-rules` | string | | This is used to let you define your firewall rules. They must be supplied with "ip-with-with-subnet,port" format with `;` breaking up firewall rules. Example: `0.0.0.0/0,80;0.0.0.0/0,90`
-`private-network` | string | | This is used to attach your load balancer to a private network. You must supply a valid private network ID
+`private-network` | `true` or `false` | `false` | This is used to attach your load balancer to a private network. If `true` the CCM will pull the `private_network_id` that is attached to the node that the CCM is running on.
