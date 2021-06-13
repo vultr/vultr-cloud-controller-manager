@@ -40,7 +40,7 @@ jobs:
       - name: hub login
         run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
       - name: deploy
-        run: REGISTRY=vu${{ secrets.DOCKER_REGISTRY}} VERSION=${{ steps.get_version.outputs.VERSION }} make deploy
+        run: REGISTRY=${{ secrets.DOCKER_REGISTRY}} VERSION=${{ steps.get_version.outputs.VERSION }} make deploy
   release-notify:
     runs-on: ubuntu-latest
     name: Release Notification
