@@ -35,12 +35,5 @@ release:
   extra_files:
     - glob: "./docs/releases/latest.yml"
 
-
-dockers:
-  - dockerfile: Dockerfile
-    image_templates:
-      - "ddymko/vultr-cloud-controller-manager:release"
-      - "ddymko/vultr-cloud-controller:{{ .Tag }}"
-
 changelog:
   skip: true
