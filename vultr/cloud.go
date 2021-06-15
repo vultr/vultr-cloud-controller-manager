@@ -57,7 +57,7 @@ func newCloud() (cloudprovider.Interface, error) {
 	if ua != "" {
 		vultr.SetUserAgent(fmt.Sprintf("vultr-cloud-controller-manager:%s", ua))
 	} else {
-		vultr.SetUserAgent(fmt.Sprintf("vultr-cloud-controller-manager %s", vultr.UserAgent))
+		vultr.SetUserAgent(fmt.Sprintf("vultr-cloud-controller-manager:%s", vultr.UserAgent))
 	}
 
 	return &cloud{
