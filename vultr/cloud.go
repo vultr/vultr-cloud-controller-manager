@@ -18,8 +18,8 @@ const (
 	providerName   = "vultr"
 	accessTokenEnv = "VULTR_API_KEY"
 	regionEnv      = "VULTR_REGION"
+	userAgent      = "CCM_USER_AGENT"
 )
-
 
 type cloud struct {
 	client        *govultr.Client
@@ -52,7 +52,13 @@ func newCloud() (cloudprovider.Interface, error) {
 	client := oauth2.NewClient(context.Background(), tokenSrc)
 
 	vultr := govultr.NewClient(client)
-	vultr.SetUserAgent(fmt.Sprintf("vultr-cloud-controller-manager %s", vultr.UserAgent))
+
+	ua := os.Getenv(userAgent)
+	if ua != "" {
+		vultr.SetUserAgent(fmt.Sprintf("vultr-cloud-controller-manager:%s", ua))
+	} else {
+		vultr.SetUserAgent(fmt.Sprintf("vultr-cloud-controller-manager:%s", vultr.UserAgent))
+	}
 
 	return &cloud{
 		client:        vultr,
