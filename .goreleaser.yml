@@ -1,0 +1,39 @@
+# This is an example goreleaser.yaml file with some sane defaults.
+# Make sure to check the documentation at http://goreleaser.com
+env:
+  - CGO_ENABLED=0
+before:
+  hooks:
+    - go test ./...
+
+builds:
+  -
+    mod_timestamp: '{{ .CommitTimestamp }}'
+    flags:
+      - -trimpath #removes all file system paths from the compiled executable
+    goos:
+      - linux
+    goarch:
+      - amd64
+      - '386'
+      - arm
+      - arm64
+    binary: '{{ .ProjectName }}_v{{ .Version }}_{{ .Os }}_{{ .Arch }}'
+
+archives:
+  - format: zip
+    files:
+      - none*
+    name_template: '{{ .ProjectName }}_v{{ .Version }}_{{ .Os }}_{{ .Arch }}'
+
+checksum:
+  name_template: '{{ .ProjectName }}_v{{ .Version }}_SHA256SUMS'
+  algorithm: sha256
+
+release:
+  draft: true
+  extra_files:
+    - glob: "./docs/releases/latest.yml"
+
+changelog:
+  skip: true
