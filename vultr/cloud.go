@@ -11,7 +11,7 @@ import (
 	"github.com/vultr/metadata"
 	"golang.org/x/oauth2"
 	cloudprovider "k8s.io/cloud-provider"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 )
 
 const (

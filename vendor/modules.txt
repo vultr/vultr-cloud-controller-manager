@@ -138,7 +138,7 @@ google.golang.org/protobuf/types/known/timestamppb
 gopkg.in/inf.v0
 # gopkg.in/yaml.v2 v2.4.0
 gopkg.in/yaml.v2
-# k8s.io/api v0.21.2
+# k8s.io/api v0.21.3 => k8s.io/api v0.21.3
 ## explicit
 k8s.io/api/admissionregistration/v1
 k8s.io/api/admissionregistration/v1beta1
@@ -183,7 +183,7 @@ k8s.io/api/scheduling/v1beta1
 k8s.io/api/storage/v1
 k8s.io/api/storage/v1alpha1
 k8s.io/api/storage/v1beta1
-# k8s.io/apimachinery v0.21.2
+# k8s.io/apimachinery v0.21.3 => k8s.io/apimachinery v0.21.3
 ## explicit
 k8s.io/apimachinery/pkg/api/errors
 k8s.io/apimachinery/pkg/api/meta
@@ -225,7 +225,7 @@ k8s.io/apimachinery/pkg/util/yaml
 k8s.io/apimachinery/pkg/version
 k8s.io/apimachinery/pkg/watch
 k8s.io/apimachinery/third_party/forked/golang/reflect
-# k8s.io/client-go v0.21.2
+# k8s.io/client-go v0.21.3 => k8s.io/client-go v0.21.3
 ## explicit
 k8s.io/client-go/applyconfigurations/admissionregistration/v1
 k8s.io/client-go/applyconfigurations/admissionregistration/v1beta1
@@ -432,10 +432,10 @@ k8s.io/client-go/util/connrotation
 k8s.io/client-go/util/flowcontrol
 k8s.io/client-go/util/keyutil
 k8s.io/client-go/util/workqueue
-# k8s.io/cloud-provider v0.21.2
+# k8s.io/cloud-provider v0.21.3
 ## explicit
 k8s.io/cloud-provider
-# k8s.io/component-base v0.21.2
+# k8s.io/component-base v0.21.3 => k8s.io/component-base v0.21.3
 ## explicit
 k8s.io/component-base/metrics
 k8s.io/component-base/metrics/legacyregistry
@@ -445,19 +445,23 @@ k8s.io/component-base/metrics/prometheus/restclient
 k8s.io/component-base/metrics/prometheus/version
 k8s.io/component-base/metrics/prometheus/workqueue
 k8s.io/component-base/version
-# k8s.io/klog v1.0.0
-## explicit
-k8s.io/klog
 # k8s.io/klog/v2 v2.8.0
+## explicit
 k8s.io/klog/v2
 # k8s.io/utils v0.0.0-20201110183641-67b214c5f920
 k8s.io/utils/buffer
 k8s.io/utils/integer
 k8s.io/utils/trace
-# sigs.k8s.io/structured-merge-diff/v4 v4.1.0
+# sigs.k8s.io/structured-merge-diff/v4 v4.1.2
 sigs.k8s.io/structured-merge-diff/v4/fieldpath
 sigs.k8s.io/structured-merge-diff/v4/schema
 sigs.k8s.io/structured-merge-diff/v4/typed
 sigs.k8s.io/structured-merge-diff/v4/value
 # sigs.k8s.io/yaml v1.2.0
 sigs.k8s.io/yaml
+# k8s.io/api => k8s.io/api v0.21.3
+# k8s.io/apimachinery => k8s.io/apimachinery v0.21.3
+# k8s.io/apiserver => k8s.io/apiserver v0.21.3
+# k8s.io/client-go => k8s.io/client-go v0.21.3
+# k8s.io/component-base => k8s.io/component-base v0.21.3
+# k8s.io/controller-manager => k8s.io/controller-manager v0.21.3
