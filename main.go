@@ -27,7 +27,7 @@ func main() {
 		klog.Fatalf("unable to initialize command options: %v", err)
 	}
 	ccmOptions.KubeCloudShared.CloudProvider.Name = vultr.ProviderName
-	//todo check the skip auth check
+	ccmOptions.Authentication.SkipInClusterLookup = true
 
 	command := app.NewCloudControllerManagerCommand(ccmOptions, cloudInitializer, app.DefaultInitFuncConstructors, flag.NamedFlagSets{}, wait.NeverStop)
 
