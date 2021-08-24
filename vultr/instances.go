@@ -14,7 +14,7 @@ import (
 
 const instanceShutdownStatus = "stopped"
 
-var _ cloudprovider.Instances= &instances{}
+var _ cloudprovider.Instances = &instances{}
 
 type instances struct {
 	client *govultr.Client
@@ -167,7 +167,7 @@ func vultrIDFromProviderID(providerID string) (string, error) {
 		return "", fmt.Errorf("unexpected providerID format %s, expected format to be: vultr://abc123", providerID)
 	}
 
-	if split[0] != providerName {
+	if split[0] != ProviderName {
 		return "", fmt.Errorf("provider scheme from providerID should be 'vultr://', %s", providerID)
 	}
 	return split[1], nil
