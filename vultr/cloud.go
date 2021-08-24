@@ -15,9 +15,8 @@ import (
 )
 
 const (
-	providerName   = "vultr"
+	ProviderName   = "vultr"
 	accessTokenEnv = "VULTR_API_KEY"
-	regionEnv      = "VULTR_REGION"
 	userAgent      = "CCM_USER_AGENT"
 )
 
@@ -29,7 +28,7 @@ type cloud struct {
 }
 
 func init() {
-	cloudprovider.RegisterCloudProvider(providerName, func(config io.Reader) (i cloudprovider.Interface, err error) {
+	cloudprovider.RegisterCloudProvider(ProviderName, func(config io.Reader) (i cloudprovider.Interface, err error) {
 		return newCloud()
 	})
 }
@@ -101,7 +100,7 @@ func (c *cloud) Routes() (cloudprovider.Routes, bool) {
 
 func (c *cloud) ProviderName() string {
 	klog.V(5).Info("called ProviderName")
-	return providerName
+	return ProviderName
 }
 
 func (c *cloud) HasClusterID() bool {
