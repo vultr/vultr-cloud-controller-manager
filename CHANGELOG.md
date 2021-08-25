@@ -1,5 +1,11 @@
 # Change Log
 
+## v0.3.0 (2021-08-24)
+* Updated Kubernetes dependencies from 1.19 to 1.20
+
+[CCM Container v0.2.1](https://hub.docker.com/repository/docker/vultr/vultr-cloud-controller-manager)
+
+
 ## v0.2.1 (2021-06-15)
 * Adding ability to change UserAgent
 * Include binary builds on tagged releases
