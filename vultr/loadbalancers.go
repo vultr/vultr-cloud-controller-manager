@@ -14,6 +14,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
 	cloudprovider "k8s.io/cloud-provider"
 	"k8s.io/klog/v2"
 )
@@ -668,9 +669,17 @@ func (l *loadbalancers) GetKubeClient() error {
 		err        error
 	)
 
-	kubeConfig, err = rest.InClusterConfig()
-	if err != nil {
-		return err
+	config := Options.KubeconfigFlag
+	if config == nil || config.Value.String() == "" {
+		kubeConfig, err = rest.InClusterConfig()
+		if err != nil {
+			return err
+		}
+	} else {
+		kubeConfig, err = clientcmd.BuildConfigFromFlags("", config.Value.String())
+		if err != nil {
+			return err
+		}
 	}
 
 	l.kubeClient, err = kubernetes.NewForConfig(kubeConfig)

@@ -1,11 +1,13 @@
 package main
 
 import (
+	goflag "flag"
 	"fmt"
 	"math/rand"
 	"os"
 	"time"
 
+	"github.com/spf13/pflag"
 	"github.com/vultr/vultr-cloud-controller-manager/vultr"
 	"k8s.io/apimachinery/pkg/util/wait"
 	cloudprovider "k8s.io/cloud-provider"
@@ -31,7 +33,11 @@ func main() {
 
 	command := app.NewCloudControllerManagerCommand(ccmOptions, cloudInitializer, app.DefaultInitFuncConstructors, flag.NamedFlagSets{}, wait.NeverStop)
 
-	logs.InitLogs()
+	vultr.Options.KubeconfigFlag = command.Flags().Lookup("kubeconfig")
+
+	pflag.CommandLine.SetNormalizeFunc(flag.WordSepNormalizeFunc)
+	pflag.CommandLine.AddGoFlagSet(goflag.CommandLine)
+
 	defer logs.FlushLogs()
 
 	if err := command.Execute(); err != nil {

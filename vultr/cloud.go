@@ -7,6 +7,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/spf13/pflag"
 	"github.com/vultr/govultr/v2"
 	"github.com/vultr/metadata"
 	"golang.org/x/oauth2"
@@ -19,6 +20,12 @@ const (
 	accessTokenEnv = "VULTR_API_KEY"
 	userAgent      = "CCM_USER_AGENT"
 )
+
+// Options currently stores the Kubeconfig that was passed in.
+// We can use this to extend any other flags that may have been passed in that we require
+var Options struct {
+	KubeconfigFlag *pflag.Flag
+}
 
 type cloud struct {
 	client        *govultr.Client
