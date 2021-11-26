@@ -382,8 +382,8 @@ github.com/tmc/grpc-websocket-proxy v0.0.0-20170815181823-89b8d40f7ca8/go.mod h1
 github.com/tmc/grpc-websocket-proxy v0.0.0-20190109142713-0ad062ec5ee5 h1:LnC5Kc/wtumK+WB441p7ynQJzVuNRJiqddSIE3IlSEQ=
 github.com/tmc/grpc-websocket-proxy v0.0.0-20190109142713-0ad062ec5ee5/go.mod h1:ncp9v5uamzpCO7NfCPTXjqaC+bZgJeR0sMTm6dMHP7U=
 github.com/urfave/cli v1.20.0/go.mod h1:70zkFmudgCuE/ngEzBv17Jvp/497gISqfk5gWijbERA=
-github.com/vultr/govultr/v2 v2.5.1 h1:Bh3G7nqHs0Gv7OQRExfYFppbuscwVKFDK05b8XBYYnQ=
-github.com/vultr/govultr/v2 v2.5.1/go.mod h1:BvOhVe6/ZpjwcoL6/unkdQshmbS9VGbowI4QT+3DGVU=
+github.com/vultr/govultr/v2 v2.11.0 h1:cvxH1mC/VTs2oRx3njhIhpypg2EBE70rlxAKKtRU/Zg=
+github.com/vultr/govultr/v2 v2.11.0/go.mod h1:JjUljQdSZx+MELCAJvZ/JH32bJotmflnsyS0NOjb8Jg=
 github.com/vultr/metadata v1.0.3 h1:sM2KjASP7A49Kltf/fRzAgpCfxV8/HLsgZJB9QXeU1A=
 github.com/vultr/metadata v1.0.3/go.mod h1:9W0P2cGZYdhwzzfeOPGSoa2jqWiBpl333rEF9ml9E4A=
 github.com/xiang90/probing v0.0.0-20190116061207-43a291ad63a2 h1:eY9dn8+vbi4tKz5Qo6v2eYzo7kUS51QINcR5jNpbZS8=

@@ -2,6 +2,64 @@
 
 ## GoVultr v1 changelog is located [here](https://github.com/vultr/govultr/blob/v1/CHANGELOG.md)
 
+## [v2.11.0](https://github.com/vultr/govultr/compare/v2.10.0..v2.11.0) (2021-11-18)
+### Breaking Changes
+* Instances : Update call will now return `*Instance` in addition to `error` [185](https://github.com/vultr/govultr/pull/185)
+* Instances : Reinstall call now allows changing of hostname and also returns `*Instance` in addition to `error` [181](https://github.com/vultr/govultr/pull/181)
+
+### Enhancement
+* Instances : The hostname of the instance is now returned in any call that returns Instance data [187](https://github.com/vultr/govultr/pull/187)
+* Domains : There is a new field called `dns_sec` which will return `enabled` or `disabled` depending on how your domain is configured [184](https://github.com/vultr/govultr/pull/184)
+
+## [v2.10.0](https://github.com/vultr/govultr/compare/v2.9.2..v2.10.0) (2021-11-03)
+### Enhancement
+* Billing : Added support for billing [178](https://github.com/vultr/govultr/pull/178)
+
+## [v2.9.2](https://github.com/vultr/govultr/compare/v2.9.1..v2.9.2) (2021-10-20)
+### Change
+* Iso : Changed `client` field to be unexported [168](https://github.com/vultr/govultr/pull/168)
+* Snapshot : Changed `client` field to be unexported  [168](https://github.com/vultr/govultr/pull/168)
+* Plans : Changed `client` field to be unexported  [168](https://github.com/vultr/govultr/pull/168)
+* Regions : Changed `client` field to be unexported  [168](https://github.com/vultr/govultr/pull/168)
+
+## [v2.9.1](https://github.com/vultr/govultr/compare/v2.9.0..v2.9.1) (2021-10-18)
+### Enhancement
+* Kubernetes : Added `Tag` support for nodepools [164](https://github.com/vultr/govultr/pull/164)
+
+## [v2.9.0](https://github.com/vultr/govultr/compare/v2.8.1..v2.9.0) (2021-09-27)
+### Breaking Change
+* Kubernetes : PlanID is now Plan and Count is now NodeQuantity to follow API pattern [161](https://github.com/vultr/govultr/pull/161)
+
+### Enhancement
+* Snapshots : Add compressed size field [162](https://github.com/vultr/govultr/pull/162)
+
+## [v2.8.1](https://github.com/vultr/govultr/compare/v2.8.0..v2.8.1) (2021-08-31)
+### Enhancement
+* Kubernetes : Add support for deletion with resources [159](https://github.com/vultr/govultr/pull/159)
+* Kubernetes : Add support for getting available versions[159](https://github.com/vultr/govultr/pull/159)
+
+### Dependency Update
+* Bump Go version to 1.16 [158](https://github.com/vultr/govultr/pull/158)
+
+## [v2.8.0](https://github.com/vultr/govultr/compare/v2.7.1..v2.8.0) (2021-08-18)
+### Enhancement
+* Added support for Vultr Kubernetes Engine [156](https://github.com/vultr/govultr/pull/156)
+
+## [v2.7.1](https://github.com/vultr/govultr/compare/v2.7.0..v2.7.1) (2021-07-15)
+### Enhancement
+* BareMetal : Add support for `image_id` on update [152](https://github.com/vultr/govultr/pull/152)
+* Instances : Add support for `image_id` on update [152](https://github.com/vultr/govultr/pull/152)
+
+## [v2.7.0](https://github.com/vultr/govultr/compare/v2.6.0..v2.7.0) (2021-07-14)
+### Enhancement
+* BareMetal : Add support for `image_id` [150](https://github.com/vultr/govultr/pull/150)
+* Instances : Add support for `image_id` [150](https://github.com/vultr/govultr/pull/150)
+* Applications : added support for marketplace applications [150](https://github.com/vultr/govultr/pull/150)
+
+## [v2.6.0](https://github.com/vultr/govultr/compare/v2.5.1..v2.6.0) (2021-07-02)
+### Enhancement
+* BareMetal : Add support for `persistent_pxe` [148](https://github.com/vultr/govultr/pull/148)
+
 ## [v2.5.1](https://github.com/vultr/govultr/compare/v2.5.0..v2.5.1) (2021-05-10)
 ### Bug fix
 * Instances : BackupScheduleReq change DOW + Hour to pointers  [145](https://github.com/vultr/govultr/pull/145)
