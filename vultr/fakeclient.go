@@ -56,7 +56,7 @@ func (f *FakeInstance) Get(ctx context.Context, instanceID string) (*govultr.Ins
 	}, nil
 }
 
-func (f *FakeInstance) Update(ctx context.Context, instanceID string, instanceReq *govultr.InstanceUpdateReq) error {
+func (f *FakeInstance) Update(ctx context.Context, instanceID string, instanceReq *govultr.InstanceUpdateReq) (*govultr.Instance, error) {
 	panic("implement me")
 }
 
@@ -100,7 +100,7 @@ func (f *FakeInstance) Reboot(ctx context.Context, instanceID string) error {
 	panic("implement me")
 }
 
-func (f *FakeInstance) Reinstall(ctx context.Context, instanceID string) error {
+func (f *FakeInstance) Reinstall(ctx context.Context, instanceID string, req *govultr.ReinstallReq) (*govultr.Instance, error) {
 	panic("implement me")
 }
 
@@ -277,11 +277,10 @@ func (f *fakeLB) ListForwardingRules(ctx context.Context, ID string, options *go
 		}, nil
 }
 
-func (f *fakeLB)ListFirewallRules(ctx context.Context, ID string, options *govultr.ListOptions) ([]govultr.LBFirewallRule, *govultr.Meta, error) {
+func (f *fakeLB) ListFirewallRules(ctx context.Context, ID string, options *govultr.ListOptions) ([]govultr.LBFirewallRule, *govultr.Meta, error) {
 	return nil, nil, nil
 }
 
 func (f *fakeLB) GetFirewallRule(ctx context.Context, ID string, ruleID string) (*govultr.LBFirewallRule, error) {
 	return nil, nil
 }
-
