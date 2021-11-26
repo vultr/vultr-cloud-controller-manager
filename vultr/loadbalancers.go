@@ -14,6 +14,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
 	cloudprovider "k8s.io/cloud-provider"
 	"k8s.io/klog/v2"
 )
@@ -657,7 +658,6 @@ func (l *loadbalancers) GetSSL(service *v1.Service, secretName string) (*govultr
 	return &ssl, nil
 }
 
-// TODO allow kubeConfig from input
 func (l *loadbalancers) GetKubeClient() error {
 	if l.kubeClient != nil {
 		return nil
@@ -666,9 +666,18 @@ func (l *loadbalancers) GetKubeClient() error {
 	var (
 		kubeConfig *rest.Config
 		err        error
+		config     string
 	)
 
-	kubeConfig, err = rest.InClusterConfig()
+	// If no kubeconfig was passed in or set then we want to default to an empty string
+	// This will have `clientcmd.BuildConfigFromFlags` default to `restclient.InClusterConfig()` which was existing behavior
+	if Options.KubeconfigFlag == nil || Options.KubeconfigFlag.Value.String() == "" {
+		config = ""
+	} else {
+		config = Options.KubeconfigFlag.Value.String()
+	}
+
+	kubeConfig, err = clientcmd.BuildConfigFromFlags("", config)
 	if err != nil {
 		return err
 	}
