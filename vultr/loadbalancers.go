@@ -658,7 +658,6 @@ func (l *loadbalancers) GetSSL(service *v1.Service, secretName string) (*govultr
 	return &ssl, nil
 }
 
-// TODO allow kubeConfig from input
 func (l *loadbalancers) GetKubeClient() error {
 	if l.kubeClient != nil {
 		return nil
@@ -667,19 +666,20 @@ func (l *loadbalancers) GetKubeClient() error {
 	var (
 		kubeConfig *rest.Config
 		err        error
+		config     string
 	)
 
-	config := Options.KubeconfigFlag
-	if config == nil || config.Value.String() == "" {
-		kubeConfig, err = rest.InClusterConfig()
-		if err != nil {
-			return err
-		}
+	// If no kubeconfig was passed in or set then we want to default to an empty string
+	// This will have `clientcmd.BuildConfigFromFlags` default to `restclient.InClusterConfig()` which was existing behavior
+	if Options.KubeconfigFlag == nil || Options.KubeconfigFlag.Value.String() == "" {
+		config = ""
 	} else {
-		kubeConfig, err = clientcmd.BuildConfigFromFlags("", config.Value.String())
-		if err != nil {
-			return err
-		}
+		config = Options.KubeconfigFlag.Value.String()
+	}
+
+	kubeConfig, err = clientcmd.BuildConfigFromFlags("", config)
+	if err != nil {
+		return err
 	}
 
 	l.kubeClient, err = kubernetes.NewForConfig(kubeConfig)
