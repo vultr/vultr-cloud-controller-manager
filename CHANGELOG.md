@@ -4,7 +4,7 @@
 * Updated GoVultr dependencies from 2.5.1 to 2.11.1. This fixes LB issues with setting SSL secret data
 * Read and store `kubeconfig` when it is passed in as a flag. This fixes and issue when the CCM runs to grab secret data for LB SSL
 
-[CCM Container v0.3.0](https://hub.docker.com/repository/docker/vultr/vultr-cloud-controller-manager)
+[CCM Container v0.4.0](https://hub.docker.com/repository/docker/vultr/vultr-cloud-controller-manager)
 
 
 ## v0.3.0 (2021-08-24)
