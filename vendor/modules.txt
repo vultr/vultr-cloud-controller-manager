@@ -120,7 +120,7 @@ github.com/spf13/cobra
 # github.com/spf13/pflag v1.0.5
 ## explicit
 github.com/spf13/pflag
-# github.com/vultr/govultr/v2 v2.11.1
+# github.com/vultr/govultr/v2 v2.14.1
 ## explicit
 github.com/vultr/govultr/v2
 # github.com/vultr/metadata v1.0.3
