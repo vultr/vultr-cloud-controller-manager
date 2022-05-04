@@ -36,6 +36,18 @@ type FakeInstance struct {
 	client *govultr.Client
 }
 
+func (f *FakeInstance) ListVPCInfo(ctx context.Context, instanceID string, options *govultr.ListOptions) ([]govultr.VPCInfo, *govultr.Meta, error) {
+	panic("implement me")
+}
+
+func (f *FakeInstance) AttachVPC(ctx context.Context, instanceID, vpcID string) error {
+	panic("implement me")
+}
+
+func (f *FakeInstance) DetachVPC(ctx context.Context, instanceID, vpcID string) error {
+	panic("implement me")
+}
+
 func (f *FakeInstance) Create(ctx context.Context, instanceReq *govultr.InstanceCreateReq) (*govultr.Instance, error) {
 	panic("implement me")
 }

@@ -59,6 +59,7 @@ const (
 
 	annoVultrFirewallRules  = "service.beta.kubernetes.io/vultr-loadbalancer-firewall-rules"
 	annoVultrPrivateNetwork = "service.beta.kubernetes.io/vultr-loadbalancer-private-network"
+	annoVultrVPC            = "service.beta.kubernetes.io/vultr-loadbalancer-vpc"
 
 	// Supported Protocols
 	protocolHTTP  = "http"
@@ -296,7 +297,7 @@ func (l *loadbalancers) buildLoadBalancerRequest(service *v1.Service, nodes []*v
 	if err != nil {
 		return nil, err
 	}
-	privateNetwork, err := getPrivateNetwork(service)
+	vpc, err := getVPC(service)
 	if err != nil {
 		return nil, err
 	}
@@ -312,7 +313,7 @@ func (l *loadbalancers) buildLoadBalancerRequest(service *v1.Service, nodes []*v
 		ProxyProtocol:      govultr.BoolToBoolPtr(getProxyProtocol(service)), // need to check
 		BalancingAlgorithm: getAlgorithm(service),                            // will always be set
 		FirewallRules:      firewallRules,                                    // need to check
-		PrivateNetwork:     govultr.StringToStringPtr(privateNetwork),        // need to check
+		VPC:                govultr.StringToStringPtr(vpc),                   // need to check
 	}, nil
 }
 
@@ -759,13 +760,23 @@ func getFirewallRules(service *v1.Service) string {
 	return fwRules
 }
 
-func getPrivateNetwork(service *v1.Service) (string, error) {
-	privateNetwork, ok := service.Annotations[annoVultrPrivateNetwork]
-	if !ok {
+func getVPC(service *v1.Service) (string, error) {
+
+	var vpc string
+	pn, pnOk := service.Annotations[annoVultrPrivateNetwork]
+	v, vpcOk := service.Annotations[annoVultrVPC]
+
+	if vpcOk && pnOk {
+		return "", fmt.Errorf("can not use private_network and vpc annotations. Please use VPC as private network is deprecated")
+	} else if pnOk {
+		vpc = pn
+	} else if vpcOk {
+		vpc = v
+	} else {
 		return "", nil
 	}
 
-	if strings.ToLower(privateNetwork) == "false" {
+	if strings.ToLower(vpc) == "false" {
 		return "", nil
 	}
 
