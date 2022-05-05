@@ -19,6 +19,7 @@ const (
 	ProviderName   = "vultr"
 	accessTokenEnv = "VULTR_API_KEY"
 	userAgent      = "CCM_USER_AGENT"
+	apiURL         = "API_URL"
 )
 
 // Options currently stores the Kubeconfig that was passed in.
@@ -64,6 +65,13 @@ func newCloud() (cloudprovider.Interface, error) {
 		vultr.SetUserAgent(fmt.Sprintf("vultr-cloud-controller-manager:%s", ua))
 	} else {
 		vultr.SetUserAgent(fmt.Sprintf("vultr-cloud-controller-manager:%s", vultr.UserAgent))
+	}
+
+	url := os.Getenv(apiURL)
+	if url != "" {
+		if err := vultr.SetBaseURL(url); err != nil {
+			return nil, err
+		}
 	}
 
 	return &cloud{
