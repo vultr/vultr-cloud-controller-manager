@@ -2,6 +2,40 @@
 
 ## GoVultr v1 changelog is located [here](https://github.com/vultr/govultr/blob/v1/CHANGELOG.md)
 
+## [v2.16.0](https://github.com/vultr/govultr/compare/v2.15.1..v2.16.0) (2022-05-04)
+
+### Enhancement
+* Kubernetes: added auto scaler options to node pools [215](https://github.com/vultr/govultr/pull/215)
+* Firewall rules: added new field `ip_type` in get/list responses to be consistent with the create calls [216](https://github.com/vultr/govultr/pull/216)
+* Kubernetes: Upgrade support [217](https://github.com/vultr/govultr/pull/217)
+* Baremetal: Added support for new `tags` field. This field allows multiple string tags to be associated with an instance [218](https://github.com/vultr/govultr/pull/218) 
+* Instance: Added support for new `tags` field. This field allows multiple string tags to be associated with an instance [218](https://github.com/vultr/govultr/pull/218)
+
+### Deprecations
+* Instance: The `tag` field has been deprecated in favor for `tags` [218](https://github.com/vultr/govultr/pull/218)
+* Baremetal: The `tag` field has been deprecated in favor for `tags` [218](https://github.com/vultr/govultr/pull/218)
+* Firewall rules: The `type` field has been deprecated in favor for `ip_type` [216](https://github.com/vultr/govultr/pull/216)
+
+### Dependency Update
+* Bump github.com/hashicorp/go-retryablehttp from 0.7.0 to 0.7.1 [214](https://github.com/vultr/govultr/pull/214)
+
+## [v2.15.1](https://github.com/vultr/govultr/compare/v2.15.0..v2.15.1) (2022-04-12)
+### Bug fixes
+* Block : add `omityempty` to `block_type` to prevent deploy issues [212](https://github.com/vultr/govultr/pull/212)
+
+## [v2.15.0](https://github.com/vultr/govultr/compare/v2.14.2..v2.15.0) (2022-04-12)
+### Enhancement 
+* Block : New optional field `block_type`. This new field is currently optional but may become required at a later release [209](https://github.com/vultr/govultr/pull/209)
+* VPC : New API endpoints that will be replacing `network` [210](https://github.com/vultr/govultr/pull/210)
+* Updated Go version from 1.16 to 1.17 [208](https://github.com/vultr/govultr/pull/208)
+
+### Deprecations
+* Network : The network resource and all related private network fields on structs are deprecated. You should now be using the VPC provided replacements [210](https://github.com/vultr/govultr/pull/210)
+
+## [v2.14.2](https://github.com/vultr/govultr/compare/v2.14.1..v2.14.2) (2022-03-23)
+### Bug Fix
+* Instances : restore support requestBody [206](https://github.com/vultr/govultr/pull/206) Thanks @andrake81
+
 ## [v2.14.1](https://github.com/vultr/govultr/compare/v2.14.0..v2.14.1) (2022-02-02)
 ### Enhancement
 * Improved retry error response [204](https://github.com/vultr/govultr/pull/204)
