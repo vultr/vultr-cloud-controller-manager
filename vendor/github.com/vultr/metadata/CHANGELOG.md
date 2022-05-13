@@ -1,3 +1,7 @@
+## v1.1.0 (2022-05-12)
+### Changes
+* bump go to 1.17 by @ddymko in https://github.com/vultr/metadata/pull/8
+
 ## v1.0.3 (2021-03-25)
 ### Changes
 * Changed `PublicKeys` from string to array
