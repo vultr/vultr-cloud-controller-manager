@@ -173,8 +173,8 @@ github.com/spf13/pflag
 # github.com/vultr/govultr/v2 v2.16.0
 ## explicit; go 1.17
 github.com/vultr/govultr/v2
-# github.com/vultr/metadata v1.0.3
-## explicit; go 1.15
+# github.com/vultr/metadata v1.1.0
+## explicit; go 1.17
 github.com/vultr/metadata
 # go.etcd.io/etcd/api/v3 v3.5.0
 ## explicit; go 1.16
