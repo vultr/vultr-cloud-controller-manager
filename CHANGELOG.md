@@ -5,6 +5,8 @@
 * bumping the 22 patches from 7 to 9 by @ddymko in https://github.com/vultr/vultr-cloud-controller-manager/pull/89
 * Allow changing the base URL the ccm uses for API calls by @ddymko in https://github.com/vultr/vultr-cloud-controller-manager/pull/88
 * bump go to 1.17 by @ddymko in https://github.com/vultr/vultr-cloud-controller-manager/pull/91
+* Bump github.com/vultr/metadata from 1.0.3 to 1.1.0 by @dependabot in https://github.com/vultr/vultr-cloud-controller-manager/pull/93
+
 
 [CCM Container v0.6.0](https://hub.docker.com/repository/docker/vultr/vultr-cloud-controller-manager)
 
