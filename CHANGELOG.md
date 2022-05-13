@@ -1,5 +1,16 @@
 # Change Log
 
+## v0.6.0 (2021-05-13)
+* VPC changes by @ddymko in https://github.com/vultr/vultr-cloud-controller-manager/pull/87
+* bumping the 22 patches from 7 to 9 by @ddymko in https://github.com/vultr/vultr-cloud-controller-manager/pull/89
+* Allow changing the base URL the ccm uses for API calls by @ddymko in https://github.com/vultr/vultr-cloud-controller-manager/pull/88
+* bump go to 1.17 by @ddymko in https://github.com/vultr/vultr-cloud-controller-manager/pull/91
+* Bump github.com/vultr/metadata from 1.0.3 to 1.1.0 by @dependabot in https://github.com/vultr/vultr-cloud-controller-manager/pull/93
+* updating all go 1.16 references to 1.17 by @ddymko in https://github.com/vultr/vultr-cloud-controller-manager/pull/94
+
+
+[CCM Container v0.6.0](https://hub.docker.com/repository/docker/vultr/vultr-cloud-controller-manager)
+
 ## v0.5.0 (2021-03-11)
 * Updated GoVultr dependencies from 2.11.1 to 2.14.1.
 * Updated Klog to v2.9.0
