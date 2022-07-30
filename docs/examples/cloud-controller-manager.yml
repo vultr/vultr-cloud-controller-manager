@@ -6,13 +6,102 @@ metadata:
 stringData:
   # Replace the api-key and region with proper values
   api-key: {{ VULTR_API_KEY }}
-  region: {{ REGION_ID }}
 ---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: vultr-ccm
   namespace: kube-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  annotations:
+    rbac.authorization.kubernetes.io/autoupdate: "true"
+  name: system:vultr-ccm
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - events
+    verbs:
+      - create
+      - patch
+      - update
+  - apiGroups:
+      - ""
+    resources:
+      - nodes
+    verbs:
+      - '*'
+  - apiGroups:
+      - ""
+    resources:
+      - nodes/status
+    verbs:
+      - patch
+  - apiGroups:
+      - ""
+    resources:
+      - services
+    verbs:
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - ""
+    resources:
+      - services/status
+    verbs:
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - ""
+    resources:
+      - serviceaccounts
+    verbs:
+      - create
+      - get
+  - apiGroups:
+      - ""
+    resources:
+      - persistentvolumes
+    verbs:
+      - get
+      - list
+      - update
+      - watch
+  - apiGroups:
+      - ""
+    resources:
+      - endpoints
+    verbs:
+      - create
+      - get
+      - list
+      - watch
+      - update
+  - apiGroups:
+      - coordination.k8s.io
+    resources:
+      - leases
+    verbs:
+      - create
+      - get
+      - list
+      - watch
+      - update
+  - apiGroups:
+      - ""
+    resources:
+      - secrets
+    verbs:
+      - get
+      - list
+      - watch
 ---
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
@@ -21,7 +110,7 @@ metadata:
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: cluster-admin
+  name: system:vultr-ccm
 subjects:
   - kind: ServiceAccount
     name: vultr-ccm
@@ -62,7 +151,8 @@ spec:
           effect: NoSchedule
       hostNetwork: true
       containers:
-        - image: vultr/vultr-cloud-controller-manager:v0.0.2
+        - image: vultr/vultr-cloud-controller-manager:v0.6.0
+          imagePullPolicy: Always
           name: vultr-cloud-controller-manager
           command:
             - "/vultr-cloud-controller-manager"
@@ -76,8 +166,3 @@ spec:
                 secretKeyRef:
                   name: vultr-ccm
                   key: api-key
-            - name: VULTR_REGION
-              valueFrom:
-                secretKeyRef:
-                  name: vultr-ccm
-                  key: region
