@@ -42,8 +42,8 @@ const (
 	// which TLS secret you want to be used for your load balancers SSL
 	annoVultrLBSSL = "service.beta.kubernetes.io/vultr-loadbalancer-ssl"
 
-	// annoVultrLBHTTPSBackendProtocol is the annotation used to specify the backend protocol
-	annoVultrLBHTTPSBackendProtocol = "service.beta.kubernetes.io/vultr-loadbalancer-https-backend-protocol"
+	// annoVultrLBBackendProtocol backend protocol
+	annoVultrLBBackendProtocol = "service.beta.kubernetes.io/vultr-loadbalancer-backend-protocol"
 
 	annoVultrHealthCheckPath               = "service.beta.kubernetes.io/vultr-loadbalancer-healthcheck-path"
 	annoVultrHealthCheckProtocol           = "service.beta.kubernetes.io/vultr-loadbalancer-healthcheck-protocol"
@@ -575,18 +575,21 @@ func buildForwardingRules(service *v1.Service) ([]govultr.ForwardingRule, error)
 	for _, port := range service.Spec.Ports {
 		// default the port
 		protocol := defaultProtocol
+		backendProtocol := getBackendProtocol(service)
 
 		if httpsPorts[port.Port] {
 			if getSSLPassthrough(service) {
 				protocol = protocolTCP
-			} else if isBackendHTTPS(service) {
-				protocol = protocolHTTPs
 			} else {
-				protocol = protocolHTTP
+				protocol = protocolHTTPs
 			}
 		}
 
-		rule, err := buildForwardingRule(&port, protocol)
+		if backendProtocol == "" {
+			backendProtocol = protocol
+		}
+
+		rule, err := buildForwardingRule(&port, protocol, backendProtocol)
 		if err != nil {
 			return nil, err
 		}
@@ -597,7 +600,7 @@ func buildForwardingRules(service *v1.Service) ([]govultr.ForwardingRule, error)
 	return rules, nil
 }
 
-func buildForwardingRule(port *v1.ServicePort, protocol string) (*govultr.ForwardingRule, error) {
+func buildForwardingRule(port *v1.ServicePort, protocol, backendProtocol string) (*govultr.ForwardingRule, error) {
 	var rule govultr.ForwardingRule
 
 	if port.Protocol == portProtocolUDP {
@@ -605,7 +608,7 @@ func buildForwardingRule(port *v1.ServicePort, protocol string) (*govultr.Forwar
 	}
 
 	rule.FrontendProtocol = protocol
-	rule.BackendProtocol = protocol
+	rule.BackendProtocol = backendProtocol
 
 	rule.FrontendPort = int(port.Port)
 	rule.BackendPort = int(port.NodePort)
@@ -802,11 +805,20 @@ func getVPC(service *v1.Service) (string, error) {
 	return pnID, nil
 }
 
-func isBackendHTTPS(service *v1.Service) bool {
-	proto := service.Annotations[annoVultrLBHTTPSBackendProtocol]
-	if proto == "https" {
-		return true
+func getBackendProtocol(service *v1.Service) string {
+	proto, ok := service.Annotations[annoVultrLBBackendProtocol]
+	if !ok {
+		return ""
 	}
 
-	return false
+	switch proto {
+	case "http":
+		return "http"
+	case "https":
+		return "https"
+	case "tcp":
+		return "tcp"
+	default:
+		return ""
+	}
 }
