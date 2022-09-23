@@ -42,6 +42,9 @@ const (
 	// which TLS secret you want to be used for your load balancers SSL
 	annoVultrLBSSL = "service.beta.kubernetes.io/vultr-loadbalancer-ssl"
 
+	// annoVultrLBHTTPSBackendProtocol is the annotation used to specify the backend protocol
+	annoVultrLBHTTPSBackendProtocol = "service.beta.kubernetes.io/vultr-loadbalancer-https-backend-protocol"
+
 	annoVultrHealthCheckPath               = "service.beta.kubernetes.io/vultr-loadbalancer-healthcheck-path"
 	annoVultrHealthCheckProtocol           = "service.beta.kubernetes.io/vultr-loadbalancer-healthcheck-protocol"
 	annoVultrHealthCheckPort               = "service.beta.kubernetes.io/vultr-loadbalancer-healthcheck-port"
@@ -576,8 +579,10 @@ func buildForwardingRules(service *v1.Service) ([]govultr.ForwardingRule, error)
 		if httpsPorts[port.Port] {
 			if getSSLPassthrough(service) {
 				protocol = protocolTCP
-			} else {
+			} else if isBackendHTTPS(service) {
 				protocol = protocolHTTPs
+			} else {
+				protocol = protocolHTTP
 			}
 		}
 
@@ -795,4 +800,13 @@ func getVPC(service *v1.Service) (string, error) {
 	}
 
 	return pnID, nil
+}
+
+func isBackendHTTPS(service *v1.Service) bool {
+	proto := service.Annotations[annoVultrLBHTTPSBackendProtocol]
+	if proto == "https" {
+		return true
+	}
+
+	return false
 }
