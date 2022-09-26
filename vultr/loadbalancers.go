@@ -265,7 +265,6 @@ func (l *loadbalancers) lbByName(ctx context.Context, lbName string) (*govultr.L
 }
 
 func (l *loadbalancers) buildLoadBalancerRequest(service *v1.Service, nodes []*v1.Node) (*govultr.LoadBalancerReq, error) {
-
 	stickySession, err := buildStickySession(service)
 	if err != nil {
 		return nil, err
@@ -574,22 +573,41 @@ func buildForwardingRules(service *v1.Service) ([]govultr.ForwardingRule, error)
 
 	for _, port := range service.Spec.Ports {
 		// default the port
-		protocol := defaultProtocol
+		frontendProtocol := defaultProtocol
 		backendProtocol := getBackendProtocol(service)
 
 		if httpsPorts[port.Port] {
 			if getSSLPassthrough(service) {
-				protocol = protocolTCP
+				frontendProtocol = protocolTCP
 			} else {
-				protocol = protocolHTTPs
+				frontendProtocol = protocolHTTPs
 			}
 		}
 
-		if backendProtocol == "" {
-			backendProtocol = protocol
+		// Check frontend/backend port combinations (listed below what is acceptable)
+		// frontend = tcp: backend must be tcp
+		// frontend = https: backend can be http(s)
+		// frontend = http: backend can be http(s)
+		switch frontendProtocol {
+		case "tcp":
+			if backendProtocol != "tcp" {
+				klog.V(3).Infof("When frontend proto is tcp, backend must also be tcp, setting backend to tcp")
+				backendProtocol = "tcp"
+			}
+		case "http", "https":
+			if backendProtocol != "http" && backendProtocol != "https" {
+				klog.V(3).Infof("When frontend proto is http/s, backend must also be http/s, setting backend to https")
+				backendProtocol = "https" // https is default
+			}
 		}
 
-		rule, err := buildForwardingRule(&port, protocol, backendProtocol)
+		// unset backend should be same as frontend
+		if backendProtocol == "" {
+			backendProtocol = frontendProtocol
+		}
+		klog.Infof("Frontend: %q, Backend: %q", frontendProtocol, backendProtocol)
+
+		rule, err := buildForwardingRule(&port, frontendProtocol, backendProtocol)
 		if err != nil {
 			return nil, err
 		}
@@ -609,6 +627,8 @@ func buildForwardingRule(port *v1.ServicePort, protocol, backendProtocol string)
 
 	rule.FrontendProtocol = protocol
 	rule.BackendProtocol = backendProtocol
+
+	klog.V(3).Infof("Rule: %+v\n", rule)
 
 	rule.FrontendPort = int(port.Port)
 	rule.BackendPort = int(port.NodePort)
@@ -813,11 +833,11 @@ func getBackendProtocol(service *v1.Service) string {
 
 	switch proto {
 	case "http":
-		return "http"
+		return protocolHTTP
 	case "https":
-		return "https"
+		return protocolHTTPs
 	case "tcp":
-		return "tcp"
+		return protocolTCP
 	default:
 		return ""
 	}
