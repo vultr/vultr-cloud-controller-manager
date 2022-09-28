@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/pkg/errors"
 	"github.com/vultr/govultr/v2"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -146,7 +145,7 @@ func (i *instances) nodeAddresses(instance *govultr.Instance) ([]v1.NodeAddress,
 
 	// make sure we have either pubic and private ip
 	if instance.InternalIP == "" || instance.MainIP == "" {
-		return nil, errors.New("require both public and private IP")
+		return nil, fmt.Errorf("require both public and private IP")
 	}
 
 	addresses = append(addresses,
@@ -160,7 +159,7 @@ func (i *instances) nodeAddresses(instance *govultr.Instance) ([]v1.NodeAddress,
 // vultrIDFromProviderID returns a vultr instance ID from providerID.
 func vultrIDFromProviderID(providerID string) (string, error) {
 	if providerID == "" {
-		return "", errors.New("providerID cannot be an empty string")
+		return "", fmt.Errorf("providerID cannot be an empty string")
 	}
 
 	split := strings.Split(providerID, "://")
@@ -211,7 +210,7 @@ func vultrByName(ctx context.Context, client *govultr.Client, nodeName types.Nod
 	if len(instances) == 0 {
 		return nil, cloudprovider.InstanceNotFound
 	} else if len(instances) > 1 {
-		return nil, errors.New(fmt.Sprintf("Multiple instances found with name %v", nodeName))
+		return nil, fmt.Errorf("multiple instances found with name %v", nodeName)
 	}
 
 	return &instances[0], nil

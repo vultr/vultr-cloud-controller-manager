@@ -8,7 +8,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/pkg/errors"
 	"github.com/vultr/govultr/v2"
 	"github.com/vultr/metadata"
 	v1 "k8s.io/api/core/v1"
@@ -80,7 +79,7 @@ const (
 	lbStatusActive = "active"
 )
 
-var errLbNotFound = errors.New("loadbalancer not found")
+var errLbNotFound = fmt.Errorf("loadbalancer not found")
 var _ cloudprovider.LoadBalancer = &loadbalancers{}
 
 type loadbalancers struct {
@@ -385,7 +384,7 @@ func getStickySessionEnabled(service *v1.Service) string {
 func getCookieName(service *v1.Service) (string, error) {
 	name, ok := service.Annotations[annoVultrStickySessionCookieName]
 	if !ok || name == "" {
-		return "", errors.New("sticky session cookie name name not supplied but is required")
+		return "", fmt.Errorf("sticky session cookie name name not supplied but is required")
 	}
 
 	return name, nil
