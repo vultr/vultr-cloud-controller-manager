@@ -40,7 +40,7 @@ jobs:
 
       - name: Run fmt
         run: |
-          cd pkg
+          cd vultr
           gofmt_files=$(gofmt -l .)
           if [[ -n ${gofmt_files} ]]; then
               echo 'gofmt needs running on the following files:'
