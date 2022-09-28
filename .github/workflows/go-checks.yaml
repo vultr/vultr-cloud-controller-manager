@@ -26,7 +26,7 @@ jobs:
 
       - name: Run golangci-lint
         run: |
-          golangci-lint run pkg/...
+          golangci-lint run vultr/...
 
   Go-Fmt:
     runs-on: ubuntu-latest
