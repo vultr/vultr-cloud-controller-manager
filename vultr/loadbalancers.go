@@ -42,6 +42,9 @@ const (
 	// which TLS secret you want to be used for your load balancers SSL
 	annoVultrLBSSL = "service.beta.kubernetes.io/vultr-loadbalancer-ssl"
 
+	// annoVultrLBBackendProtocol backend protocol
+	annoVultrLBBackendProtocol = "service.beta.kubernetes.io/vultr-loadbalancer-backend-protocol"
+
 	annoVultrHealthCheckPath               = "service.beta.kubernetes.io/vultr-loadbalancer-healthcheck-path"
 	annoVultrHealthCheckProtocol           = "service.beta.kubernetes.io/vultr-loadbalancer-healthcheck-protocol"
 	annoVultrHealthCheckPort               = "service.beta.kubernetes.io/vultr-loadbalancer-healthcheck-port"
@@ -262,7 +265,6 @@ func (l *loadbalancers) lbByName(ctx context.Context, lbName string) (*govultr.L
 }
 
 func (l *loadbalancers) buildLoadBalancerRequest(service *v1.Service, nodes []*v1.Node) (*govultr.LoadBalancerReq, error) {
-
 	stickySession, err := buildStickySession(service)
 	if err != nil {
 		return nil, err
@@ -571,17 +573,46 @@ func buildForwardingRules(service *v1.Service) ([]govultr.ForwardingRule, error)
 
 	for _, port := range service.Spec.Ports {
 		// default the port
-		protocol := defaultProtocol
+		frontendProtocol := defaultProtocol
+		backendProtocol := getBackendProtocol(service)
 
 		if httpsPorts[port.Port] {
 			if getSSLPassthrough(service) {
-				protocol = protocolTCP
+				frontendProtocol = protocolTCP
 			} else {
-				protocol = protocolHTTPs
+				frontendProtocol = protocolHTTPs
 			}
 		}
 
-		rule, err := buildForwardingRule(&port, protocol)
+		// Check frontend/backend port combinations (listed below what is acceptable)
+		// frontend = tcp: backend must be tcp
+		// frontend = https: backend can be http(s)
+		// frontend = http: backend can be http(s)
+		switch frontendProtocol {
+		case "tcp":
+			if backendProtocol != "tcp" {
+				klog.Infof("When frontend proto is tcp, backend default is tcp, %q is out of supported range, setting backend to tcp", backendProtocol)
+				backendProtocol = "tcp"
+			}
+		case "http":
+			if backendProtocol != "http" && backendProtocol != "https" {
+				klog.Infof("When frontend proto is http, backend default is http, %q is out of supported range, setting backend to http", backendProtocol)
+				backendProtocol = "http" // http is default
+			}
+		case "https":
+			if backendProtocol != "http" && backendProtocol != "https" {
+				klog.Infof("When frontend proto is https, backend default is https, %q is out of supported range, setting backend to https", backendProtocol)
+				backendProtocol = "https" // https is default
+			}
+		}
+
+		// unset backend should be same as frontend
+		if backendProtocol == "" {
+			backendProtocol = frontendProtocol
+		}
+		klog.Infof("Frontend: %q, Backend: %q", frontendProtocol, backendProtocol)
+
+		rule, err := buildForwardingRule(&port, frontendProtocol, backendProtocol)
 		if err != nil {
 			return nil, err
 		}
@@ -592,7 +623,7 @@ func buildForwardingRules(service *v1.Service) ([]govultr.ForwardingRule, error)
 	return rules, nil
 }
 
-func buildForwardingRule(port *v1.ServicePort, protocol string) (*govultr.ForwardingRule, error) {
+func buildForwardingRule(port *v1.ServicePort, protocol, backendProtocol string) (*govultr.ForwardingRule, error) {
 	var rule govultr.ForwardingRule
 
 	if port.Protocol == portProtocolUDP {
@@ -600,7 +631,9 @@ func buildForwardingRule(port *v1.ServicePort, protocol string) (*govultr.Forwar
 	}
 
 	rule.FrontendProtocol = protocol
-	rule.BackendProtocol = protocol
+	rule.BackendProtocol = backendProtocol
+
+	klog.V(3).Infof("Rule: %+v\n", rule)
 
 	rule.FrontendPort = int(port.Port)
 	rule.BackendPort = int(port.NodePort)
@@ -795,4 +828,22 @@ func getVPC(service *v1.Service) (string, error) {
 	}
 
 	return pnID, nil
+}
+
+func getBackendProtocol(service *v1.Service) string {
+	proto, ok := service.Annotations[annoVultrLBBackendProtocol]
+	if !ok {
+		return ""
+	}
+
+	switch proto {
+	case "http":
+		return protocolHTTP
+	case "https":
+		return protocolHTTPs
+	case "tcp":
+		return protocolTCP
+	default:
+		return ""
+	}
 }
