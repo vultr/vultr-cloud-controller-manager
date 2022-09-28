@@ -5,7 +5,7 @@ go 1.17
 require (
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/pflag v1.0.5
-	github.com/vultr/govultr/v2 v2.16.0
+	github.com/vultr/govultr/v2 v2.17.2
 	github.com/vultr/metadata v1.1.0
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
 	k8s.io/api v0.22.9
@@ -13,7 +13,7 @@ require (
 	k8s.io/client-go v0.22.9
 	k8s.io/cloud-provider v0.22.9
 	k8s.io/component-base v0.22.9
-	k8s.io/klog/v2 v2.9.0
+	k8s.io/klog/v2 v2.80.1
 )
 
 require (
@@ -30,7 +30,7 @@ require (
 	github.com/emicklei/go-restful v2.9.5+incompatible // indirect
 	github.com/evanphx/json-patch v4.11.0+incompatible // indirect
 	github.com/felixge/httpsnoop v1.0.1 // indirect
-	github.com/go-logr/logr v0.4.0 // indirect
+	github.com/go-logr/logr v1.2.0 // indirect
 	github.com/go-openapi/jsonpointer v0.19.5 // indirect
 	github.com/go-openapi/jsonreference v0.19.5 // indirect
 	github.com/go-openapi/swag v0.19.14 // indirect
