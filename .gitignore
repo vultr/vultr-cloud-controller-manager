@@ -1,7 +1,9 @@
 # OSX
 .DS_STORE
 
-
 # Misc
 .idea/
 /dist
+
+vultr-ccm
+vultr-cloud-controller-manager
