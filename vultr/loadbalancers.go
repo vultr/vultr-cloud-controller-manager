@@ -131,20 +131,18 @@ func (l *loadbalancers) EnsureLoadBalancer(ctx context.Context, clusterName stri
 
 	// if exists is false and the err above was nil then this is errLbNotFound
 	if !exists {
-		var err1 error
-		var lbReq *govultr.LoadBalancerReq
-		var lb2 *govultr.LoadBalancer
-
-		lbReq, err1 = l.buildLoadBalancerRequest(service, nodes)
+		klog.Infof("Load balancer for cluster %q doesn't exist, creating", clusterName)
+		lbReq, err1 := l.buildLoadBalancerRequest(service, nodes)
 		if err1 != nil {
 			return nil, err1
 		}
 
 		lbReq.Region = l.zone
-		lb2, err1 = l.client.LoadBalancer.Create(ctx, lbReq)
+		lb2, err1 := l.client.LoadBalancer.Create(ctx, lbReq)
 		if err1 != nil {
 			return nil, fmt.Errorf("failed to create load-balancer: %s", err1)
 		}
+		klog.Infof("Created load balancer %q", lb2.ID)
 
 		if lb2.Status != lbStatusActive {
 			return nil, fmt.Errorf("load-balancer is not yet active - current status: %s", lb2.Status)
@@ -160,6 +158,8 @@ func (l *loadbalancers) EnsureLoadBalancer(ctx context.Context, clusterName stri
 		}, nil
 	}
 
+	klog.Infof("Load balancer exists for cluster %q", clusterName)
+
 	lbName := l.GetLoadBalancerName(ctx, clusterName, service)
 	lb, err := l.lbByName(ctx, lbName)
 	if err != nil {
@@ -169,6 +169,8 @@ func (l *loadbalancers) EnsureLoadBalancer(ctx context.Context, clusterName stri
 
 		return nil, err
 	}
+
+	klog.Infof("Found load balancer: %q", lbName)
 
 	if lb.Status != lbStatusActive {
 		return nil, fmt.Errorf("load-balancer is not yet active - current status: %s", lb.Status)
