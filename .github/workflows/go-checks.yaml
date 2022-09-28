@@ -28,24 +28,3 @@ jobs:
         run: |
           golangci-lint run --timeout=5m vultr/...
 
-  Go-Fmt:
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v2
-      - name: Setup Go
-        uses: actions/setup-go@v2
-        with:
-          go-version: 1.19
-
-      - name: Run fmt
-        run: |
-          cd vultr
-          gofmt_files=$(gofmt -l .)
-          if [[ -n ${gofmt_files} ]]; then
-              echo 'gofmt needs running on the following files:'
-              echo "${gofmt_files}"
-              exit 1
-          fi
-          exit 0
-
