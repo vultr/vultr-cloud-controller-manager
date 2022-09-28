@@ -591,17 +591,17 @@ func buildForwardingRules(service *v1.Service) ([]govultr.ForwardingRule, error)
 		switch frontendProtocol {
 		case "tcp":
 			if backendProtocol != "tcp" {
-				klog.V(3).Infof("When frontend proto is tcp, backend must also be tcp, setting backend to tcp")
+				klog.Infof("When frontend proto is tcp, backend default is tcp, %q is out of supported range, setting backend to tcp", backendProtocol)
 				backendProtocol = "tcp"
 			}
 		case "http":
 			if backendProtocol != "http" && backendProtocol != "https" {
-				klog.V(3).Infof("When frontend proto is http, backend must also be http, setting backend to http")
+				klog.Infof("When frontend proto is http, backend default is http, %q is out of supported range, setting backend to http", backendProtocol)
 				backendProtocol = "http" // http is default
 			}
 		case "https":
 			if backendProtocol != "http" && backendProtocol != "https" {
-				klog.V(3).Infof("When frontend proto is https, backend must also be https, setting backend to https")
+				klog.Infof("When frontend proto is https, backend default is https, %q is out of supported range, setting backend to https", backendProtocol)
 				backendProtocol = "https" // https is default
 			}
 		}
