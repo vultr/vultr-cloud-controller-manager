@@ -1,3 +1,4 @@
+// Package vultr is vultr cloud specific implementation
 package vultr
 
 import (
@@ -148,10 +149,10 @@ func (i *instances) nodeAddresses(instance *govultr.Instance) ([]v1.NodeAddress,
 		return nil, errors.New("require both public and private IP")
 	}
 
-	// private IP
-	addresses = append(addresses, v1.NodeAddress{Type: v1.NodeInternalIP, Address: instance.InternalIP})
-	// public IP
-	addresses = append(addresses, v1.NodeAddress{Type: v1.NodeExternalIP, Address: instance.MainIP})
+	addresses = append(addresses,
+		v1.NodeAddress{Type: v1.NodeInternalIP, Address: instance.InternalIP}, // private IP
+		v1.NodeAddress{Type: v1.NodeExternalIP, Address: instance.MainIP},     // public IP
+	)
 
 	return addresses, nil
 }
@@ -163,7 +164,7 @@ func vultrIDFromProviderID(providerID string) (string, error) {
 	}
 
 	split := strings.Split(providerID, "://")
-	if len(split) != 2 {
+	if len(split) != 2 { //nolint
 		return "", fmt.Errorf("unexpected providerID format %s, expected format to be: vultr://abc123", providerID)
 	}
 
@@ -193,7 +194,7 @@ func vultrByName(ctx context.Context, client *govultr.Client, nodeName types.Nod
 			return nil, err
 		}
 
-		for _, v := range i {
+		for _, v := range i { //nolint
 			if v.Label == string(nodeName) {
 				instances = append(instances, v)
 			}

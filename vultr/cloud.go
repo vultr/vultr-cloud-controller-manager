@@ -1,3 +1,4 @@
+// Package vultr is vultr cloud specific implementation
 package vultr
 
 import (
@@ -16,8 +17,9 @@ import (
 )
 
 const (
+	// ProviderName defines the cloud provider
 	ProviderName   = "vultr"
-	accessTokenEnv = "VULTR_API_KEY"
+	accessTokenEnv = "VULTR_API_KEY" //nolint
 	userAgent      = "CCM_USER_AGENT"
 	apiURL         = "API_URL"
 )
@@ -35,7 +37,7 @@ type cloud struct {
 	loadbalancers cloudprovider.LoadBalancer
 }
 
-func init() {
+func init() { //nolint
 	cloudprovider.RegisterCloudProvider(ProviderName, func(config io.Reader) (i cloudprovider.Interface, err error) {
 		return newCloud()
 	})
@@ -99,26 +101,26 @@ func (c *cloud) InstancesV2() (cloudprovider.InstancesV2, bool) {
 }
 
 func (c *cloud) Zones() (cloudprovider.Zones, bool) {
-	klog.V(5).Info("called Zones")
+	klog.V(5).Info("called Zones") //nolint
 	return c.zones, true
 }
 
 func (c *cloud) Clusters() (cloudprovider.Clusters, bool) {
-	klog.V(5).Info("called Clusters")
+	klog.V(5).Info("called Clusters") //nolint
 	return nil, false
 }
 
 func (c *cloud) Routes() (cloudprovider.Routes, bool) {
-	klog.V(5).Info("called Routes")
+	klog.V(5).Info("called Routes") //nolint
 	return nil, false
 }
 
 func (c *cloud) ProviderName() string {
-	klog.V(5).Info("called ProviderName")
+	klog.V(5).Info("called ProviderName") //nolint
 	return ProviderName
 }
 
 func (c *cloud) HasClusterID() bool {
-	klog.V(5).Info("called HasClusterID")
+	klog.V(5).Info("called HasClusterID") //nolint
 	return false
 }

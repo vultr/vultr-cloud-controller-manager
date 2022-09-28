@@ -144,7 +144,6 @@ func TestLoadbalancers_EnsureLoadBalancer(t *testing.T) {
 		t.Errorf("expected %+v got %+v", expected, actual)
 	}
 	// todo go through does not exist route
-
 }
 
 func TestLoadbalancers_UpdateLoadBalancer(t *testing.T) {
