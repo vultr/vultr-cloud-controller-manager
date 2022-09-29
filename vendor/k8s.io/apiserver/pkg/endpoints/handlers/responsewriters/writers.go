@@ -36,6 +36,7 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/handlers/negotiation"
 	"k8s.io/apiserver/pkg/endpoints/metrics"
 	"k8s.io/apiserver/pkg/endpoints/request"
+	endpointsrequest "k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 	utilfeature "k8s.io/apiserver/pkg/util/feature"
 	"k8s.io/apiserver/pkg/util/flushwriter"
@@ -143,8 +144,10 @@ var gzipPool = &sync.Pool{
 }
 
 const (
-	// defaultGzipContentEncodingLevel is set to 4 which uses less CPU than the default level
-	defaultGzipContentEncodingLevel = 4
+	// defaultGzipContentEncodingLevel is set to 1 which uses least CPU compared to higher levels, yet offers
+	// similar compression ratios (off by at most 1.5x, but typically within 1.1x-1.3x). For further details see -
+	// https://github.com/kubernetes/kubernetes/issues/112296
+	defaultGzipContentEncodingLevel = 1
 	// defaultGzipThresholdBytes is compared to the size of the first write from the stream
 	// (usually the entire object), and if the size is smaller no gzipping will be performed
 	// if the client requests it.
@@ -201,7 +204,8 @@ func (w *deferredResponseWriter) Write(p []byte) (n int, err error) {
 			w.trace.Step("Write call finished",
 				utiltrace.Field{"writer", fmt.Sprintf("%T", w.w)},
 				utiltrace.Field{"size", len(p)},
-				utiltrace.Field{"firstWrite", firstWrite})
+				utiltrace.Field{"firstWrite", firstWrite},
+				utiltrace.Field{"err", err})
 		}()
 	}
 	if w.hasWritten {
@@ -267,12 +271,12 @@ func WriteObjectNegotiated(s runtime.NegotiatedSerializer, restrictions negotiat
 		return
 	}
 
-	if ae := request.AuditEventFrom(req.Context()); ae != nil {
-		audit.LogResponseObject(ae, object, gv, s)
-	}
+	audit.LogResponseObject(req.Context(), object, gv, s)
 
 	encoder := s.EncoderForVersion(serializer.Serializer, gv)
-	SerializeObject(serializer.MediaType, encoder, w, req, statusCode, object)
+	endpointsrequest.TrackSerializeResponseObjectLatency(req.Context(), func() {
+		SerializeObject(serializer.MediaType, encoder, w, req, statusCode, object)
+	})
 }
 
 // ErrorNegotiated renders an error to the response. Returns the HTTP status code of the error.

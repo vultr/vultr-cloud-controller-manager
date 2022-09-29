@@ -1,3 +1,4 @@
+// Package vultr is vultr cloud specific implementation
 package vultr
 
 import (
@@ -5,7 +6,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/pkg/errors"
 	"github.com/vultr/govultr/v2"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -145,13 +145,13 @@ func (i *instances) nodeAddresses(instance *govultr.Instance) ([]v1.NodeAddress,
 
 	// make sure we have either pubic and private ip
 	if instance.InternalIP == "" || instance.MainIP == "" {
-		return nil, errors.New("require both public and private IP")
+		return nil, fmt.Errorf("require both public and private IP")
 	}
 
-	// private IP
-	addresses = append(addresses, v1.NodeAddress{Type: v1.NodeInternalIP, Address: instance.InternalIP})
-	// public IP
-	addresses = append(addresses, v1.NodeAddress{Type: v1.NodeExternalIP, Address: instance.MainIP})
+	addresses = append(addresses,
+		v1.NodeAddress{Type: v1.NodeInternalIP, Address: instance.InternalIP}, // private IP
+		v1.NodeAddress{Type: v1.NodeExternalIP, Address: instance.MainIP},     // public IP
+	)
 
 	return addresses, nil
 }
@@ -159,11 +159,11 @@ func (i *instances) nodeAddresses(instance *govultr.Instance) ([]v1.NodeAddress,
 // vultrIDFromProviderID returns a vultr instance ID from providerID.
 func vultrIDFromProviderID(providerID string) (string, error) {
 	if providerID == "" {
-		return "", errors.New("providerID cannot be an empty string")
+		return "", fmt.Errorf("providerID cannot be an empty string")
 	}
 
 	split := strings.Split(providerID, "://")
-	if len(split) != 2 {
+	if len(split) != 2 { //nolint
 		return "", fmt.Errorf("unexpected providerID format %s, expected format to be: vultr://abc123", providerID)
 	}
 
@@ -193,7 +193,7 @@ func vultrByName(ctx context.Context, client *govultr.Client, nodeName types.Nod
 			return nil, err
 		}
 
-		for _, v := range i {
+		for _, v := range i { //nolint
 			if v.Label == string(nodeName) {
 				instances = append(instances, v)
 			}
@@ -210,7 +210,7 @@ func vultrByName(ctx context.Context, client *govultr.Client, nodeName types.Nod
 	if len(instances) == 0 {
 		return nil, cloudprovider.InstanceNotFound
 	} else if len(instances) > 1 {
-		return nil, errors.New(fmt.Sprintf("Multiple instances found with name %v", nodeName))
+		return nil, fmt.Errorf("multiple instances found with name %v", nodeName)
 	}
 
 	return &instances[0], nil

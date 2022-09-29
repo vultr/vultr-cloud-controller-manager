@@ -1,10 +1,9 @@
+// Package main is the entrypoint into vultr-ccm
 package main
 
 import (
 	goflag "flag"
-	"fmt"
 	"math/rand"
-	"os"
 	"time"
 
 	"github.com/spf13/pflag"
@@ -41,13 +40,12 @@ func main() {
 	defer logs.FlushLogs()
 
 	if err := command.Execute(); err != nil {
-		fmt.Fprintf(os.Stderr, "error: %v\n", err)
-		os.Exit(1)
+		klog.Fatal(err)
 	}
 }
 
-func cloudInitializer(config *config.CompletedConfig) cloudprovider.Interface {
-	cloudConfig := config.ComponentConfig.KubeCloudShared.CloudProvider
+func cloudInitializer(c *config.CompletedConfig) cloudprovider.Interface {
+	cloudConfig := c.ComponentConfig.KubeCloudShared.CloudProvider
 	// initialize cloud provider with the cloud provider name and config file provided
 	cloud, err := cloudprovider.InitCloudProvider(cloudConfig.Name, cloudConfig.CloudConfigFile)
 	if err != nil {

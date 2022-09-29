@@ -1,3 +1,4 @@
+// Package vultr is vultr cloud specific implementation
 package vultr
 
 import (
@@ -7,7 +8,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/pkg/errors"
 	"github.com/vultr/govultr/v2"
 	"github.com/vultr/metadata"
 	v1 "k8s.io/api/core/v1"
@@ -20,7 +20,7 @@ import (
 )
 
 const (
-	annoVultrLoadBalancerID = "kubernetes.vultr.com/load-balancer-id"
+	annoVultrLoadBalancerID = "kubernetes.vultr.com/load-balancer-id" //nolint (this is unused)
 
 	// annoVultrLBProtocol is the annotation used to specify
 	// which protocol should be used for a Load Balancer.
@@ -29,14 +29,13 @@ const (
 
 	// annoVultrLBHTTPSPorts is the annotation used to specify
 	// which ports should be used for HTTPS.
-	// You can pass in a comma seperated list: 443,8443
-	annoVultrLbHttpsPorts = "service.beta.kubernetes.io/vultr-loadbalancer-https-ports"
+	// You can pass in a comma separated list: 443,8443
+	annoVultrLbHTTPSPorts = "service.beta.kubernetes.io/vultr-loadbalancer-https-ports"
 
 	// annoVultrLBSSLPassthrough is the annotation used to specify
 	// whether or not you do not wish to have SSL termination on the load balancer
 	// default is false to enable set to true
-
-	annoVultrLBSSLPassthrough = "service.beta.kubernetes.io/vultr-loadbalancer-ssl-pass-through"
+	annoVultrLBSSLPassthrough = "service.beta.kubernetes.io/vultr-loadbalancer-ssl-pass-through" //nolint
 
 	// annoVultrLBSSL is the annotation used to specify
 	// which TLS secret you want to be used for your load balancers SSL
@@ -66,10 +65,10 @@ const (
 
 	// Supported Protocols
 	protocolHTTP  = "http"
-	protocolHTTPs = "https"
+	protocolHTTPS = "https"
 	protocolTCP   = "tcp"
 
-	portProtocolTCP = "TCP"
+	portProtocolTCP = "TCP" //nolint
 	portProtocolUDP = "UDP"
 
 	healthCheckInterval  = 15
@@ -80,7 +79,7 @@ const (
 	lbStatusActive = "active"
 )
 
-var errLbNotFound = errors.New("loadbalancer not found")
+var errLbNotFound = fmt.Errorf("loadbalancer not found")
 var _ cloudprovider.LoadBalancer = &loadbalancers{}
 
 type loadbalancers struct {
@@ -132,30 +131,34 @@ func (l *loadbalancers) EnsureLoadBalancer(ctx context.Context, clusterName stri
 
 	// if exists is false and the err above was nil then this is errLbNotFound
 	if !exists {
-		lbReq, err := l.buildLoadBalancerRequest(service, nodes)
-		if err != nil {
-			return nil, err
+		klog.Infof("Load balancer for cluster %q doesn't exist, creating", clusterName)
+		lbReq, err1 := l.buildLoadBalancerRequest(service, nodes)
+		if err1 != nil {
+			return nil, err1
 		}
 
 		lbReq.Region = l.zone
-		l, err := l.client.LoadBalancer.Create(ctx, lbReq)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create load-balancer: %s", err)
+		lb2, err1 := l.client.LoadBalancer.Create(ctx, lbReq)
+		if err1 != nil {
+			return nil, fmt.Errorf("failed to create load-balancer: %s", err1)
 		}
+		klog.Infof("Created load balancer %q", lb2.ID)
 
-		if l.Status != lbStatusActive {
-			return nil, fmt.Errorf("load-balancer is not yet active - current status: %s", l.Status)
+		if lb2.Status != lbStatusActive {
+			return nil, fmt.Errorf("load-balancer is not yet active - current status: %s", lb2.Status)
 		}
 
 		return &v1.LoadBalancerStatus{
 			Ingress: []v1.LoadBalancerIngress{
 				{
-					IP:       l.IPV4,
-					Hostname: l.Label,
+					IP:       lb2.IPV4,
+					Hostname: lb2.Label,
 				},
 			},
 		}, nil
 	}
+
+	klog.Infof("Load balancer exists for cluster %q", clusterName)
 
 	lbName := l.GetLoadBalancerName(ctx, clusterName, service)
 	lb, err := l.lbByName(ctx, lbName)
@@ -167,12 +170,14 @@ func (l *loadbalancers) EnsureLoadBalancer(ctx context.Context, clusterName stri
 		return nil, err
 	}
 
+	klog.Infof("Found load balancer: %q", lbName)
+
 	if lb.Status != lbStatusActive {
 		return nil, fmt.Errorf("load-balancer is not yet active - current status: %s", lb.Status)
 	}
 
-	if err := l.UpdateLoadBalancer(ctx, clusterName, service, nodes); err != nil {
-		return nil, err
+	if err2 := l.UpdateLoadBalancer(ctx, clusterName, service, nodes); err2 != nil {
+		return nil, err2
 	}
 
 	lbStatus, _, err := l.GetLoadBalancer(ctx, clusterName, service)
@@ -184,7 +189,7 @@ func (l *loadbalancers) EnsureLoadBalancer(ctx context.Context, clusterName stri
 }
 
 func (l *loadbalancers) UpdateLoadBalancer(ctx context.Context, clusterName string, service *v1.Service, nodes []*v1.Node) error {
-	klog.V(3).Info("Called UpdateLoadBalancers")
+	klog.V(3).Info("Called UpdateLoadBalancers") //nolint
 	if _, _, err := l.GetLoadBalancer(ctx, clusterName, service); err != nil {
 		return err
 	}
@@ -232,12 +237,7 @@ func (l *loadbalancers) EnsureLoadBalancerDeleted(ctx context.Context, clusterNa
 	return nil
 }
 
-func getLoadBalancerID(service *v1.Service) string {
-	return service.ObjectMeta.Annotations[annoVultrLoadBalancerID]
-}
-
 func (l *loadbalancers) lbByName(ctx context.Context, lbName string) (*govultr.LoadBalancer, error) {
-
 	listOptions := &govultr.ListOptions{
 		PerPage: 25,
 	}
@@ -248,7 +248,7 @@ func (l *loadbalancers) lbByName(ctx context.Context, lbName string) (*govultr.L
 			return nil, err
 		}
 
-		for _, v := range lbs {
+		for _, v := range lbs { //nolint
 			if v.Label == lbName {
 				return &v, nil
 			}
@@ -285,7 +285,7 @@ func (l *loadbalancers) buildLoadBalancerRequest(service *v1.Service, nodes []*v
 		return nil, err
 	}
 
-	ssl := &govultr.SSL{}
+	var ssl *govultr.SSL
 	if secretName, ok := service.Annotations[annoVultrLBSSL]; ok {
 		ssl, err = l.GetSSL(service, secretName)
 		if err != nil {
@@ -325,9 +325,9 @@ func getAlgorithm(service *v1.Service) string {
 	algo := service.Annotations[annoVultrAlgorithm]
 	if algo == "least_connections" {
 		return "leastconn"
-	} else {
-		return "roundrobin"
 	}
+
+	return "roundrobin"
 }
 
 // getSSLRedirect returns if traffic should be redirected to https
@@ -386,7 +386,7 @@ func getStickySessionEnabled(service *v1.Service) string {
 func getCookieName(service *v1.Service) (string, error) {
 	name, ok := service.Annotations[annoVultrStickySessionCookieName]
 	if !ok || name == "" {
-		return "", errors.New("sticky session cookie name name not supplied but is required")
+		return "", fmt.Errorf("sticky session cookie name name not supplied but is required")
 	}
 
 	return name, nil
@@ -482,7 +482,7 @@ func getHealthCheckPort(service *v1.Service) (int, error) {
 			return int(v.Port), nil
 		}
 		// The provided port does not exist
-		return 0, fmt.Errorf("provided health check port %d does not exist for service %s/%s", portInt, service.Namespace, service.Name)
+		return 0, fmt.Errorf("provided health check port %d does not exist for service %s/%s", portInt, service.Namespace, service.Name) //nolint
 	}
 
 	// need to default a return here
@@ -497,7 +497,7 @@ func getHealthCheckInterval(service *v1.Service) (int, error) {
 
 	intervalInt, err := strconv.Atoi(interval)
 	if err != nil {
-		return 0, fmt.Errorf("failed to retireve health check interval %s - %s", annoVultrHealthCheckInterval, err)
+		return 0, fmt.Errorf("failed to retrieve health check interval %s - %s", annoVultrHealthCheckInterval, err)
 	}
 
 	return intervalInt, err
@@ -511,7 +511,7 @@ func getHealthCheckResponse(service *v1.Service) (int, error) {
 
 	responseInt, err := strconv.Atoi(response)
 	if err != nil {
-		return 0, fmt.Errorf("failed to retireve health check response timeout %s - %s", annoVultrHealthCheckResponseTimeout, err)
+		return 0, fmt.Errorf("failed to retrieve health check response timeout %s - %s", annoVultrHealthCheckResponseTimeout, err)
 	}
 
 	return responseInt, err
@@ -525,7 +525,7 @@ func getHealthCheckUnhealthy(service *v1.Service) (int, error) {
 
 	unhealthyInt, err := strconv.Atoi(unhealthy)
 	if err != nil {
-		return 0, fmt.Errorf("failed to retireve health check unhealthy treshold %s - %s", annoVultrHealthCheckUnhealthyThreshold, err)
+		return 0, fmt.Errorf("failed to retrieve health check unhealthy treshold %s - %s", annoVultrHealthCheckUnhealthyThreshold, err)
 	}
 
 	return unhealthyInt, err
@@ -539,7 +539,7 @@ func getHealthCheckHealthy(service *v1.Service) (int, error) {
 
 	healthyInt, err := strconv.Atoi(healthy)
 	if err != nil {
-		return 0, fmt.Errorf("failed to retireve health check healthy treshold %s - %s", annoVultrHealthCheckHealthyThreshold, err)
+		return 0, fmt.Errorf("failed to retrieve health check healthy treshold %s - %s", annoVultrHealthCheckHealthyThreshold, err)
 	}
 
 	return healthyInt, err
@@ -566,7 +566,7 @@ func buildForwardingRules(service *v1.Service) ([]govultr.ForwardingRule, error)
 
 	defaultProtocol := getLBProtocol(service)
 
-	httpsPorts, err := getHttpsPorts(service)
+	httpsPorts, err := getHTTPSPorts(service)
 	if err != nil {
 		return nil, err
 	}
@@ -580,7 +580,7 @@ func buildForwardingRules(service *v1.Service) ([]govultr.ForwardingRule, error)
 			if getSSLPassthrough(service) {
 				frontendProtocol = protocolTCP
 			} else {
-				frontendProtocol = protocolHTTPs
+				frontendProtocol = protocolHTTPS
 			}
 		}
 
@@ -612,7 +612,7 @@ func buildForwardingRules(service *v1.Service) ([]govultr.ForwardingRule, error)
 		}
 		klog.Infof("Frontend: %q, Backend: %q", frontendProtocol, backendProtocol)
 
-		rule, err := buildForwardingRule(&port, frontendProtocol, backendProtocol)
+		rule, err := buildForwardingRule(&port, frontendProtocol, backendProtocol) //nolint
 		if err != nil {
 			return nil, err
 		}
@@ -627,13 +627,13 @@ func buildForwardingRule(port *v1.ServicePort, protocol, backendProtocol string)
 	var rule govultr.ForwardingRule
 
 	if port.Protocol == portProtocolUDP {
-		return nil, fmt.Errorf("TCP protocol is only supported: recieved %s", port.Protocol)
+		return nil, fmt.Errorf("TCP protocol is only supported: received %s", port.Protocol)
 	}
 
 	rule.FrontendProtocol = protocol
 	rule.BackendProtocol = backendProtocol
 
-	klog.V(3).Infof("Rule: %+v\n", rule)
+	klog.V(3).Infof("Rule: %+v\n", rule) //nolint
 
 	rule.FrontendPort = int(port.Port)
 	rule.BackendPort = int(port.NodePort)
@@ -650,8 +650,8 @@ func getLBProtocol(service *v1.Service) string {
 	return protocol
 }
 
-func getHttpsPorts(service *v1.Service) (map[int32]bool, error) {
-	ports, ok := service.Annotations[annoVultrLbHttpsPorts]
+func getHTTPSPorts(service *v1.Service) (map[int32]bool, error) {
+	ports, ok := service.Annotations[annoVultrLbHTTPSPorts]
 	if !ok {
 		return nil, nil
 	}
@@ -664,7 +664,7 @@ func getHttpsPorts(service *v1.Service) (map[int32]bool, error) {
 		if err != nil {
 			return nil, err
 		}
-		portInt[int32(p)] = true
+		portInt[int32(p)] = true //nolint could cause integer overflow if p > 32-bits
 	}
 	return portInt, nil
 }
@@ -762,7 +762,7 @@ func buildFirewallRules(service *v1.Service) ([]govultr.LBFirewallRule, error) {
 		fwRule := govultr.LBFirewallRule{}
 
 		rules := strings.Split(v, ",")
-		if len(rules) != 2 {
+		if len(rules) != 2 { //nolint
 			return nil, fmt.Errorf("loadbalancer fw rules : %s invalid configuration", rules)
 		}
 		source := rules[0]
@@ -794,7 +794,6 @@ func getFirewallRules(service *v1.Service) string {
 }
 
 func getVPC(service *v1.Service) (string, error) {
-
 	var vpc string
 	pn, pnOk := service.Annotations[annoVultrPrivateNetwork]
 	v, vpcOk := service.Annotations[annoVultrVPC]
@@ -809,7 +808,7 @@ func getVPC(service *v1.Service) (string, error) {
 		return "", nil
 	}
 
-	if strings.ToLower(vpc) == "false" {
+	if strings.EqualFold(vpc, "false") {
 		return "", nil
 	}
 
@@ -820,7 +819,7 @@ func getVPC(service *v1.Service) (string, error) {
 	}
 
 	pnID := ""
-	for _, v := range m.Interfaces {
+	for _, v := range m.Interfaces { //nolint
 		if v.NetworkV2ID != "" {
 			pnID = v.NetworkV2ID
 			break
@@ -840,7 +839,7 @@ func getBackendProtocol(service *v1.Service) string {
 	case "http":
 		return protocolHTTP
 	case "https":
-		return protocolHTTPs
+		return protocolHTTPS
 	case "tcp":
 		return protocolTCP
 	default:
