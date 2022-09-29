@@ -8,7 +8,7 @@
 * Removes `github.com/pkg/errors` in favor of built-in `fmt`: [PR #120](https://github.com/vultr/vultr-cloud-controller-manager/pull/120)
 * Updates `golang.org/x/oauth2`: [PR #120](https://github.com/vultr/vultr-cloud-controller-manager/pull/120)
 * Fixes a lot of `golangci-lint` issues: [PR #120](https://github.com/vultr/vultr-cloud-controller-manager/pull/120)
-* Adds functionality to define "backend" protocol: [PR #120](https://github.com/vultr/vultr-cloud-controller-manager/pull/118)
+* Adds annotation to define "backend" protocol: [PR #118](https://github.com/vultr/vultr-cloud-controller-manager/pull/118)
 * Updates to `govultr` from `2.16.0` to `2.17.2`: [PR #103](https://github.com/vultr/vultr-cloud-controller-manager/pull/103)
 
 [CCM Container v0.7.0](https://hub.docker.com/repository/docker/vultr/vultr-cloud-controller-manager)
