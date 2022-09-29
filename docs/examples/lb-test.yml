@@ -1,0 +1,52 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: cert
+type: Opaque
+data:
+  tls.key: |
+    replace_me
+  tls.crt: |
+    replace_me
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: test
+  annotations:
+    service.beta.kubernetes.io/vultr-loadbalancer-protocol: "https"
+    service.beta.kubernetes.io/vultr-loadbalancer-backend-protocol: "http"
+    service.beta.kubernetes.io/vultr-loadbalancer-ssl: "cert"
+    service.beta.kubernetes.io/vultr-loadbalancer-ssl-pass-through: "false"
+spec:
+  type: LoadBalancer
+  selector:
+    app: test
+  ports:
+  - name: http
+    port: 443
+    targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test
+  annotations:
+    app: test
+spec:
+  selector:
+    matchLabels:
+      app: test
+  template:
+    metadata:
+      labels:
+        app: test
+    spec:
+      containers:
+        - name: test
+          image: nginx
+          ports:
+          - name: http
+            containerPort: 8080
+            protocol: TCP
+          imagePullPolicy: Always
