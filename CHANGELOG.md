@@ -1,10 +1,7 @@
 # Change Log
 
-## v0.7.1 (2022-09-30)
+## v0.7.0 (2022-09-30)
 * Adds goreleaser: [PR #126](https://github.com/vultr/vultr-cloud-controller-manager/pull/126)
-* Includes all `v0.7.0` updates
-
-## v0.7.0 (2022-09-29)
 * Updates various `k8s.io` components from `v0.22.9` to `v0.24.6`: [PR #120](https://github.com/vultr/vultr-cloud-controller-manager/pull/120)
 * Moves from Go 1.17 to Go 1.19: [PR #120](https://github.com/vultr/vultr-cloud-controller-manager/pull/120)
 * Adds `golangci-lint`: [PR #120](https://github.com/vultr/vultr-cloud-controller-manager/pull/120)
