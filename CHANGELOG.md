@@ -1,5 +1,18 @@
 # Change Log
 
+## v0.7.0 (2022-09-29)
+* Updates various `k8s.io` components from `v0.22.9` to `v0.24.6`: [PR #120](https://github.com/vultr/vultr-cloud-controller-manager/pull/120)
+* Moves from Go 1.17 to Go 1.19: [PR #120](https://github.com/vultr/vultr-cloud-controller-manager/pull/120)
+* Adds `golangci-lint`: [PR #120](https://github.com/vultr/vultr-cloud-controller-manager/pull/120)
+* Updates `klog` version: [PR #120](https://github.com/vultr/vultr-cloud-controller-manager/pull/120)
+* Removes `github.com/pkg/errors` in favor of built-in `fmt`: [PR #120](https://github.com/vultr/vultr-cloud-controller-manager/pull/120)
+* Updates `golang.org/x/oauth2`: [PR #120](https://github.com/vultr/vultr-cloud-controller-manager/pull/120)
+* Fixes a lot of `golangci-lint` issues: [PR #120](https://github.com/vultr/vultr-cloud-controller-manager/pull/120)
+* Adds annotation to define "backend" protocol: [PR #118](https://github.com/vultr/vultr-cloud-controller-manager/pull/118)
+* Updates to `govultr` from `2.16.0` to `2.17.2`: [PR #103](https://github.com/vultr/vultr-cloud-controller-manager/pull/103)
+
+[CCM Container v0.7.0](https://hub.docker.com/repository/docker/vultr/vultr-cloud-controller-manager)
+
 ## v0.6.0 (2021-05-13)
 * VPC changes by @ddymko in https://github.com/vultr/vultr-cloud-controller-manager/pull/87
 * bumping the 22 patches from 7 to 9 by @ddymko in https://github.com/vultr/vultr-cloud-controller-manager/pull/89
