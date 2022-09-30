@@ -1,27 +1,30 @@
-# This is an example goreleaser.yaml file with some sane defaults.
-# Make sure to check the documentation at http://goreleaser.com
-env:
-  - CGO_ENABLED=0
 before:
   hooks:
-    - go test ./...
+    - go mod download
+    - go generate ./...
 
 builds:
   -
+    main: ./main.go
+
+    binary: vultr-cloud-controller-manager
+
+    env:
+    - CGO_ENABLED=0
+
     mod_timestamp: '{{ .CommitTimestamp }}'
     flags:
       - -trimpath #removes all file system paths from the compiled executable
+      - -ldflags
+      - '-s -w'
     goos:
       - linux
     goarch:
       - amd64
-      - '386'
-      - arm
-      - arm64
-    binary: '{{ .ProjectName }}_v{{ .Version }}_{{ .Os }}_{{ .Arch }}'
 
 archives:
-  - format: zip
+  -
+    format: zip
     files:
       - none*
     name_template: '{{ .ProjectName }}_v{{ .Version }}_{{ .Os }}_{{ .Arch }}'
@@ -30,10 +33,14 @@ checksum:
   name_template: '{{ .ProjectName }}_v{{ .Version }}_SHA256SUMS'
   algorithm: sha256
 
+dockers:
+  - dockerfile: Dockerfile.goreleaser
+    image_templates:
+      - "ghcr.io/vultr/vultr-cloud-controller-manager/vultr-cloud-controller-manager:release"
+      - "ghcr.io/vultr/vultr-cloud-controller-manager/vultr-cloud-controller-manager:{{ .Tag }}"
+
 release:
-  draft: true
-  extra_files:
-    - glob: "./docs/releases/latest.yml"
+  draft: false
 
 changelog:
-  skip: true
+  skip: false
