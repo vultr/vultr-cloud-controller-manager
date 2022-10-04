@@ -19,7 +19,7 @@ builds:
       - linux
     goarch:
       - amd64
-    binary: '{{ .ProjectName }}_v{{ .Version }}_{{ .Os }}_{{ .Arch }}'
+    binary: vultr-cloud-controller-manager
 
 archives:
   -
