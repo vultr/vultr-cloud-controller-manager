@@ -6,7 +6,7 @@ WORKDIR /workspace
 
 COPY . .
 
-RUN CGO_ENABLED=0 go build -trimpath -o vultr-cloud-controller-manager .
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags "-s -w -X main.version=$VERSION" -o vultr-cloud-controller-manager .
 
 FROM alpine:latest
 RUN apk add --no-cache ca-certificates
