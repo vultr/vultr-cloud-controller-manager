@@ -7,8 +7,6 @@ builds:
   -
     main: ./main.go
 
-    binary: vultr-cloud-controller-manager
-
     env:
     - CGO_ENABLED=0
 
