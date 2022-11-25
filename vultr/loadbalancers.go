@@ -765,10 +765,13 @@ func buildFirewallRules(service *v1.Service) ([]govultr.LBFirewallRule, error) {
 		if len(rules) != 2 { //nolint
 			return nil, fmt.Errorf("loadbalancer fw rules : %s invalid configuration", rules)
 		}
+
 		source := rules[0]
-		_, _, err := net.ParseCIDR(source)
-		if err != nil {
-			return nil, fmt.Errorf("loadbalancer fw rules : source %s is invalid", source)
+		if source != "cloudflare" {
+			_, _, err := net.ParseCIDR(source)
+			if err != nil {
+				return nil, fmt.Errorf("loadbalancer fw rules : source %s is invalid", source)
+			}
 		}
 
 		port, err := strconv.Atoi(rules[1])
