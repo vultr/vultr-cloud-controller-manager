@@ -92,9 +92,9 @@ func TestLoadbalancers_EnsureLoadBalancer(t *testing.T) {
 
 	svc := &v1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:        "lb-name",
-			Namespace:   v1.NamespaceDefault,
-			UID:         "lb-name",
+			Name:      "lb-name",
+			Namespace: v1.NamespaceDefault,
+			UID:       "lb-name",
 			Annotations: map[string]string{
 				annoVultrFirewallRules: "cloudflare,80;10.0.0.0/8,80",
 			},
