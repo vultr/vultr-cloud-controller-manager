@@ -32,7 +32,7 @@ var Options struct {
 
 type cloud struct {
 	client        *govultr.Client
-	instances     cloudprovider.Instances
+	instances     cloudprovider.InstancesV2
 	zones         cloudprovider.Zones
 	loadbalancers cloudprovider.LoadBalancer
 }
@@ -78,7 +78,7 @@ func newCloud() (cloudprovider.Interface, error) {
 
 	return &cloud{
 		client:        vultr,
-		instances:     newInstances(vultr),
+		instances:     newInstancesV2(vultr),
 		zones:         newZones(vultr, strings.ToLower(meta.Region.RegionCode)),
 		loadbalancers: newLoadbalancers(vultr, strings.ToLower(meta.Region.RegionCode)),
 	}, nil
@@ -88,21 +88,22 @@ func (c *cloud) Initialize(clientBuilder cloudprovider.ControllerClientBuilder, 
 }
 
 func (c *cloud) LoadBalancer() (cloudprovider.LoadBalancer, bool) {
+	klog.V(5).Info("called LoadBalancer") //nolint
 	return c.loadbalancers, true
 }
 
 func (c *cloud) Instances() (cloudprovider.Instances, bool) {
-	return c.instances, true
+	return nil, false
 }
 
 func (c *cloud) InstancesV2() (cloudprovider.InstancesV2, bool) {
-	// TODO we will need to implement this but for now it is not required and experimental
-	return nil, false
+	klog.V(5).Info("called InstancesV2") //nolint
+	return c.instances, true
 }
 
 func (c *cloud) Zones() (cloudprovider.Zones, bool) {
 	klog.V(5).Info("called Zones") //nolint
-	return c.zones, true
+	return nil, false
 }
 
 func (c *cloud) Clusters() (cloudprovider.Clusters, bool) {
