@@ -1,5 +1,13 @@
 # Change Log
 
+## [v0.8.0](https://github.com/vultr/vultr-cloud-controller-manager/compare/v0.7.0...v0.8.0) (2023-02-01)
+* Add support for cloudflare source in loadbalaner firewall rules [PR #139](https://github.com/vultr/vultr-cloud-controller-manager/pull/139)
+* implemented instancesv2 [PR #150](https://github.com/vultr/vultr-cloud-controller-manager/pull/150)
+
+### New Contributors
+* @reubit made their first contribution in [PR #139](https://github.com/vultr/vultr-cloud-controller-manager/pull/139)
+* @happytreees made their first contribution in [PR #150](https://github.com/vultr/vultr-cloud-controller-manager/pull/150)
+
 ## v0.7.0 (2022-09-30)
 * Adds goreleaser: [PR #126](https://github.com/vultr/vultr-cloud-controller-manager/pull/126)
 * Updates various `k8s.io` components from `v0.22.9` to `v0.24.6`: [PR #120](https://github.com/vultr/vultr-cloud-controller-manager/pull/120)
@@ -48,7 +56,7 @@
 ## v0.2.1 (2021-06-15)
 * Adding ability to change UserAgent
 * Include binary builds on tagged releases
-  
+
 [CCM Container v0.2.1](https://hub.docker.com/repository/docker/vultr/vultr-cloud-controller-manager)
 
 
@@ -60,7 +68,7 @@
 [CCM Container v0.2.0](https://hub.docker.com/repository/docker/vultr/vultr-cloud-controller-manager)
 
 ## v0.1.3 (2021-04-26)
-* Fix error message on metadata retrieval 
+* Fix error message on metadata retrieval
 
 [CCM Container v0.1.3](https://hub.docker.com/repository/docker/vultr/vultr-cloud-controller-manager)
 
@@ -71,7 +79,7 @@
 [CCM Container v0.1.2](https://hub.docker.com/repository/docker/vultr/vultr-cloud-controller-manager)
 
 ## v0.1.1 (2020-12-14)
-* Bumped GoVultr from v2.0.0 - v2.2.0 
+* Bumped GoVultr from v2.0.0 - v2.2.0
 * Adding proxy protocol support for Load Balancer service [24](https://github.com/vultr/vultr-cloud-controller-manager/pull/34)
 * Adding nightly yaml
 
@@ -79,26 +87,26 @@
 
 
 ## v0.1.0 (2020-11-24)
-* Bumping Kubernetes dependencies from 1.18.5 to 1.19.4 
+* Bumping Kubernetes dependencies from 1.18.5 to 1.19.4
 * Bumped GoVultr to v2.0.0 - This will use UUIDs for node IDs and not work on clusters provisioned by a CCM prior to v0.1.0
 
 [CCM Container v0.1.0](https://hub.docker.com/repository/docker/vultr/vultr-cloud-controller-manager)
 
 
 ## v0.0.5 (2020-06-30)
-* Bumping Kubernetes dependencies from 1.17.5 to 1.18.5 
+* Bumping Kubernetes dependencies from 1.17.5 to 1.18.5
 
 [CCM Container v0.0.5](https://hub.docker.com/layers/vultr/vultr-cloud-controller-manager/v0.0.5/images/sha256-db70482087faa632e4852ddd69ad1586f2efdf0876daae2ace158d7f0721cf2f?context=repo)
 
 ## v0.0.4 (2020-06-01)
-* Bumping Vultr Metadata client to v1.0.1 to support new Region South Korea 
+* Bumping Vultr Metadata client to v1.0.1 to support new Region South Korea
 
 [CCM Container v0.0.4](https://hub.docker.com/layers/vultr/vultr-cloud-controller-manager/v0.0.4/images/sha256-050a3bf2cf1726caa1295831a6f50b24efc10da2d76ea98a24f79d20bf8c294b?context=repo)
 
 ## v0.0.3 (2020-05-21)
 * Updated Kubernetes dependency to 1.17.5
 * Updated GoVultr dependency to v0.4.1
-* Added Metadata client dependency which removes need to define region ID in yaml 
+* Added Metadata client dependency which removes need to define region ID in yaml
 * Added a more defined RBAC
 
 [CCM Container v0.0.3](https://hub.docker.com/layers/vultr/vultr-cloud-controller-manager/v0.0.3/images/sha256-bde33d08802dd9211d3faa66007639e605eded89d13d77ba9cd4cfae9161f6e9?context=repo)
@@ -110,7 +118,7 @@
 [CCM Container v0.0.2](https://hub.docker.com/layers/vultr/vultr-cloud-controller-manager/v0.0.2/images/sha256-96c6ed0293fb6c444dfcf927d775798a1eec3f2de39e2155600677441531e4a8?context=repo)
 
 ## v0.0.1 (2020-02-28)
-* Initial Release supports 
+* Initial Release supports
     * NodeController
     * ZoneController
 
