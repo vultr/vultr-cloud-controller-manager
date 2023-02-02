@@ -45,7 +45,6 @@ func (i *instancesv2) InstanceExists(ctx context.Context, node *v1.Node) (bool, 
 		log.Printf("instance(%s) status is: %s", newNode.Label, newNode.Status) //nolint
 		return true, nil
 	}
-
 	return false, nil
 }
 
@@ -60,7 +59,6 @@ func (i *instancesv2) InstanceShutdown(ctx context.Context, node *v1.Node) (bool
 	if newNode.PowerStatus != "running" {
 		return true, nil
 	}
-
 	return false, nil
 }
 
@@ -85,7 +83,6 @@ func (i *instancesv2) InstanceMetadata(ctx context.Context, node *v1.Node) (*clo
 	}
 
 	log.Printf("returned node metadata: %v", vultrNode) //nolint
-
 	return &vultrNode, nil
 }
 
@@ -111,7 +108,6 @@ func (i *instancesv2) nodeAddresses(instance *govultr.Instance) ([]v1.NodeAddres
 		v1.NodeAddress{Type: v1.NodeInternalIP, Address: instance.InternalIP}, // private IP
 		v1.NodeAddress{Type: v1.NodeExternalIP, Address: instance.MainIP},     // public IP
 	)
-
 	return addresses, nil
 }
 
@@ -139,18 +135,12 @@ func (i *instancesv2) getVultrInstance(ctx context.Context, node *v1.Node) (*gov
 			log.Printf("instance(%s) by ID failed: %e", node.Spec.ProviderID, err) //nolint
 			return nil, err
 		}
-
 		return newNode, nil
-
-	} else {
-		newNode, err := vultrByName(ctx, i.client, types.NodeName(node.Name))
-		if err != nil {
-			log.Printf("instance(%s) by name failed: %e", node.Name, err) //nolint
-			return nil, err
-		}
-
-		return newNode, nil
-
 	}
-
+	newNode, err := vultrByName(ctx, i.client, types.NodeName(node.Name))
+	if err != nil {
+		log.Printf("instance(%s) by name failed: %e", node.Name, err) //nolint
+		return nil, err
+	}
+	return newNode, nil
 }
