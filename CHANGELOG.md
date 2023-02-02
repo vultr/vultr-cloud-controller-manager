@@ -1,5 +1,8 @@
 # Change Log
 
+## [v0.8.1](https://github.com/vultr/vultr-cloud-controller-manager/compare/v0.8.0...v0.8.1) (2023-02-02)
+* Update instanceV2 to fix instance lookup [PR #152](https://github.com/vultr/vultr-cloud-controller-manager/pull/152)
+
 ## [v0.8.0](https://github.com/vultr/vultr-cloud-controller-manager/compare/v0.7.0...v0.8.0) (2023-02-01)
 * Add support for cloudflare source in loadbalaner firewall rules [PR #139](https://github.com/vultr/vultr-cloud-controller-manager/pull/139)
 * implemented instancesv2 [PR #150](https://github.com/vultr/vultr-cloud-controller-manager/pull/150)
