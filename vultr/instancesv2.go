@@ -38,6 +38,9 @@ func (i *instancesv2) InstanceExists(ctx context.Context, node *v1.Node) (bool, 
 		if strings.Contains(err.Error(), "invalid instance ID") {
 			return false, nil
 		}
+		if strings.Contains(err.Error(), "instance not found") {
+			return false, nil
+		}
 		return false, err
 	}
 
