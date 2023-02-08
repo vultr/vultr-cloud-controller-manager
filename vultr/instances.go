@@ -185,7 +185,8 @@ func vultrByID(ctx context.Context, client *govultr.Client, id string) (*govultr
 // vultrByName returns a vultr instance for a given NodeName.
 // Note that if multiple nodes with the same name exist and error will be thrown.
 func vultrByName(ctx context.Context, client *govultr.Client, nodeName types.NodeName) (*govultr.Instance, error) {
-	listOptions := &govultr.ListOptions{PerPage: 500}
+	listOptions := &govultr.ListOptions{PerPage: 300}
+
 	var instances []govultr.Instance
 	for {
 		i, meta, err := client.Instance.List(ctx, listOptions)
