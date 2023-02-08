@@ -1,5 +1,8 @@
 # Change Log
 
+## [v0.8.2](https://github.com/vultr/vultr-cloud-controller-manager/compare/v0.8.1...v0.8.2) (2023-02-08)
+* Increase page size for instance lookup and add additional error check during instance exists check [PR #154](https://github.com/vultr/vultr-cloud-controller-manager/pull/154)
+
 ## [v0.8.1](https://github.com/vultr/vultr-cloud-controller-manager/compare/v0.8.0...v0.8.1) (2023-02-02)
 * Update instanceV2 to fix instance lookup [PR #152](https://github.com/vultr/vultr-cloud-controller-manager/pull/152)
 
