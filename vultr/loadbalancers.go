@@ -105,13 +105,17 @@ func (l *loadbalancers) GetLoadBalancer(ctx context.Context, clusterName string,
 		return nil, false, err
 	}
 
+	enabledIPv6 := checkEnabledIPv6(service)
+	var ingress []v1.LoadBalancerIngress
+
+	ingress = append(ingress, v1.LoadBalancerIngress{Hostname: lb.Label, IP: lb.IPV4})
+
+	if enabledIPv6 {
+		ingress = append(ingress, v1.LoadBalancerIngress{Hostname: lb.Label, IP: lb.IPV6})
+	}
+
 	return &v1.LoadBalancerStatus{
-		Ingress: []v1.LoadBalancerIngress{
-			{
-				IP:       lb.IPV4,
-				Hostname: lb.Label,
-			},
-		},
+		Ingress: ingress,
 	}, true, nil
 }
 
@@ -148,13 +152,17 @@ func (l *loadbalancers) EnsureLoadBalancer(ctx context.Context, clusterName stri
 			return nil, fmt.Errorf("load-balancer is not yet active - current status: %s", lb2.Status)
 		}
 
+		enabledIPv6 := checkEnabledIPv6(service)
+		var ingress []v1.LoadBalancerIngress
+
+		ingress = append(ingress, v1.LoadBalancerIngress{Hostname: lb2.Label, IP: lb2.IPV4})
+
+		if enabledIPv6 {
+			ingress = append(ingress, v1.LoadBalancerIngress{Hostname: lb2.Label, IP: lb2.IPV6})
+		}
+
 		return &v1.LoadBalancerStatus{
-			Ingress: []v1.LoadBalancerIngress{
-				{
-					IP:       lb2.IPV4,
-					Hostname: lb2.Label,
-				},
-			},
+			Ingress: ingress,
 		}, nil
 	}
 
@@ -848,4 +856,24 @@ func getBackendProtocol(service *v1.Service) string {
 	default:
 		return ""
 	}
+}
+
+// checkEnabledIPv6 checks whether or not IPv6 is requested on the resource
+func checkEnabledIPv6(service *v1.Service) bool {
+	if family := service.Spec.IPFamilies; len(family) >= 1 {
+		for _, fam := range family {
+			if fam == "IPv6" {
+				return true
+			}
+		}
+	}
+
+	if service.Spec.IPFamilyPolicy != nil {
+		policy := *service.Spec.IPFamilyPolicy
+		if policy == v1.IPFamilyPolicyPreferDualStack || policy == v1.IPFamilyPolicyRequireDualStack {
+			return true
+		}
+	}
+
+	return false
 }
