@@ -153,6 +153,10 @@ func (i *instances) nodeAddresses(instance *govultr.Instance) ([]v1.NodeAddress,
 		v1.NodeAddress{Type: v1.NodeExternalIP, Address: instance.MainIP},     // public IP
 	)
 
+	if instance.V6MainIP != "" {
+		addresses = append(addresses, v1.NodeAddress{Type: v1.NodeExternalIP, Address: instance.V6MainIP}) // IPv6
+	}
+
 	return addresses, nil
 }
 
