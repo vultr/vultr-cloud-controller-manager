@@ -1,4 +1,6 @@
 # Change Log
+## [v0.9.0](https://github.com/vultr/vultr-cloud-controller-manager/compare/v0.8.2...v0.9.0) (2023-03-18)
+* Added IPv6 support for VLB and worker nodes [PR #163](https://github.com/vultr/vultr-cloud-controller-manager/pull/163)
 
 ## [v0.8.2](https://github.com/vultr/vultr-cloud-controller-manager/compare/v0.8.1...v0.8.2) (2023-02-08)
 * Increase page size for instance lookup and add additional error check during instance exists check [PR #154](https://github.com/vultr/vultr-cloud-controller-manager/pull/154)

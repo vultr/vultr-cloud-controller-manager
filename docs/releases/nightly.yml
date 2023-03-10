@@ -142,7 +142,8 @@ spec:
           effect: NoSchedule
       hostNetwork: true
       containers:
-        - image: vultr/vultr-cloud-controller-manager:nightly
+        - image: vultr/vultr-cloud-controller-manager:v0.9.0
+          imagePullPolicy: Always
           name: vultr-cloud-controller-manager
           command:
             - "/vultr-cloud-controller-manager"
@@ -150,7 +151,6 @@ spec:
             - "--allow-untagged-cloud=true"
             - "--authentication-skip-lookup=true"
             - "--v=3"
-          imagePullPolicy: "Always"
           env:
             - name: VULTR_API_KEY
               valueFrom:
