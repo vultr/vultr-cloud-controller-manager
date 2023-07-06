@@ -209,7 +209,6 @@ func vultrByName(ctx context.Context, client *govultr.Client, nodeName types.Nod
 		}
 
 		listOptions.Cursor = meta.Links.Next
-		continue
 	}
 
 	if len(instances) == 0 {
