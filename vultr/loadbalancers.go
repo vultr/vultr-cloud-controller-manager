@@ -119,7 +119,7 @@ func (l *loadbalancers) GetLoadBalancer(ctx context.Context, clusterName string,
 	}, true, nil
 }
 
-func (l *loadbalancers) GetLoadBalancerName(ctx context.Context, clusterName string, service *v1.Service) string {
+func (l *loadbalancers) GetLoadBalancerName(_ context.Context, _ string, service *v1.Service) string {
 	return getDefaultLBName(service)
 }
 
@@ -264,9 +264,9 @@ func (l *loadbalancers) lbByName(ctx context.Context, lbName string) (*govultr.L
 
 		if meta.Links.Next == "" {
 			break
-		} else {
-			listOptions.Cursor = meta.Links.Next
 		}
+
+		listOptions.Cursor = meta.Links.Next
 	}
 
 	return nil, errLbNotFound
