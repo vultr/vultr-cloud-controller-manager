@@ -84,7 +84,7 @@ func newCloud() (cloudprovider.Interface, error) {
 	}, nil
 }
 
-func (c *cloud) Initialize(clientBuilder cloudprovider.ControllerClientBuilder, stop <-chan struct{}) {
+func (c *cloud) Initialize(_ cloudprovider.ControllerClientBuilder, _ <-chan struct{}) {
 }
 
 func (c *cloud) LoadBalancer() (cloudprovider.LoadBalancer, bool) {

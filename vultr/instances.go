@@ -95,12 +95,12 @@ func (i *instances) InstanceTypeByProviderID(ctx context.Context, providerID str
 }
 
 // AddSSHKeyToAllInstances is not implemented.
-func (i *instances) AddSSHKeyToAllInstances(ctx context.Context, user string, keyData []byte) error {
+func (i *instances) AddSSHKeyToAllInstances(_ context.Context, _ string, _ []byte) error {
 	return cloudprovider.NotImplemented
 }
 
 // CurrentNodeName returns the hostname as a NodeName.
-func (i *instances) CurrentNodeName(ctx context.Context, hostname string) (types.NodeName, error) {
+func (i *instances) CurrentNodeName(_ context.Context, hostname string) (types.NodeName, error) {
 	return types.NodeName(hostname), nil
 }
 
@@ -206,10 +206,9 @@ func vultrByName(ctx context.Context, client *govultr.Client, nodeName types.Nod
 
 		if meta.Links.Next == "" {
 			break
-		} else {
-			listOptions.Cursor = meta.Links.Next
-			continue
 		}
+
+		listOptions.Cursor = meta.Links.Next
 	}
 
 	if len(instances) == 0 {
