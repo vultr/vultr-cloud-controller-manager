@@ -179,7 +179,7 @@ func vultrIDFromProviderID(providerID string) (string, error) {
 
 // vultrByID returns a vultr instance for the given id.
 func vultrByID(ctx context.Context, client *govultr.Client, id string) (*govultr.Instance, error) {
-	instance, _, err := client.Instance.Get(ctx, id)
+	instance, _, err := client.Instance.Get(ctx, id) //nolint:bodyclose
 	if err != nil {
 		return nil, err
 	}
@@ -193,7 +193,7 @@ func vultrByName(ctx context.Context, client *govultr.Client, nodeName types.Nod
 
 	var instances []govultr.Instance
 	for {
-		i, meta, _, err := client.Instance.List(ctx, listOptions)
+		i, meta, _, err := client.Instance.List(ctx, listOptions) //nolint:bodyclose
 		if err != nil {
 			return nil, err
 		}
