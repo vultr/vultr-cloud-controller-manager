@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/spf13/pflag"
-	"github.com/vultr/govultr/v2"
+	"github.com/vultr/govultr/v3"
 	"github.com/vultr/metadata"
 	"golang.org/x/oauth2"
 	cloudprovider "k8s.io/cloud-provider"

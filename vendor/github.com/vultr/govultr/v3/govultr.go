@@ -6,7 +6,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
+	"net"
 	"net/http"
 	"net/url"
 	"strings"
@@ -16,18 +17,12 @@ import (
 )
 
 const (
-	version     = "2.17.2"
+	version     = "3.1.0"
 	defaultBase = "https://api.vultr.com"
 	userAgent   = "govultr/" + version
 	rateLimit   = 500 * time.Millisecond
 	retryLimit  = 3
 )
-
-// APIKey contains a users API Key for interacting with the API
-type APIKey struct {
-	// API Key
-	key string
-}
 
 // RequestBody is used to create JSON bodies for one off calls
 type RequestBody map[string]interface{}
@@ -50,6 +45,7 @@ type Client struct {
 	BareMetalServer BareMetalServerService
 	Billing         BillingService
 	BlockStorage    BlockStorageService
+	Database        DatabaseService
 	Domain          DomainService
 	DomainRecord    DomainRecordService
 	FirewallGroup   FirewallGroupService
@@ -80,9 +76,23 @@ type RequestCompletionCallback func(*http.Request, *http.Response)
 
 // NewClient returns a Vultr API Client
 func NewClient(httpClient *http.Client) *Client {
-
 	if httpClient == nil {
-		httpClient = http.DefaultClient
+		httpClient = &http.Client{
+			Transport: &http.Transport{
+				DialContext: (&net.Dialer{
+					Timeout:   30 * time.Second,
+					KeepAlive: 30 * time.Second,
+					DualStack: true,
+				}).DialContext,
+				MaxIdleConns:          100,
+				IdleConnTimeout:       90 * time.Second,
+				TLSHandshakeTimeout:   10 * time.Second,
+				ExpectContinueTimeout: 1 * time.Second,
+				MaxIdleConnsPerHost:   -1,
+				DisableKeepAlives:     true,
+			},
+			Timeout: 5 * time.Second,
+		}
 	}
 
 	baseURL, _ := url.Parse(defaultBase)
@@ -105,6 +115,7 @@ func NewClient(httpClient *http.Client) *Client {
 	client.BareMetalServer = &BareMetalServerServiceHandler{client}
 	client.Billing = &BillingServiceHandler{client}
 	client.BlockStorage = &BlockStorageServiceHandler{client}
+	client.Database = &DatabaseServiceHandler{client}
 	client.Domain = &DomainServiceHandler{client}
 	client.DomainRecord = &DomainRecordsServiceHandler{client}
 	client.FirewallGroup = &FireWallGroupServiceHandler{client}
@@ -137,8 +148,8 @@ func (c *Client) NewRequest(ctx context.Context, method, uri string, body interf
 
 	buf := new(bytes.Buffer)
 	if body != nil {
-		if err = json.NewEncoder(buf).Encode(body); err != nil {
-			return nil, err
+		if err2 := json.NewEncoder(buf).Encode(body); err2 != nil {
+			return nil, err2
 		}
 	}
 
@@ -157,10 +168,10 @@ func (c *Client) NewRequest(ctx context.Context, method, uri string, body interf
 // DoWithContext sends an API Request and returns back the response. The API response is checked  to see if it was
 // a successful call. A successful call is then checked to see if we need to unmarshal since some resources
 // have their own implements of unmarshal.
-func (c *Client) DoWithContext(ctx context.Context, r *http.Request, data interface{}) error {
+func (c *Client) DoWithContext(ctx context.Context, r *http.Request, data interface{}) (*http.Response, error) {
 	rreq, err := retryablehttp.FromRequest(r)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	rreq = rreq.WithContext(ctx)
@@ -172,26 +183,32 @@ func (c *Client) DoWithContext(ctx context.Context, r *http.Request, data interf
 	}
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	defer res.Body.Close()
+	defer func() {
+		if rerr := res.Body.Close(); err == nil {
+			err = rerr
+		}
+	}()
 
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 	if err != nil {
-		return err
+		return nil, err
 	}
+
+	res.Body = io.NopCloser(bytes.NewBuffer(body))
 
 	if res.StatusCode >= http.StatusOK && res.StatusCode <= http.StatusNoContent {
 		if data != nil {
 			if err := json.Unmarshal(body, data); err != nil {
-				return err
+				return nil, err
 			}
 		}
-		return nil
+		return res, nil
 	}
 
-	return errors.New(string(body))
+	return res, errors.New(string(body))
 }
 
 // SetBaseURL Overrides the default BaseUrl
@@ -208,9 +225,9 @@ func (c *Client) SetBaseURL(baseURL string) error {
 
 // SetRateLimit Overrides the default rateLimit. For performance, exponential
 // backoff is used with the minimum wait being 2/3rds the time provided.
-func (c *Client) SetRateLimit(time time.Duration) {
-	c.client.RetryWaitMin = time / 3 * 2
-	c.client.RetryWaitMax = time
+func (c *Client) SetRateLimit(t time.Duration) {
+	c.client.RetryWaitMin = t / 3 * 2
+	c.client.RetryWaitMax = t
 }
 
 // SetUserAgent Overrides the default UserAgent
@@ -236,7 +253,7 @@ func (c *Client) vultrErrorHandler(resp *http.Response, err error, numTries int)
 		return nil, fmt.Errorf("gave up after %d attempts, last error unavailable (resp == nil)", numTries)
 	}
 
-	buf, err := ioutil.ReadAll(resp.Body)
+	buf, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("gave up after %d attempts, last error unavailable (error reading response body: %v)", numTries, err)
 	}
