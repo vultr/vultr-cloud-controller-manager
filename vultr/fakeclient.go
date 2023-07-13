@@ -3,6 +3,7 @@ package vultr
 
 import (
 	"context"
+	"net/http"
 
 	"github.com/vultr/govultr/v3"
 )
@@ -22,7 +23,7 @@ type FakeInstance struct {
 }
 
 // ListVPCInfo returns VPC info (not implemented, yet)
-func (f *FakeInstance) ListVPCInfo(_ context.Context, _ string, _ *govultr.ListOptions) ([]govultr.VPCInfo, *govultr.Meta, error) {
+func (f *FakeInstance) ListVPCInfo(_ context.Context, _ string, _ *govultr.ListOptions) ([]govultr.VPCInfo, *govultr.Meta, *http.Response, error) {
 	panic("implement me")
 }
 
@@ -37,12 +38,12 @@ func (f *FakeInstance) DetachVPC(_ context.Context, _, _ string) error {
 }
 
 // Create creates an instance (not implemented, yet)
-func (f *FakeInstance) Create(_ context.Context, _ *govultr.InstanceCreateReq) (*govultr.Instance, error) {
+func (f *FakeInstance) Create(_ context.Context, _ *govultr.InstanceCreateReq) (*govultr.Instance, *http.Response, error) {
 	panic("implement me")
 }
 
 // Get returns instance
-func (f *FakeInstance) Get(_ context.Context, _ string) (*govultr.Instance, error) {
+func (f *FakeInstance) Get(_ context.Context, _ string) (*govultr.Instance, *http.Response, error) {
 	return &govultr.Instance{
 		ID:           "75b95d83-47e2-4c0f-b273-cc9ce2b456f8",
 		MainIP:       "149.28.225.110",
@@ -55,11 +56,11 @@ func (f *FakeInstance) Get(_ context.Context, _ string) (*govultr.Instance, erro
 		Plan:         "vc2-4c-8gb",
 		Label:        "ccm-test",
 		InternalIP:   "10.1.95.4",
-	}, nil
+	}, nil, nil
 }
 
 // Update updates and instance
-func (f *FakeInstance) Update(_ context.Context, _ string, _ *govultr.InstanceUpdateReq) (*govultr.Instance, error) {
+func (f *FakeInstance) Update(_ context.Context, _ string, _ *govultr.InstanceUpdateReq) (*govultr.Instance, *http.Response, error) {
 	panic("implement me")
 }
 
@@ -69,7 +70,7 @@ func (f *FakeInstance) Delete(_ context.Context, _ string) error {
 }
 
 // List lists instances
-func (f *FakeInstance) List(_ context.Context, _ *govultr.ListOptions) ([]govultr.Instance, *govultr.Meta, error) {
+func (f *FakeInstance) List(_ context.Context, _ *govultr.ListOptions) ([]govultr.Instance, *govultr.Meta, *http.Response, error) {
 	return []govultr.Instance{
 			{
 				ID:           "75b95d83-47e2-4c0f-b273-cc9ce2b456f8",
@@ -90,7 +91,7 @@ func (f *FakeInstance) List(_ context.Context, _ *govultr.ListOptions) ([]govult
 				Next: "",
 				Prev: "",
 			},
-		}, nil
+		}, nil, nil
 }
 
 // Start starts an instance
@@ -109,7 +110,7 @@ func (f *FakeInstance) Reboot(_ context.Context, _ string) error {
 }
 
 // Reinstall reinstalls an instance
-func (f *FakeInstance) Reinstall(_ context.Context, _ string, _ *govultr.ReinstallReq) (*govultr.Instance, error) {
+func (f *FakeInstance) Reinstall(_ context.Context, _ string, _ *govultr.ReinstallReq) (*govultr.Instance, *http.Response, error) {
 	panic("implement me")
 }
 
@@ -129,22 +130,22 @@ func (f *FakeInstance) MassReboot(_ context.Context, _ []string) error {
 }
 
 // Restore restores an instance
-func (f *FakeInstance) Restore(_ context.Context, _ string, _ *govultr.RestoreReq) error {
+func (f *FakeInstance) Restore(_ context.Context, _ string, _ *govultr.RestoreReq) (*http.Response, error) {
 	panic("implement me")
 }
 
 // GetBandwidth gets bandwidth for an instance
-func (f *FakeInstance) GetBandwidth(_ context.Context, _ string) (*govultr.Bandwidth, error) {
+func (f *FakeInstance) GetBandwidth(_ context.Context, _ string) (*govultr.Bandwidth, *http.Response, error) {
 	panic("implement me")
 }
 
 // GetNeighbors gets neighors for an instance
-func (f *FakeInstance) GetNeighbors(_ context.Context, _ string) (*govultr.Neighbors, error) {
+func (f *FakeInstance) GetNeighbors(_ context.Context, _ string) (*govultr.Neighbors, *http.Response, error) {
 	panic("implement me")
 }
 
 // ListPrivateNetworks gets private networks
-func (f *FakeInstance) ListPrivateNetworks(_ context.Context, _ string, _ *govultr.ListOptions) ([]govultr.PrivateNetwork, *govultr.Meta, error) {
+func (f *FakeInstance) ListPrivateNetworks(_ context.Context, _ string, _ *govultr.ListOptions) ([]govultr.PrivateNetwork, *govultr.Meta, *http.Response, error) {
 	panic("implement me")
 }
 
@@ -159,37 +160,37 @@ func (f *FakeInstance) DetachPrivateNetwork(_ context.Context, _, _ string) erro
 }
 
 // ISOStatus gets ISO status from instance
-func (f *FakeInstance) ISOStatus(_ context.Context, _ string) (*govultr.Iso, error) {
+func (f *FakeInstance) ISOStatus(_ context.Context, _ string) (*govultr.Iso, *http.Response, error) {
 	panic("implement me")
 }
 
 // AttachISO attaches ISO to instance
-func (f *FakeInstance) AttachISO(_ context.Context, _, _ string) error {
+func (f *FakeInstance) AttachISO(_ context.Context, _, _ string) (*http.Response, error) {
 	panic("implement me")
 }
 
 // DetachISO detaches ISO from instance
-func (f *FakeInstance) DetachISO(_ context.Context, _ string) error {
+func (f *FakeInstance) DetachISO(_ context.Context, _ string) (*http.Response, error) {
 	panic("implement me")
 }
 
 // GetBackupSchedule gets instance backup stchedule
-func (f *FakeInstance) GetBackupSchedule(_ context.Context, _ string) (*govultr.BackupSchedule, error) {
+func (f *FakeInstance) GetBackupSchedule(_ context.Context, _ string) (*govultr.BackupSchedule, *http.Response, error) {
 	panic("implement me")
 }
 
 // SetBackupSchedule sets instance backup schedule
-func (f *FakeInstance) SetBackupSchedule(_ context.Context, _ string, _ *govultr.BackupScheduleReq) error {
+func (f *FakeInstance) SetBackupSchedule(_ context.Context, _ string, _ *govultr.BackupScheduleReq) (*http.Response, error) {
 	panic("implement me")
 }
 
 // CreateIPv4 creates an IPv4 association to instance
-func (f *FakeInstance) CreateIPv4(_ context.Context, _ string, _ *bool) (*govultr.IPv4, error) {
+func (f *FakeInstance) CreateIPv4(_ context.Context, _ string, _ *bool) (*govultr.IPv4, *http.Response, error) {
 	panic("implement me")
 }
 
 // ListIPv4 gets IPv4 addresses associated with instance
-func (f *FakeInstance) ListIPv4(_ context.Context, _ string, _ *govultr.ListOptions) ([]govultr.IPv4, *govultr.Meta, error) {
+func (f *FakeInstance) ListIPv4(_ context.Context, _ string, _ *govultr.ListOptions) ([]govultr.IPv4, *govultr.Meta, *http.Response, error) {
 	panic("implement me")
 }
 
@@ -199,7 +200,7 @@ func (f *FakeInstance) DeleteIPv4(_ context.Context, _, _ string) error {
 }
 
 // ListIPv6 lists IPv6 addresses associated with instance
-func (f *FakeInstance) ListIPv6(_ context.Context, _ string, _ *govultr.ListOptions) ([]govultr.IPv6, *govultr.Meta, error) {
+func (f *FakeInstance) ListIPv6(_ context.Context, _ string, _ *govultr.ListOptions) ([]govultr.IPv6, *govultr.Meta, *http.Response, error) {
 	panic("implement me")
 }
 
@@ -209,7 +210,7 @@ func (f *FakeInstance) CreateReverseIPv6(_ context.Context, _ string, _ *govultr
 }
 
 // ListReverseIPv6 gets reverse IP for IPv6 on instance
-func (f *FakeInstance) ListReverseIPv6(_ context.Context, _ string) ([]govultr.ReverseIP, error) {
+func (f *FakeInstance) ListReverseIPv6(_ context.Context, _ string) ([]govultr.ReverseIP, *http.Response, error) {
 	panic("implement me")
 }
 
@@ -229,12 +230,12 @@ func (f *FakeInstance) DefaultReverseIPv4(_ context.Context, _, _ string) error 
 }
 
 // GetUserData returns instance userdata
-func (f *FakeInstance) GetUserData(_ context.Context, _ string) (*govultr.UserData, error) {
+func (f *FakeInstance) GetUserData(_ context.Context, _ string) (*govultr.UserData, *http.Response, error) {
 	panic("implement me")
 }
 
 // GetUpgrades gets instance upgade
-func (f *FakeInstance) GetUpgrades(_ context.Context, _ string) (*govultr.Upgrades, error) {
+func (f *FakeInstance) GetUpgrades(_ context.Context, _ string) (*govultr.Upgrades, *http.Response, error) {
 	panic("implement me")
 }
 
@@ -243,12 +244,12 @@ type fakeLB struct {
 }
 
 // Create creates loadbalancer
-func (f *fakeLB) Create(_ context.Context, _ *govultr.LoadBalancerReq) (*govultr.LoadBalancer, error) {
+func (f *fakeLB) Create(_ context.Context, _ *govultr.LoadBalancerReq) (*govultr.LoadBalancer, *http.Response, error) {
 	panic("implement me")
 }
 
 // Get gets loadbalancer
-func (f *fakeLB) Get(_ context.Context, _ string) (*govultr.LoadBalancer, error) {
+func (f *fakeLB) Get(_ context.Context, _ string) (*govultr.LoadBalancer, *http.Response, error) {
 	return &govultr.LoadBalancer{
 		ID:        "6334f227-6d96-4cbd-9bcb-5be0759354fa",
 		Region:    "ewr",
@@ -256,7 +257,7 @@ func (f *fakeLB) Get(_ context.Context, _ string) (*govultr.LoadBalancer, error)
 		Status:    "active",
 		IPV4:      "192.168.0.1",
 		Instances: []string{"0c51cc3d-529e-4e03-ad86-fd0af47467ba", "ca9a74cb-2d9f-4786-9bb0-094398c593a2"},
-	}, nil
+	}, nil, nil
 }
 
 // Update updates loadbalancer
@@ -270,7 +271,7 @@ func (f *fakeLB) Delete(_ context.Context, _ string) error {
 }
 
 // List gets loadbalancers
-func (f *fakeLB) List(_ context.Context, _ *govultr.ListOptions) ([]govultr.LoadBalancer, *govultr.Meta, error) {
+func (f *fakeLB) List(_ context.Context, _ *govultr.ListOptions) ([]govultr.LoadBalancer, *govultr.Meta, *http.Response, error) {
 	return []govultr.LoadBalancer{
 			{
 				ID:     "6334f227-6d96-4cbd-9bcb-5be0759354fa",
@@ -285,16 +286,16 @@ func (f *fakeLB) List(_ context.Context, _ *govultr.ListOptions) ([]govultr.Load
 				Next: "",
 				Prev: "",
 			},
-		}, nil
+		}, nil, nil
 }
 
 // CreateForwardingRule adds forwarding rule
-func (f *fakeLB) CreateForwardingRule(_ context.Context, _ string, _ *govultr.ForwardingRule) (*govultr.ForwardingRule, error) {
+func (f *fakeLB) CreateForwardingRule(_ context.Context, _ string, _ *govultr.ForwardingRule) (*govultr.ForwardingRule, *http.Response, error) {
 	panic("implement me")
 }
 
 // GetForwardingRule returns forwarding rule
-func (f *fakeLB) GetForwardingRule(_ context.Context, _, _ string) (*govultr.ForwardingRule, error) {
+func (f *fakeLB) GetForwardingRule(_ context.Context, _, _ string) (*govultr.ForwardingRule, *http.Response, error) {
 	panic("implement me")
 }
 
@@ -304,7 +305,7 @@ func (f *fakeLB) DeleteForwardingRule(_ context.Context, _, _ string) error {
 }
 
 // ListForwardingRules gets forwarding rules
-func (f *fakeLB) ListForwardingRules(_ context.Context, _ string, _ *govultr.ListOptions) ([]govultr.ForwardingRule, *govultr.Meta, error) {
+func (f *fakeLB) ListForwardingRules(_ context.Context, _ string, _ *govultr.ListOptions) ([]govultr.ForwardingRule, *govultr.Meta, *http.Response, error) {
 	return []govultr.ForwardingRule{{
 			RuleID:           "1234",
 			FrontendProtocol: "tcp",
@@ -317,15 +318,15 @@ func (f *fakeLB) ListForwardingRules(_ context.Context, _ string, _ *govultr.Lis
 				Next: "",
 				Prev: "",
 			},
-		}, nil
+		}, nil, nil
 }
 
 // ListFirewallRules gets forwarding rules
-func (f *fakeLB) ListFirewallRules(_ context.Context, _ string, _ *govultr.ListOptions) ([]govultr.LBFirewallRule, *govultr.Meta, error) {
-	return nil, nil, nil
+func (f *fakeLB) ListFirewallRules(_ context.Context, _ string, _ *govultr.ListOptions) ([]govultr.LBFirewallRule, *govultr.Meta, *http.Response, error) {
+	return nil, nil, nil, nil
 }
 
 // GetFirewallRule gets firewall rules
-func (f *fakeLB) GetFirewallRule(_ context.Context, _, _ string) (*govultr.LBFirewallRule, error) {
-	return nil, nil
+func (f *fakeLB) GetFirewallRule(_ context.Context, _, _ string) (*govultr.LBFirewallRule, *http.Response, error) {
+	return nil, nil, nil
 }

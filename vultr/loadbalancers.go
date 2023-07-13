@@ -142,7 +142,7 @@ func (l *loadbalancers) EnsureLoadBalancer(ctx context.Context, clusterName stri
 		}
 
 		lbReq.Region = l.zone
-		lb2, err1 := l.client.LoadBalancer.Create(ctx, lbReq)
+		lb2, _, err1 := l.client.LoadBalancer.Create(ctx, lbReq)
 		if err1 != nil {
 			return nil, fmt.Errorf("failed to create load-balancer: %s", err1)
 		}
@@ -251,7 +251,7 @@ func (l *loadbalancers) lbByName(ctx context.Context, lbName string) (*govultr.L
 	}
 
 	for {
-		lbs, meta, err := l.client.LoadBalancer.List(ctx, listOptions)
+		lbs, meta, _, err := l.client.LoadBalancer.List(ctx, listOptions)
 		if err != nil {
 			return nil, err
 		}
