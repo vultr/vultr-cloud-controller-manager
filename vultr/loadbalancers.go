@@ -251,7 +251,7 @@ func (l *loadbalancers) lbByName(ctx context.Context, lbName string) (*govultr.L
 	}
 
 	for {
-		lbs, meta, _, err := l.client.LoadBalancer.List(ctx, listOptions)
+		lbs, meta, _, err := l.client.LoadBalancer.List(ctx, listOptions) //nolint:bodyclose
 		if err != nil {
 			return nil, err
 		}
