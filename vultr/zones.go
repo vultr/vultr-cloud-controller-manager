@@ -4,7 +4,7 @@ package vultr
 import (
 	"context"
 
-	"github.com/vultr/govultr/v2"
+	"github.com/vultr/govultr/v3"
 	"k8s.io/apimachinery/pkg/types"
 	cloudprovider "k8s.io/cloud-provider"
 )

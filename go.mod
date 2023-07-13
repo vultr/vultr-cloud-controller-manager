@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	github.com/spf13/pflag v1.0.5
-	github.com/vultr/govultr/v2 v2.17.2
+	github.com/vultr/govultr/v3 v3.1.0
 	github.com/vultr/metadata v1.1.0
 	golang.org/x/oauth2 v0.4.0
 	k8s.io/api v0.24.6
@@ -44,8 +44,8 @@ require (
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0 // indirect
-	github.com/hashicorp/go-cleanhttp v0.5.1 // indirect
-	github.com/hashicorp/go-retryablehttp v0.7.1 // indirect
+	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
+	github.com/hashicorp/go-retryablehttp v0.7.4 // indirect
 	github.com/imdario/mergo v0.3.5 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
