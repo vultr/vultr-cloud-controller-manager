@@ -97,6 +97,7 @@ func TestLoadbalancers_EnsureLoadBalancer(t *testing.T) {
 			UID:       "lb-name",
 			Annotations: map[string]string{
 				annoVultrFirewallRules: "cloudflare,80;10.0.0.0/8,80",
+				annoVultrNodeCount:     "5",
 			},
 		},
 		Spec: v1.ServiceSpec{
