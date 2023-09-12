@@ -63,6 +63,8 @@ const (
 	annoVultrPrivateNetwork = "service.beta.kubernetes.io/vultr-loadbalancer-private-network"
 	annoVultrVPC            = "service.beta.kubernetes.io/vultr-loadbalancer-vpc"
 
+	annoVultrNodeCount = "service.beta.kubernetes.io/vultr-loadbalancer-node-count"
+
 	// Supported Protocols
 	protocolHTTP  = "http"
 	protocolHTTPS = "https"
@@ -312,6 +314,19 @@ func (l *loadbalancers) buildLoadBalancerRequest(service *v1.Service, nodes []*v
 		return nil, err
 	}
 
+	nodeC := 1
+
+	if count, ok := service.Annotations[annoVultrNodeCount]; ok {
+		nodeC, err = strconv.Atoi(count)
+		if err != nil {
+			return nil, err
+		}
+
+		if nodeC&1 == 0 {
+			return nil, fmt.Errorf("%s must be odd", annoVultrNodeCount)
+		}
+	}
+
 	return &govultr.LoadBalancerReq{
 		Label:              getDefaultLBName(service),                        // will always be set
 		Instances:          instances,                                        // will always be set
@@ -324,6 +339,7 @@ func (l *loadbalancers) buildLoadBalancerRequest(service *v1.Service, nodes []*v
 		BalancingAlgorithm: getAlgorithm(service),                            // will always be set
 		FirewallRules:      firewallRules,                                    // need to check
 		VPC:                govultr.StringToStringPtr(vpc),                   // need to check
+		Nodes:              nodeC,                                            // need to check
 	}, nil
 }
 
