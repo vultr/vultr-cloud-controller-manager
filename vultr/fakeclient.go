@@ -27,13 +27,28 @@ func (f *FakeInstance) ListVPCInfo(_ context.Context, _ string, _ *govultr.ListO
 	panic("implement me")
 }
 
+// ListVPC2Info returns VPC info (not implemented, yet)
+func (f *FakeInstance) ListVPC2Info(_ context.Context, _ string, _ *govultr.ListOptions) ([]govultr.VPC2Info, *govultr.Meta, *http.Response, error) {
+	panic("implement me")
+}
+
 // AttachVPC attaches VPC (not implemented, yet)
 func (f *FakeInstance) AttachVPC(_ context.Context, _, _ string) error {
 	panic("implement me")
 }
 
+// AttachVPC2 attaches VPC (not implemented, yet)
+func (f *FakeInstance) AttachVPC2(_ context.Context, _ string, _ *govultr.AttachVPC2Req) error {
+	panic("implement me")
+}
+
 // DetachVPC detaches VPC (not implemented, yet)
 func (f *FakeInstance) DetachVPC(_ context.Context, _, _ string) error {
+	panic("implement me")
+}
+
+// DetachVPC detaches VPC (not implemented, yet)
+func (f *FakeInstance) DetachVPC2(_ context.Context, _, _ string) error {
 	panic("implement me")
 }
 
