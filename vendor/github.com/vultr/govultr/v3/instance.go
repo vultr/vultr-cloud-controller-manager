@@ -44,6 +44,10 @@ type InstanceService interface {
 	AttachVPC(ctx context.Context, instanceID, vpcID string) error
 	DetachVPC(ctx context.Context, instanceID, vpcID string) error
 
+	ListVPC2Info(ctx context.Context, instanceID string, options *ListOptions) ([]VPC2Info, *Meta, *http.Response, error)
+	AttachVPC2(ctx context.Context, instanceID string, vpc2Req *AttachVPC2Req) error
+	DetachVPC2(ctx context.Context, instanceID, vpcID string) error
+
 	ISOStatus(ctx context.Context, instanceID string) (*Iso, *http.Response, error)
 	AttachISO(ctx context.Context, instanceID, isoID string) (*http.Response, error)
 	DetachISO(ctx context.Context, instanceID string) (*http.Response, error)
@@ -159,6 +163,24 @@ type VPCInfo struct {
 	IPAddress  string `json:"ip_address"`
 }
 
+type vpc2InfoBase struct {
+	VPCs []VPC2Info `json:"vpcs"`
+	Meta *Meta      `json:"meta"`
+}
+
+// VPC2Info information for a given instance.
+type VPC2Info struct {
+	ID         string `json:"id"`
+	MacAddress string `json:"mac_address"`
+	IPAddress  string `json:"ip_address"`
+}
+
+// AttachVPC2Req parameters for attaching a VPC 2.0 network
+type AttachVPC2Req struct {
+	VPCID     string  `json:"vpc_id,omitempty"`
+	IPAddress *string `json:"ip_address,omitempty"`
+}
+
 type isoStatusBase struct {
 	IsoStatus *Iso `json:"iso_status"`
 }
@@ -253,6 +275,8 @@ type InstanceCreateReq struct {
 	AttachPrivateNetwork []string `json:"attach_private_network,omitempty"`
 	EnableVPC            *bool    `json:"enable_vpc,omitempty"`
 	AttachVPC            []string `json:"attach_vpc,omitempty"`
+	EnableVPC2           *bool    `json:"enable_vpc2,omitempty"`
+	AttachVPC2           []string `json:"attach_vpc2,omitempty"`
 	SSHKeys              []string `json:"sshkey_id,omitempty"`
 	Backups              string   `json:"backups,omitempty"`
 	DDOSProtection       *bool    `json:"ddos_protection,omitempty"`
@@ -281,6 +305,9 @@ type InstanceUpdateReq struct {
 	EnableVPC            *bool    `json:"enable_vpc,omitempty"`
 	AttachVPC            []string `json:"attach_vpc,omitempty"`
 	DetachVPC            []string `json:"detach_vpc,omitempty"`
+	EnableVPC2           *bool    `json:"enable_vpc2,omitempty"`
+	AttachVPC2           []string `json:"attach_vpc2,omitempty"`
+	DetachVPC2           []string `json:"detach_vpc2,omitempty"`
 	Backups              string   `json:"backups,omitempty"`
 	DDOSProtection       *bool    `json:"ddos_protection"`
 	UserData             string   `json:"user_data,omitempty"`
@@ -327,7 +354,7 @@ func (i *InstanceServiceHandler) Get(ctx context.Context, instanceID string) (*I
 }
 
 // Update will update the server with the given parameters
-func (i *InstanceServiceHandler) Update(ctx context.Context, instanceID string, instanceReq *InstanceUpdateReq) (*Instance, *http.Response, error) {
+func (i *InstanceServiceHandler) Update(ctx context.Context, instanceID string, instanceReq *InstanceUpdateReq) (*Instance, *http.Response, error) { //nolint:lll
 	uri := fmt.Sprintf("%s/%s", instancePath, instanceID)
 
 	req, err := i.client.NewRequest(ctx, http.MethodPatch, uri, instanceReq)
@@ -358,7 +385,7 @@ func (i *InstanceServiceHandler) Delete(ctx context.Context, instanceID string) 
 }
 
 // List all instances on your account.
-func (i *InstanceServiceHandler) List(ctx context.Context, options *ListOptions) ([]Instance, *Meta, *http.Response, error) {
+func (i *InstanceServiceHandler) List(ctx context.Context, options *ListOptions) ([]Instance, *Meta, *http.Response, error) { //nolint:dupl
 	req, err := i.client.NewRequest(ctx, http.MethodGet, instancePath, nil)
 	if err != nil {
 		return nil, nil, nil, err
@@ -417,7 +444,7 @@ func (i *InstanceServiceHandler) Reboot(ctx context.Context, instanceID string) 
 }
 
 // Reinstall an instance.
-func (i *InstanceServiceHandler) Reinstall(ctx context.Context, instanceID string, reinstallReq *ReinstallReq) (*Instance, *http.Response, error) {
+func (i *InstanceServiceHandler) Reinstall(ctx context.Context, instanceID string, reinstallReq *ReinstallReq) (*Instance, *http.Response, error) { //nolint:lll
 	uri := fmt.Sprintf("%s/%s/reinstall", instancePath, instanceID)
 
 	req, err := i.client.NewRequest(ctx, http.MethodPost, uri, reinstallReq)
@@ -520,7 +547,7 @@ func (i *InstanceServiceHandler) GetNeighbors(ctx context.Context, instanceID st
 
 // ListPrivateNetworks currently attached to an instance.
 // Deprecated: ListPrivateNetworks should no longer be used. Instead, use ListVPCInfo
-func (i *InstanceServiceHandler) ListPrivateNetworks(ctx context.Context, instanceID string, options *ListOptions) ([]PrivateNetwork, *Meta, *http.Response, error) {
+func (i *InstanceServiceHandler) ListPrivateNetworks(ctx context.Context, instanceID string, options *ListOptions) ([]PrivateNetwork, *Meta, *http.Response, error) { //nolint:lll,dupl
 	uri := fmt.Sprintf("%s/%s/private-networks", instancePath, instanceID)
 	req, err := i.client.NewRequest(ctx, http.MethodGet, uri, nil)
 	if err != nil {
@@ -574,7 +601,7 @@ func (i *InstanceServiceHandler) DetachPrivateNetwork(ctx context.Context, insta
 }
 
 // ListVPCInfo currently attached to an instance.
-func (i *InstanceServiceHandler) ListVPCInfo(ctx context.Context, instanceID string, options *ListOptions) ([]VPCInfo, *Meta, *http.Response, error) {
+func (i *InstanceServiceHandler) ListVPCInfo(ctx context.Context, instanceID string, options *ListOptions) ([]VPCInfo, *Meta, *http.Response, error) { //nolint:lll,dupl
 	uri := fmt.Sprintf("%s/%s/vpcs", instancePath, instanceID)
 	req, err := i.client.NewRequest(ctx, http.MethodGet, uri, nil)
 	if err != nil {
@@ -620,6 +647,57 @@ func (i *InstanceServiceHandler) DetachVPC(ctx context.Context, instanceID, vpcI
 	if err != nil {
 		return err
 	}
+	_, err = i.client.DoWithContext(ctx, req, nil)
+	return err
+}
+
+// ListVPC2Info currently attached to an instance.
+func (i *InstanceServiceHandler) ListVPC2Info(ctx context.Context, instanceID string, options *ListOptions) ([]VPC2Info, *Meta, *http.Response, error) { //nolint:lll,dupl
+	uri := fmt.Sprintf("%s/%s/vpc2", instancePath, instanceID)
+	req, err := i.client.NewRequest(ctx, http.MethodGet, uri, nil)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	newValues, err := query.Values(options)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	req.URL.RawQuery = newValues.Encode()
+
+	vpcs := new(vpc2InfoBase)
+	resp, err := i.client.DoWithContext(ctx, req, vpcs)
+	if err != nil {
+		return nil, nil, resp, err
+	}
+
+	return vpcs.VPCs, vpcs.Meta, resp, nil
+}
+
+// AttachVPC2 to an instance
+func (i *InstanceServiceHandler) AttachVPC2(ctx context.Context, instanceID string, vpc2Req *AttachVPC2Req) error {
+	uri := fmt.Sprintf("%s/%s/vpc2/attach", instancePath, instanceID)
+
+	req, err := i.client.NewRequest(ctx, http.MethodPost, uri, vpc2Req)
+	if err != nil {
+		return err
+	}
+
+	_, err = i.client.DoWithContext(ctx, req, nil)
+	return err
+}
+
+// DetachVPC2 from an instance.
+func (i *InstanceServiceHandler) DetachVPC2(ctx context.Context, instanceID, vpcID string) error {
+	uri := fmt.Sprintf("%s/%s/vpc2/detach", instancePath, instanceID)
+	body := RequestBody{"vpc_id": vpcID}
+
+	req, err := i.client.NewRequest(ctx, http.MethodPost, uri, body)
+	if err != nil {
+		return err
+	}
+
 	_, err = i.client.DoWithContext(ctx, req, nil)
 	return err
 }
@@ -684,7 +762,7 @@ func (i *InstanceServiceHandler) GetBackupSchedule(ctx context.Context, instance
 }
 
 // SetBackupSchedule sets the backup schedule for a given instance - all time values are in UTC.
-func (i *InstanceServiceHandler) SetBackupSchedule(ctx context.Context, instanceID string, backup *BackupScheduleReq) (*http.Response, error) {
+func (i *InstanceServiceHandler) SetBackupSchedule(ctx context.Context, instanceID string, backup *BackupScheduleReq) (*http.Response, error) { //nolint:lll
 	uri := fmt.Sprintf("%s/%s/backup-schedule", instancePath, instanceID)
 	req, err := i.client.NewRequest(ctx, http.MethodPost, uri, backup)
 	if err != nil {
@@ -715,7 +793,7 @@ func (i *InstanceServiceHandler) CreateIPv4(ctx context.Context, instanceID stri
 }
 
 // ListIPv4 addresses that are currently assigned to a given instance.
-func (i *InstanceServiceHandler) ListIPv4(ctx context.Context, instanceID string, options *ListOptions) ([]IPv4, *Meta, *http.Response, error) {
+func (i *InstanceServiceHandler) ListIPv4(ctx context.Context, instanceID string, options *ListOptions) ([]IPv4, *Meta, *http.Response, error) { //nolint:lll,dupl
 	uri := fmt.Sprintf("%s/%s/ipv4", instancePath, instanceID)
 	req, err := i.client.NewRequest(ctx, http.MethodGet, uri, nil)
 	if err != nil {
@@ -750,7 +828,7 @@ func (i *InstanceServiceHandler) DeleteIPv4(ctx context.Context, instanceID, ip 
 }
 
 // ListIPv6 addresses that are currently assigned to a given instance.
-func (i *InstanceServiceHandler) ListIPv6(ctx context.Context, instanceID string, options *ListOptions) ([]IPv6, *Meta, *http.Response, error) {
+func (i *InstanceServiceHandler) ListIPv6(ctx context.Context, instanceID string, options *ListOptions) ([]IPv6, *Meta, *http.Response, error) { //nolint:lll,dupl
 	uri := fmt.Sprintf("%s/%s/ipv6", instancePath, instanceID)
 	req, err := i.client.NewRequest(ctx, http.MethodGet, uri, nil)
 	if err != nil {
