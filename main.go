@@ -3,6 +3,7 @@ package main
 
 import (
 	goflag "flag"
+	"k8s.io/cloud-provider/names"
 	"math/rand"
 	"time"
 
@@ -30,7 +31,15 @@ func main() {
 	ccmOptions.KubeCloudShared.CloudProvider.Name = vultr.ProviderName
 	ccmOptions.Authentication.SkipInClusterLookup = true
 
-	command := app.NewCloudControllerManagerCommand(ccmOptions, cloudInitializer, app.DefaultInitFuncConstructors, flag.NamedFlagSets{}, wait.NeverStop)
+	controllerAliases := names.CCMControllerAliases()
+
+	command := app.NewCloudControllerManagerCommand(
+		ccmOptions,
+		cloudInitializer,
+		app.DefaultInitFuncConstructors,
+		controllerAliases,
+		flag.NamedFlagSets{},
+		wait.NeverStop)
 
 	vultr.Options.KubeconfigFlag = command.Flags().Lookup("kubeconfig")
 

@@ -15,6 +15,8 @@ require (
 	k8s.io/klog/v2 v2.100.1
 )
 
+replace github.com/google/cel-go => github.com/google/cel-go v0.16.0
+
 require (
 	github.com/Azure/go-ansiterm v0.0.0-20230124172434-306776ec8161 // indirect
 	github.com/NYTimes/gziphandler v1.1.1 // indirect
