@@ -2,6 +2,7 @@
 package main
 
 import (
+	"context"
 	goflag "flag"
 	"k8s.io/cloud-provider/names"
 	"math/rand"
@@ -47,6 +48,9 @@ func main() {
 	pflag.CommandLine.AddGoFlagSet(goflag.CommandLine)
 
 	defer logs.FlushLogs()
+
+	vultr.SetupSecretWatcher(context.Background())
+	go vultr.SecretWatcher.WatchSecrets()
 
 	if err := command.Execute(); err != nil {
 		klog.Fatal(err)

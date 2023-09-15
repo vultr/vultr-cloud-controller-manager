@@ -13,17 +13,37 @@ import (
 )
 
 type SecretWatch struct {
-	LastModifiedTime time.Time
-	kubeClient       kubernetes.Interface
-	ctx              context.Context
+	kubeClient kubernetes.Interface
+	ctx        context.Context
+	Services   []*v1.Service
+	secrets    map[string][]SecretList
 }
 
-func (s *SecretWatch) watchSecret(name, svcName, namespace string) {
+type SecretList struct {
+	Name    string
+	Service string
+}
+
+var SecretWatcher SecretWatch
+
+func SetupSecretWatcher(ctx context.Context) {
+	SecretWatcher = SecretWatch{ctx: ctx, secrets: make(map[string][]SecretList)}
+}
+
+func (s *SecretWatch) AddService(svc *v1.Service, secretName string) {
+	s.Services = append(s.Services, svc)
+	// [namespace] -> ["secret-name/service-name"]
+	// Example [nginx] -> ["prod-tls-cert/nginx-frontend"]
+	s.secrets[svc.Namespace] = append(s.secrets[svc.Namespace], SecretList{Service: svc.Name, Name: secretName})
+	klog.Infof("added secret %s to watcher", secretName)
+}
+
+func (s *SecretWatch) WatchSecrets() {
 	if err := s.getKubeClient(); err != nil {
 		klog.V(3).Info(err)
 	}
 
-	watcher, err := s.kubeClient.CoreV1().Secrets(namespace).Watch(s.ctx, metav1.ListOptions{})
+	watcher, err := s.kubeClient.CoreV1().Secrets("*").Watch(s.ctx, metav1.ListOptions{})
 	if err != nil {
 		klog.V(3).Info(err)
 	}
@@ -31,16 +51,20 @@ func (s *SecretWatch) watchSecret(name, svcName, namespace string) {
 	for event := range watcher.ResultChan() {
 		secret := event.Object.(*v1.Secret)
 
-		if secret.Name == name {
-			switch event.Type {
-			case watch.Modified:
-				s.LastModifiedTime = time.Now()
-				klog.Infof("secret %s has been modified, updating service %s", name, svcName)
-
-			default:
-				continue
+		switch event.Type {
+		case watch.Modified:
+			if _, ok := s.secrets[secret.Namespace]; ok {
+				for _, sec := range s.secrets[secret.Namespace] {
+					if sec.Name == secret.Name {
+						s.updateServicefromSecret(sec.Service, secret.Namespace)
+					}
+				}
 			}
+
+		default:
+			continue
 		}
+
 	}
 
 }
