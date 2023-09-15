@@ -303,7 +303,6 @@ func (l *loadbalancers) buildLoadBalancerRequest(service *v1.Service, nodes []*v
 		if err != nil {
 			return nil, err
 		}
-		SecretWatcher.updateServicefromSecret(service.Name, service.Namespace)
 		SecretWatcher.AddService(service, secretName)
 	} else {
 		ssl = nil
