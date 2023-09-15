@@ -65,6 +65,9 @@ const (
 
 	annoVultrNodeCount = "service.beta.kubernetes.io/vultr-loadbalancer-node-count"
 
+	// annoVultrLBSSLLastUpdatedTime is used to keep track of when a SVC is updated due to the SSL secret being updated
+	annoVultrLBSSLLastUpdatedTime = "service.beta.kubernetes.io/vultr-loadbalancer-ssl-last-updated"
+
 	// Supported Protocols
 	protocolHTTP  = "http"
 	protocolHTTPS = "https"
@@ -301,6 +304,10 @@ func (l *loadbalancers) buildLoadBalancerRequest(service *v1.Service, nodes []*v
 		if err != nil {
 			return nil, err
 		}
+
+		var secretWatcher SecretWatch
+
+		go secretWatcher.watchSecret(secretName, service.Name, service.Namespace)
 	} else {
 		ssl = nil
 	}
