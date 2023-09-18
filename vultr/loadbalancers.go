@@ -660,7 +660,7 @@ func buildForwardingRule(port *v1.ServicePort, protocol, backendProtocol string)
 	rule.FrontendProtocol = protocol
 	rule.BackendProtocol = backendProtocol
 
-	klog.V(3).Infof("Rule: %+v\n", rule) //nolint
+	klog.V(logLevel).Infof("Rule: %+v\n", rule) //nolint
 
 	rule.FrontendPort = int(port.Port)
 	rule.BackendPort = int(port.NodePort)

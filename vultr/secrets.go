@@ -12,17 +12,25 @@ import (
 	"time"
 )
 
+// SecretWatch is the main structure for the secret watcher
 type SecretWatch struct {
 	kubeClient kubernetes.Interface
 	ctx        context.Context
 	secrets    map[string][]SecretList
 }
 
+// SecretList is meant to be stored as a slice of type SecretList which stores the name of the secret and it's service
 type SecretList struct {
 	Name    string
 	Service string
 }
 
+const (
+	logLevel = 3
+)
+
+// SecretWatcher is a global variable of type SecretWatch. We use a global variable so that the SecretWatcher can be accessed globally
+// The watcher is meant to be ran as a go routine and in the current CCM we would not be able to run and access it globally otherwise
 var SecretWatcher SecretWatch
 
 // SetupSecretWatcher initializes the watcher
@@ -50,13 +58,13 @@ func (s *SecretWatch) AddService(svc *v1.Service, secretName string) {
 // WatchSecrets is the main entrance into the execution of the secretwatcher
 func (s *SecretWatch) WatchSecrets() {
 	if err := s.getKubeClient(); err != nil {
-		klog.V(3).Info(err)
+		klog.V(logLevel).Info(err)
 		return
 	}
 
 	watcher, err := s.kubeClient.CoreV1().Secrets("*").Watch(s.ctx, metav1.ListOptions{Watch: true})
 	if err != nil {
-		klog.V(3).Info(err)
+		klog.V(logLevel).Info(err)
 		return
 	}
 
@@ -76,26 +84,27 @@ func (s *SecretWatch) WatchSecrets() {
 		default:
 			continue
 		}
-
 	}
-
 }
 
 func (s *SecretWatch) updateServiceFromSecret(svcName, namespace string) {
 	if err := s.getKubeClient(); err != nil {
-		klog.V(3).Info(err)
+		klog.V(logLevel).Info(err)
 	}
 
 	svc, err := s.kubeClient.CoreV1().Services(namespace).Get(s.ctx, svcName, metav1.GetOptions{})
 	if err != nil {
-		klog.V(3).Info(err)
+		klog.V(logLevel).Info(err)
 	}
 
 	svc.Annotations[annoVultrLBSSLLastUpdatedTime] = time.Now().String()
 
-	s.kubeClient.CoreV1().Services(namespace).Update(s.ctx, svc, metav1.UpdateOptions{})
+	_, err = s.kubeClient.CoreV1().Services(namespace).Update(s.ctx, svc, metav1.UpdateOptions{})
+	if err != nil {
+		klog.V(logLevel).Info(err)
+	}
 
-	klog.V(3).Infof("service %s in namespace %s has been updated", svcName, namespace)
+	klog.V(logLevel).Infof("service %s in namespace %s has been updated", svcName, namespace)
 }
 
 func (s *SecretWatch) getKubeClient() error {
