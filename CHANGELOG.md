@@ -1,4 +1,10 @@
 # Change Log
+## [v0.10.0](https://github.com/vultr/vultr-cloud-controller-manager/compare/v0.9.0...v0.10.0) (2023-09-18)
+* Update to Go v1.20 [PR #186](https://github.com/vultr/vultr-cloud-controller-manager/pull/186)
+* Update to Go-Vultr v3.1.0 [PR #191](https://github.com/vultr/vultr-cloud-controller-manager/pull/191)
+* Add VLB node-count [PR #206](https://github.com/vultr/vultr-cloud-controller-manager/pull/206)
+* Add Secret watcher to update services when TLS cert is renewed for VLB [PR #209](https://github.com/vultr/vultr-cloud-controller-manager/pull/209)
+
 ## [v0.9.0](https://github.com/vultr/vultr-cloud-controller-manager/compare/v0.8.2...v0.9.0) (2023-03-18)
 * Added IPv6 support for VLB and worker nodes [PR #163](https://github.com/vultr/vultr-cloud-controller-manager/pull/163)
 
