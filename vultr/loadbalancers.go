@@ -4,6 +4,10 @@ package vultr
 import (
 	"context"
 	"fmt"
+	"net"
+	"strconv"
+	"strings"
+
 	"github.com/vultr/govultr/v3"
 	"github.com/vultr/metadata"
 	v1 "k8s.io/api/core/v1"
@@ -13,9 +17,6 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	cloudprovider "k8s.io/cloud-provider"
 	"k8s.io/klog/v2"
-	"net"
-	"strconv"
-	"strings"
 )
 
 const (
