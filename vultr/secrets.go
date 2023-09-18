@@ -62,7 +62,7 @@ func (s *SecretWatch) WatchSecrets() {
 		return
 	}
 
-	watcher, err := s.kubeClient.CoreV1().Secrets("*").Watch(s.ctx, metav1.ListOptions{Watch: true})
+	watcher, err := s.kubeClient.CoreV1().Secrets("").Watch(s.ctx, metav1.ListOptions{Watch: true})
 	if err != nil {
 		klog.V(logLevel).Info(err)
 		return
@@ -73,14 +73,16 @@ func (s *SecretWatch) WatchSecrets() {
 
 		switch event.Type {
 		case watch.Modified:
+			fallthrough
+		case watch.Added:
 			if _, ok := s.secrets[secret.Namespace]; ok {
 				for _, sec := range s.secrets[secret.Namespace] {
 					if sec.Name == secret.Name {
+						klog.V(logLevel).Infof("secret %s had a %s event", secret.Name, event.Type)
 						s.updateServiceFromSecret(sec.Service, secret.Namespace)
 					}
 				}
 			}
-
 		default:
 			continue
 		}
