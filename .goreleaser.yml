@@ -40,6 +40,8 @@ dockers:
       - "vultr/vultr-cloud-controller-manager:release"
       - "vultr/vultr-cloud-controller-manager:latest"
       - "vultr/vultr-cloud-controller-manager:{{ .Tag }}"
+    extra_files:
+      - scripts/entrypoint.sh
 
 release:
   draft: false
