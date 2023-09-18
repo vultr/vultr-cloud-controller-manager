@@ -47,7 +47,7 @@ func (f *FakeInstance) DetachVPC(_ context.Context, _, _ string) error {
 	panic("implement me")
 }
 
-// DetachVPC detaches VPC (not implemented, yet)
+// DetachVPC2 detaches VPC (not implemented, yet)
 func (f *FakeInstance) DetachVPC2(_ context.Context, _, _ string) error {
 	panic("implement me")
 }
