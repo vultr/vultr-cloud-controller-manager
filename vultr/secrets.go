@@ -73,7 +73,7 @@ func (s *SecretWatch) WatchSecrets() {
 
 		switch event.Type {
 		case watch.Modified:
-			fallthrough
+			fallthrough //nolint
 		case watch.Added:
 			if _, ok := s.secrets[secret.Namespace]; ok {
 				for _, sec := range s.secrets[secret.Namespace] {
