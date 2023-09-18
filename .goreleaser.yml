@@ -37,6 +37,9 @@ dockers:
     image_templates:
       - "ghcr.io/vultr/vultr-cloud-controller-manager/vultr-cloud-controller-manager:release"
       - "ghcr.io/vultr/vultr-cloud-controller-manager/vultr-cloud-controller-manager:{{ .Tag }}"
+      - "vultr/vultr-cloud-controller-manager:release"
+      - "vultr/vultr-cloud-controller-manager:latest"
+      - "vultr/vultr-cloud-controller-manager:{{ .Tag }}"
 
 release:
   draft: false

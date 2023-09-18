@@ -4,7 +4,7 @@ metadata:
   name: vultr-ccm
   namespace: kube-system
 stringData:
-  # Replace the api-key and region with proper values
+  # Replace the api-key
   api-key: {{ VULTR_API_KEY }}
 ---
 apiVersion: v1
@@ -151,7 +151,7 @@ spec:
           effect: NoSchedule
       hostNetwork: true
       containers:
-        - image: vultr/vultr-cloud-controller-manager:v0.9.0
+        - image: vultr/vultr-cloud-controller-manager:v0.10.0
           imagePullPolicy: Always
           name: vultr-cloud-controller-manager
           command:
