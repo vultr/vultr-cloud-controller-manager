@@ -142,7 +142,7 @@ func (l *loadbalancers) EnsureLoadBalancer(ctx context.Context, clusterName stri
 	}
 
 	if create, ok := service.Annotations[annoVultrLoadBalancerCreate]; ok {
-		if strings.ToLower(create) == "false" {
+		if strings.EqualFold(create, "false") {
 			return nil, fmt.Errorf("%s set to %s - load balancer will not be created", annoVultrLoadBalancerCreate, create)
 		}
 	}
