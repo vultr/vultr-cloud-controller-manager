@@ -795,10 +795,15 @@ func buildFirewallRules(service *v1.Service) ([]govultr.LBFirewallRule, error) {
 		}
 
 		source := rules[0]
+		ipType := "v4"
 		if source != "cloudflare" {
-			_, _, err := net.ParseCIDR(source)
+			ip, _, err := net.ParseCIDR(source)
 			if err != nil {
 				return nil, fmt.Errorf("loadbalancer fw rules : source %s is invalid", source)
+			}
+
+			if ip.To4() == nil {
+				ipType = "v6"
 			}
 		}
 
@@ -808,7 +813,7 @@ func buildFirewallRules(service *v1.Service) ([]govultr.LBFirewallRule, error) {
 		}
 
 		fwRule.Source = source
-		fwRule.IPType = "v4"
+		fwRule.IPType = ipType
 		fwRule.Port = port
 		lbFWRules = append(lbFWRules, fwRule)
 	}
