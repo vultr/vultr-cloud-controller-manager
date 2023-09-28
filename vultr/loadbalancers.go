@@ -22,6 +22,9 @@ import (
 const (
 	annoVultrLoadBalancerID = "kubernetes.vultr.com/load-balancer-id" //nolint (this is unused)
 
+	// annoVultrLoadBalancerCreate defaults to true and is to specify whether or not to create a VLB for the svc
+	annoVultrLoadBalancerCreate = "kubernetes.vultr.com/load-balancer-create"
+
 	// annoVultrLBProtocol is the annotation used to specify
 	// which protocol should be used for a Load Balancer.
 	// Note that if annoVultrLBHTTPSPorts is defined then this will be overridden to HTTPS
@@ -136,6 +139,12 @@ func (l *loadbalancers) EnsureLoadBalancer(ctx context.Context, clusterName stri
 	_, exists, err := l.GetLoadBalancer(ctx, clusterName, service)
 	if err != nil {
 		return nil, err
+	}
+
+	if create, ok := service.Annotations[annoVultrLoadBalancerCreate]; ok {
+		if strings.EqualFold(create, "false") {
+			return nil, fmt.Errorf("%s set to %s - load balancer will not be created", annoVultrLoadBalancerCreate, create)
+		}
 	}
 
 	// if exists is false and the err above was nil then this is errLbNotFound
