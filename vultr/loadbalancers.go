@@ -150,7 +150,7 @@ func (l *loadbalancers) EnsureLoadBalancer(ctx context.Context, clusterName stri
 	// if exists is false and the err above was nil then this is errLbNotFound
 	if !exists {
 		klog.Infof("Load balancer for cluster %q doesn't exist, creating", clusterName)
-		lbReq, err1 := l.buildLoadBalancerRequest(service, nodes)
+		lbReq, err1 := l.buildLoadBalancerRequest(service, nodes, 1)
 		if err1 != nil {
 			return nil, err1
 		}
@@ -222,7 +222,7 @@ func (l *loadbalancers) UpdateLoadBalancer(ctx context.Context, clusterName stri
 		return err
 	}
 
-	lbReq, err := l.buildLoadBalancerRequest(service, nodes)
+	lbReq, err := l.buildLoadBalancerRequest(service, nodes, lb.Nodes)
 	if err != nil {
 		return fmt.Errorf("failed to create load balancer request: %s", err)
 	}
@@ -286,7 +286,7 @@ func (l *loadbalancers) lbByName(ctx context.Context, lbName string) (*govultr.L
 	return nil, errLbNotFound
 }
 
-func (l *loadbalancers) buildLoadBalancerRequest(service *v1.Service, nodes []*v1.Node) (*govultr.LoadBalancerReq, error) {
+func (l *loadbalancers) buildLoadBalancerRequest(service *v1.Service, nodes []*v1.Node, nodeCount int) (*govultr.LoadBalancerReq, error) {
 	stickySession, err := buildStickySession(service)
 	if err != nil {
 		return nil, err
@@ -327,17 +327,19 @@ func (l *loadbalancers) buildLoadBalancerRequest(service *v1.Service, nodes []*v
 		return nil, err
 	}
 
-	nodeC := 1
+	klog.V(3).Infof("node count is currently %d\n", nodeCount)
 
 	if count, ok := service.Annotations[annoVultrNodeCount]; ok {
-		nodeC, err = strconv.Atoi(count)
+		nodeCount, err = strconv.Atoi(count)
 		if err != nil {
 			return nil, err
 		}
 
-		if nodeC&1 == 0 {
+		if nodeCount&1 == 0 {
 			return nil, fmt.Errorf("%s must be odd", annoVultrNodeCount)
 		}
+
+		klog.V(3).Infof("setting node count to %d\n", nodeCount) //nolint
 	}
 
 	return &govultr.LoadBalancerReq{
@@ -352,7 +354,7 @@ func (l *loadbalancers) buildLoadBalancerRequest(service *v1.Service, nodes []*v
 		BalancingAlgorithm: getAlgorithm(service),                            // will always be set
 		FirewallRules:      firewallRules,                                    // need to check
 		VPC:                govultr.StringToStringPtr(vpc),                   // need to check
-		Nodes:              nodeC,                                            // need to check
+		Nodes:              nodeCount,                                        // need to check
 	}, nil
 }
 

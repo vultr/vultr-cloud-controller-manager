@@ -1,4 +1,7 @@
 # Change Log
+## [v0.10.1](https://github.com/vultr/vultr-cloud-controller-manager/compare/v0.10.0...v0.10.1) (2023-11-27)
+* Fix bug with VLB node annotation failing to be set [PR #220](https://github.com/vultr/vultr-cloud-controller-manager/pull/220)
+
 ## [v0.10.0](https://github.com/vultr/vultr-cloud-controller-manager/compare/v0.9.0...v0.10.0) (2023-09-18)
 * Update to Go v1.20 [PR #186](https://github.com/vultr/vultr-cloud-controller-manager/pull/186)
 * Update to Go-Vultr v3.1.0 [PR #191](https://github.com/vultr/vultr-cloud-controller-manager/pull/191)

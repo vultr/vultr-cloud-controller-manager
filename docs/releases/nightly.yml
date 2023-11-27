@@ -142,7 +142,7 @@ spec:
           effect: NoSchedule
       hostNetwork: true
       containers:
-        - image: vultr/vultr-cloud-controller-manager:v0.10.0
+        - image: vultr/vultr-cloud-controller-manager:v0.10.1
           imagePullPolicy: Always
           name: vultr-cloud-controller-manager
           command:
