@@ -26,7 +26,7 @@ func newInstances(client *govultr.Client) cloudprovider.Instances {
 
 // NodeAddresses return all IPv4 addresses associated to a instance by nodeName.
 func (i *instances) NodeAddresses(ctx context.Context, name types.NodeName) ([]v1.NodeAddress, error) {
-	instance, err := vultrByName(ctx, i.client, name)
+	instance, err := vultrByInstanceName(ctx, i.client, name)
 	if err != nil {
 		return nil, err
 	}
@@ -46,7 +46,7 @@ func (i *instances) NodeAddressesByProviderID(ctx context.Context, providerID st
 		return nil, err
 	}
 
-	instance, err := vultrByID(ctx, i.client, id)
+	instance, err := vultrByInstanceID(ctx, i.client, id)
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +61,7 @@ func (i *instances) NodeAddressesByProviderID(ctx context.Context, providerID st
 
 // InstanceID returns the instance ID of the droplet identified by nodeName.
 func (i *instances) InstanceID(ctx context.Context, nodeName types.NodeName) (string, error) {
-	instance, err := vultrByName(ctx, i.client, nodeName)
+	instance, err := vultrByInstanceName(ctx, i.client, nodeName)
 	if err != nil {
 		return "", err
 	}
@@ -71,7 +71,7 @@ func (i *instances) InstanceID(ctx context.Context, nodeName types.NodeName) (st
 
 // InstanceType returns the type of instance for given name.
 func (i *instances) InstanceType(ctx context.Context, name types.NodeName) (string, error) {
-	instance, err := vultrByName(ctx, i.client, name)
+	instance, err := vultrByInstanceName(ctx, i.client, name)
 	if err != nil {
 		return "", err
 	}
@@ -86,7 +86,7 @@ func (i *instances) InstanceTypeByProviderID(ctx context.Context, providerID str
 		return "", err
 	}
 
-	instance, err := vultrByID(ctx, i.client, id)
+	instance, err := vultrByInstanceID(ctx, i.client, id)
 	if err != nil {
 		return "", err
 	}
@@ -111,7 +111,7 @@ func (i *instances) InstanceExistsByProviderID(ctx context.Context, providerID s
 		return false, err
 	}
 
-	_, err = vultrByID(ctx, i.client, id)
+	_, err = vultrByInstanceID(ctx, i.client, id)
 	if err == nil {
 		return true, nil
 	}
@@ -126,7 +126,7 @@ func (i *instances) InstanceShutdownByProviderID(ctx context.Context, providerID
 		return false, err
 	}
 
-	instance, err := vultrByID(ctx, i.client, id)
+	instance, err := vultrByInstanceID(ctx, i.client, id)
 	if err != nil {
 		return false, err
 	}
@@ -178,7 +178,7 @@ func vultrIDFromProviderID(providerID string) (string, error) {
 }
 
 // vultrByID returns a vultr instance for the given id.
-func vultrByID(ctx context.Context, client *govultr.Client, id string) (*govultr.Instance, error) {
+func vultrByInstanceID(ctx context.Context, client *govultr.Client, id string) (*govultr.Instance, error) {
 	instance, _, err := client.Instance.Get(ctx, id) //nolint:bodyclose
 	if err != nil {
 		return nil, err
@@ -188,7 +188,7 @@ func vultrByID(ctx context.Context, client *govultr.Client, id string) (*govultr
 
 // vultrByName returns a vultr instance for a given NodeName.
 // Note that if multiple nodes with the same name exist and error will be thrown.
-func vultrByName(ctx context.Context, client *govultr.Client, nodeName types.NodeName) (*govultr.Instance, error) {
+func vultrByInstanceName(ctx context.Context, client *govultr.Client, nodeName types.NodeName) (*govultr.Instance, error) {
 	listOptions := &govultr.ListOptions{PerPage: 300}
 
 	var instances []govultr.Instance

@@ -1,3 +1,5 @@
+// Package govultr contains the functionality to interact with the Vultr public
+// HTTP REST API.
 package govultr
 
 import (
@@ -17,7 +19,7 @@ import (
 )
 
 const (
-	version     = "3.3.1"
+	version     = "3.6.1"
 	defaultBase = "https://api.vultr.com"
 	userAgent   = "govultr/" + version
 	rateLimit   = 500 * time.Millisecond
@@ -27,9 +29,9 @@ const (
 // RequestBody is used to create JSON bodies for one off calls
 type RequestBody map[string]interface{}
 
-// Client manages interaction with the Vultr V1 API
+// Client manages interaction with the Vultr API
 type Client struct {
-	// Http Client used to interact with the Vultr V1 API
+	// Http Client used to interact with the Vultr API
 	client *retryablehttp.Client
 
 	// BASE URL for APIs
@@ -39,21 +41,23 @@ type Client struct {
 	UserAgent string
 
 	// Services used to interact with the API
-	Account         AccountService
-	Application     ApplicationService
-	Backup          BackupService
-	BareMetalServer BareMetalServerService
-	Billing         BillingService
-	BlockStorage    BlockStorageService
-	Database        DatabaseService
-	Domain          DomainService
-	DomainRecord    DomainRecordService
-	FirewallGroup   FirewallGroupService
-	FirewallRule    FireWallRuleService
-	Instance        InstanceService
-	ISO             ISOService
-	Kubernetes      KubernetesService
-	LoadBalancer    LoadBalancerService
+	Account           AccountService
+	Application       ApplicationService
+	Backup            BackupService
+	BareMetalServer   BareMetalServerService
+	Billing           BillingService
+	BlockStorage      BlockStorageService
+	ContainerRegistry ContainerRegistryService
+	Database          DatabaseService
+	Domain            DomainService
+	DomainRecord      DomainRecordService
+	FirewallGroup     FirewallGroupService
+	FirewallRule      FireWallRuleService
+	Instance          InstanceService
+	ISO               ISOService
+	Kubernetes        KubernetesService
+	LoadBalancer      LoadBalancerService
+	Marketplace       MarketplaceService
 	// Deprecated: Network should no longer be used. Instead, use VPC.
 	Network       NetworkService
 	ObjectStorage ObjectStorageService
@@ -116,6 +120,7 @@ func NewClient(httpClient *http.Client) *Client {
 	client.BareMetalServer = &BareMetalServerServiceHandler{client}
 	client.Billing = &BillingServiceHandler{client}
 	client.BlockStorage = &BlockStorageServiceHandler{client}
+	client.ContainerRegistry = &ContainerRegistryServiceHandler{client}
 	client.Database = &DatabaseServiceHandler{client}
 	client.Domain = &DomainServiceHandler{client}
 	client.DomainRecord = &DomainRecordsServiceHandler{client}
@@ -125,6 +130,7 @@ func NewClient(httpClient *http.Client) *Client {
 	client.ISO = &ISOServiceHandler{client}
 	client.Kubernetes = &KubernetesHandler{client}
 	client.LoadBalancer = &LoadBalancerHandler{client}
+	client.Marketplace = &MarketplaceServiceHandler{client}
 	client.Network = &NetworkServiceHandler{client}
 	client.ObjectStorage = &ObjectStorageServiceHandler{client}
 	client.OS = &OSServiceHandler{client}
@@ -178,14 +184,14 @@ func (c *Client) DoWithContext(ctx context.Context, r *http.Request, data interf
 
 	rreq = rreq.WithContext(ctx)
 
-	res, err := c.client.Do(rreq)
+	res, errDo := c.client.Do(rreq)
 
 	if c.onRequestCompleted != nil {
 		c.onRequestCompleted(r, res)
 	}
 
-	if err != nil {
-		return nil, err
+	if errDo != nil {
+		return nil, errDo
 	}
 
 	defer func() {

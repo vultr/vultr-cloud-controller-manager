@@ -43,17 +43,19 @@ type KubernetesHandler struct {
 
 // Cluster represents a full VKE cluster
 type Cluster struct {
-	ID            string     `json:"id"`
-	Label         string     `json:"label"`
-	DateCreated   string     `json:"date_created"`
-	ClusterSubnet string     `json:"cluster_subnet"`
-	ServiceSubnet string     `json:"service_subnet"`
-	IP            string     `json:"ip"`
-	Endpoint      string     `json:"endpoint"`
-	Version       string     `json:"version"`
-	Region        string     `json:"region"`
-	Status        string     `json:"status"`
-	NodePools     []NodePool `json:"node_pools"`
+	ID              string     `json:"id"`
+	Label           string     `json:"label"`
+	DateCreated     string     `json:"date_created"`
+	ClusterSubnet   string     `json:"cluster_subnet"`
+	ServiceSubnet   string     `json:"service_subnet"`
+	IP              string     `json:"ip"`
+	Endpoint        string     `json:"endpoint"`
+	Version         string     `json:"version"`
+	Region          string     `json:"region"`
+	Status          string     `json:"status"`
+	HAControlPlanes bool       `json:"ha_controlplanes"`
+	FirewallGroupID string     `json:"firewall_group_id"`
+	NodePools       []NodePool `json:"node_pools"`
 }
 
 // NodePool represents a pool of nodes that are grouped by their label and plan type
@@ -87,10 +89,12 @@ type KubeConfig struct {
 
 // ClusterReq struct used to create a cluster
 type ClusterReq struct {
-	Label     string        `json:"label"`
-	Region    string        `json:"region"`
-	Version   string        `json:"version"`
-	NodePools []NodePoolReq `json:"node_pools"`
+	Label           string        `json:"label"`
+	Region          string        `json:"region"`
+	Version         string        `json:"version"`
+	HAControlPlanes bool          `json:"ha_controlplanes,omitempty"`
+	EnableFirewall  bool          `json:"enable_firewall,omitempty"`
+	NodePools       []NodePoolReq `json:"node_pools"`
 }
 
 // ClusterReqUpdate struct used to update update a cluster
@@ -254,7 +258,7 @@ func (k *KubernetesHandler) CreateNodePool(ctx context.Context, vkeID string, no
 }
 
 // ListNodePools will return all nodepools for a given VKE cluster
-func (k *KubernetesHandler) ListNodePools(ctx context.Context, vkeID string, options *ListOptions) ([]NodePool, *Meta, *http.Response, error) { //nolint:lll
+func (k *KubernetesHandler) ListNodePools(ctx context.Context, vkeID string, options *ListOptions) ([]NodePool, *Meta, *http.Response, error) { //nolint:lll,dupl
 	req, err := k.client.NewRequest(ctx, http.MethodGet, fmt.Sprintf("%s/%s/node-pools", vkePath, vkeID), nil)
 	if err != nil {
 		return nil, nil, nil, err
