@@ -29,7 +29,7 @@ func (z zones) GetZoneByProviderID(ctx context.Context, providerID string) (clou
 	if err != nil {
 		return cloudprovider.Zone{}, nil
 	}
-	vultr, err := vultrByID(ctx, z.client, id)
+	vultr, err := vultrByInstanceID(ctx, z.client, id)
 	if err != nil {
 		return cloudprovider.Zone{}, err
 	}
@@ -38,7 +38,7 @@ func (z zones) GetZoneByProviderID(ctx context.Context, providerID string) (clou
 }
 
 func (z zones) GetZoneByNodeName(ctx context.Context, nodeName types.NodeName) (cloudprovider.Zone, error) {
-	vultr, err := vultrByName(ctx, z.client, nodeName)
+	vultr, err := vultrByInstanceName(ctx, z.client, nodeName)
 	if err != nil {
 		return cloudprovider.Zone{}, nil
 	}

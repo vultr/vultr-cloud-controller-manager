@@ -1,6 +1,55 @@
 # Change Log
+## What's Changed
+## [v3.6.1](https://github.com/vultr/govultr/compare/v3.6.0...v3.6.1) (2024-01-16)
+### Enhancement
+* Bare Metal: Add functions to allow VPC [PR 293](https://github.com/vultr/govultr/pull/293)
 
-## GoVultr v1 changelog is located [here](https://github.com/vultr/govultr/blob/v1/CHANGELOG.md)
+## [v3.6.0](https://github.com/vultr/govultr/compare/v3.5.0...v3.6.0) (2023-12-15)
+### Enhancement
+* Marketplace: add support for new API route [PR 291](https://github.com/vultr/govultr/pull/291)
+* Bare Metal: add marketplace app variables [PR 291](https://github.com/vultr/govultr/pull/291)
+* Instance: add marketplace app variables [PR 291](https://github.com/vultr/govultr/pull/291)
+
+### Documentation
+* Update the README with non-auth client examples [PR 290](https://github.com/vultr/govultr/pull/290)
+
+## [v3.5.0](https://github.com/vultr/govultr/compare/v3.4.1...v3.5.0) (2023-12-01)
+### Enhancement
+* Instance: Add disable IPv4 option create request [PR 287](https://github.com/vultr/govultr/pull/287)
+* Database: Add user access control for Redis [PR 288](https://github.com/vultr/govultr/pull/288)
+
+## [v3.4.1](https://github.com/vultr/govultr/compare/v3.4.0...v3.4.1) (2023-11-17)
+### Enhancement
+* Database: Add support for usage endpoint [PR 282](https://github.com/vultr/govultr/pull/282)
+
+### Bug Fix
+* Container Registry: minor API fixes [PR 284](https://github.com/vultr/govultr/pull/284)
+
+## [v3.4.0](https://github.com/vultr/govultr/compare/v3.3.4...v3.4.0) (2023-11-10)
+### Enhancements
+* Database: Support read replica promotion [PR 276](https://github.com/vultr/govultr/pull/276)
+* Kubernetes: Add managed firewall support [PR 277](https://github.com/vultr/govultr/pull/277)
+* Container Registry: Add support for container registry operations [PR 278](https://github.com/vultr/govultr/pull/278)
+
+### Dependencies
+* Bump github.com/hashicorp/go-retryablehttp from 0.7.4 to 0.7.5 [PR 280](https://github.com/vultr/govultr/pull/280)
+
+### New Contributors
+* @Byteflux made their first contribution in [PR 277](https://github.com/vultr/govultr/pull/277)
+
+## [v3.3.4](https://github.com/vultr/govultr/compare/v3.3.3...v3.3.4) (2023-10-30)
+### Enhancements
+* Database: Add support for FerretDB [PR 272](https://github.com/vultr/govultr/pull/272)
+* Kubernetes: Add HA control planes support [PR 273](https://github.com/vultr/govultr/pull/273)
+
+## [v3.3.3](https://github.com/vultr/govultr/compare/v3.3.2...v3.3.3) (2023-10-24)
+### Bug Fixes
+* Database: Change VPCID to pointer for empty & nil values in updates [PR 270](https://github.com/vultr/govultr/pull/270)
+
+## [v3.3.2](https://github.com/vultr/govultr/compare/v3.3.1...v3.3.2) (2023-10-23)
+### Enhancements
+* General: Remove references to deprecated V1 API [PR 266](https://github.com/vultr/govultr/pull/266)
+* Database: Add support for public/private hostnames [PR 268](https://github.com/vultr/govultr/pull/268)
 
 ## [v3.3.1](https://github.com/vultr/govultr/compare/v3.3.0...v3.3.1) (2023-08-18)
 ### Enhancements

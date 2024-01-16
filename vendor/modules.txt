@@ -135,7 +135,7 @@ github.com/grpc-ecosystem/grpc-gateway/v2/utilities
 # github.com/hashicorp/go-cleanhttp v0.5.2
 ## explicit; go 1.13
 github.com/hashicorp/go-cleanhttp
-# github.com/hashicorp/go-retryablehttp v0.7.4
+# github.com/hashicorp/go-retryablehttp v0.7.5
 ## explicit; go 1.13
 github.com/hashicorp/go-retryablehttp
 # github.com/imdario/mergo v0.3.16
@@ -204,7 +204,7 @@ github.com/spf13/pflag
 # github.com/stoewer/go-strcase v1.3.0
 ## explicit; go 1.11
 github.com/stoewer/go-strcase
-# github.com/vultr/govultr/v3 v3.3.1
+# github.com/vultr/govultr/v3 v3.6.1
 ## explicit; go 1.20
 github.com/vultr/govultr/v3
 # github.com/vultr/metadata v1.1.0
