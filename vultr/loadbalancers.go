@@ -20,7 +20,11 @@ import (
 )
 
 const (
-	annoVultrLoadBalancerID = "kubernetes.vultr.com/load-balancer-id" //nolint (this is unused)
+	// annoVultrLoadBalancerLabel is used to set custom labels for load balancers
+	annoVultrLoadBalancerLabel = "kubernetes.vultr.com/load-balancer-label"
+
+	// annoVultrLoadBalancerID is used to identify individual Vultr load balancers, this is managed by the CCM
+	annoVultrLoadBalancerID = "kubernetes.vultr.com/load-balancer-id"
 
 	// annoVultrLoadBalancerCreate defaults to true and is to specify whether or not to create a VLB for the svc
 	annoVultrLoadBalancerCreate = "kubernetes.vultr.com/load-balancer-create"
@@ -101,15 +105,12 @@ func newLoadbalancers(client *govultr.Client, zone string) cloudprovider.LoadBal
 	return &loadbalancers{client: client, zone: zone}
 }
 
-func (l *loadbalancers) GetLoadBalancer(ctx context.Context, clusterName string, service *v1.Service) (status *v1.LoadBalancerStatus, exists bool, err error) {
-	lbName := l.GetLoadBalancerName(ctx, clusterName, service)
-
-	lb, err := l.lbByName(ctx, lbName)
+func (l *loadbalancers) GetLoadBalancer(ctx context.Context, _ string, service *v1.Service) (status *v1.LoadBalancerStatus, exists bool, err error) {
+	lb, err := l.getVultrLB(ctx, service)
 	if err != nil {
 		if err == errLbNotFound {
 			return nil, false, nil
 		}
-
 		return nil, false, err
 	}
 
@@ -128,6 +129,9 @@ func (l *loadbalancers) GetLoadBalancer(ctx context.Context, clusterName string,
 }
 
 func (l *loadbalancers) GetLoadBalancerName(_ context.Context, _ string, service *v1.Service) string {
+	if label, ok := service.Annotations[annoVultrLoadBalancerLabel]; ok {
+		return label
+	}
 	return getDefaultLBName(service)
 }
 
@@ -162,6 +166,9 @@ func (l *loadbalancers) EnsureLoadBalancer(ctx context.Context, clusterName stri
 		}
 		klog.Infof("Created load balancer %q", lb2.ID)
 
+		// Set the Vultr VLB ID annotation
+		service.Annotations[annoVultrLoadBalancerID] = lb2.ID
+
 		if lb2.Status != lbStatusActive {
 			return nil, fmt.Errorf("load-balancer is not yet active - current status: %s", lb2.Status)
 		}
@@ -182,8 +189,7 @@ func (l *loadbalancers) EnsureLoadBalancer(ctx context.Context, clusterName stri
 
 	klog.Infof("Load balancer exists for cluster %q", clusterName)
 
-	lbName := l.GetLoadBalancerName(ctx, clusterName, service)
-	lb, err := l.lbByName(ctx, lbName)
+	lb, err := l.getVultrLB(ctx, service)
 	if err != nil {
 		if err == errLbNotFound {
 			return nil, errLbNotFound
@@ -192,7 +198,10 @@ func (l *loadbalancers) EnsureLoadBalancer(ctx context.Context, clusterName stri
 		return nil, err
 	}
 
-	klog.Infof("Found load balancer: %q", lbName)
+	klog.Infof("Found load balancer: %q", lb.Label)
+
+	// Set the Vultr VLB ID annotation
+	service.Annotations[annoVultrLoadBalancerID] = lb.ID
 
 	if lb.Status != lbStatusActive {
 		return nil, fmt.Errorf("load-balancer is not yet active - current status: %s", lb.Status)
@@ -216,11 +225,13 @@ func (l *loadbalancers) UpdateLoadBalancer(ctx context.Context, clusterName stri
 		return err
 	}
 
-	lbName := l.GetLoadBalancerName(ctx, clusterName, service)
-	lb, err := l.lbByName(ctx, lbName)
+	lb, err := l.getVultrLB(ctx, service)
 	if err != nil {
 		return err
 	}
+
+	// Set the Vultr VLB ID annotation
+	service.Annotations[annoVultrLoadBalancerID] = lb.ID
 
 	lbReq, err := l.buildLoadBalancerRequest(service, nodes)
 	if err != nil {
@@ -244,9 +255,7 @@ func (l *loadbalancers) EnsureLoadBalancerDeleted(ctx context.Context, clusterNa
 		return nil
 	}
 
-	lbName := l.GetLoadBalancerName(ctx, clusterName, service)
-
-	lb, err := l.lbByName(ctx, lbName)
+	lb, err := l.getVultrLB(ctx, service)
 	if err != nil {
 		return err
 	}
@@ -284,6 +293,32 @@ func (l *loadbalancers) lbByName(ctx context.Context, lbName string) (*govultr.L
 	}
 
 	return nil, errLbNotFound
+}
+
+func (l *loadbalancers) lbByID(ctx context.Context, lbID string) (*govultr.LoadBalancer, error) {
+	vlb, _, err := l.client.LoadBalancer.Get(ctx, lbID)
+	if err != nil {
+		return nil, errLbNotFound
+	}
+
+	return vlb, nil
+}
+
+func (l *loadbalancers) getVultrLB(ctx context.Context, service *v1.Service) (*govultr.LoadBalancer, error) {
+	if id, ok := service.Annotations[annoVultrLoadBalancerID]; ok {
+		lb, err := l.lbByID(ctx, id)
+		if err != nil {
+			return nil, err
+		}
+		return lb, nil
+	} else {
+		lbName := l.GetLoadBalancerName(ctx, "", service)
+		lb, err := l.lbByName(ctx, lbName)
+		if err != nil {
+			return nil, err
+		}
+		return lb, nil
+	}
 }
 
 func (l *loadbalancers) buildLoadBalancerRequest(service *v1.Service, nodes []*v1.Node) (*govultr.LoadBalancerReq, error) {
