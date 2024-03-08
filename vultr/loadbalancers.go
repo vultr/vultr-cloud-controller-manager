@@ -21,13 +21,13 @@ import (
 
 const (
 	// annoVultrLoadBalancerLabel is used to set custom labels for load balancers
-	annoVultrLoadBalancerLabel = "service.beta.kubernetes.io/load-balancer-label"
+	annoVultrLoadBalancerLabel = "service.beta.kubernetes.io/vultr-loadbalancer-label"
 
 	// annoVultrLoadBalancerID is used to identify individual Vultr load balancers, this is managed by the CCM
-	annoVultrLoadBalancerID = "service.beta.kubernetes.io/load-balancer-id"
+	annoVultrLoadBalancerID = "service.beta.kubernetes.io/vultr-loadbalancer-id"
 
 	// annoVultrLoadBalancerCreate defaults to true and is to specify whether or not to create a VLB for the svc
-	annoVultrLoadBalancerCreate = "service.beta.kubernetes.io/load-balancer-create"
+	annoVultrLoadBalancerCreate = "service.beta.kubernetes.io/vultr-loadbalancer-create"
 
 	// annoVultrLBProtocol is the annotation used to specify
 	// which protocol should be used for a Load Balancer.
@@ -168,6 +168,13 @@ func (l *loadbalancers) EnsureLoadBalancer(ctx context.Context, clusterName stri
 
 		// Set the Vultr VLB ID annotation
 		service.Annotations[annoVultrLoadBalancerID] = lb2.ID
+		if err = l.GetKubeClient(); err != nil {
+			return nil, fmt.Errorf("failed to get kubeclient to update service: %s", err)
+		}
+		_, err = l.kubeClient.CoreV1().Services(service.Namespace).Update(ctx, service, metav1.UpdateOptions{})
+		if err != nil {
+			return nil, fmt.Errorf("failed to update service with loadbalancer ID: %s", err)
+		}
 
 		if lb2.Status != lbStatusActive {
 			return nil, fmt.Errorf("load-balancer is not yet active - current status: %s", lb2.Status)
@@ -202,6 +209,13 @@ func (l *loadbalancers) EnsureLoadBalancer(ctx context.Context, clusterName stri
 
 	// Set the Vultr VLB ID annotation
 	service.Annotations[annoVultrLoadBalancerID] = lb.ID
+	if err = l.GetKubeClient(); err != nil {
+		return nil, fmt.Errorf("failed to get kubeclient to update service: %s", err)
+	}
+	_, err = l.kubeClient.CoreV1().Services(service.Namespace).Update(ctx, service, metav1.UpdateOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to update service with loadbalancer ID: %s", err)
+	}
 
 	if lb.Status != lbStatusActive {
 		return nil, fmt.Errorf("load-balancer is not yet active - current status: %s", lb.Status)
@@ -232,6 +246,13 @@ func (l *loadbalancers) UpdateLoadBalancer(ctx context.Context, clusterName stri
 
 	// Set the Vultr VLB ID annotation
 	service.Annotations[annoVultrLoadBalancerID] = lb.ID
+	if err = l.GetKubeClient(); err != nil {
+		return fmt.Errorf("failed to get kubeclient to update service: %s", err)
+	}
+	_, err = l.kubeClient.CoreV1().Services(service.Namespace).Update(ctx, service, metav1.UpdateOptions{})
+	if err != nil {
+		return fmt.Errorf("failed to update service with loadbalancer ID: %s", err)
+	}
 
 	lbReq, err := l.buildLoadBalancerRequest(service, nodes)
 	if err != nil {
@@ -374,19 +395,21 @@ func (l *loadbalancers) buildLoadBalancerRequest(service *v1.Service, nodes []*v
 		}
 	}
 
+	name := l.GetLoadBalancerName(context.Background(), "", service)
+
 	return &govultr.LoadBalancerReq{
-		Label:              l.GetLoadBalancerName(context.Background(), "", service), // will always be set
-		Instances:          instances,                                                // will always be set
-		HealthCheck:        healthCheck,                                              // will always be set
-		StickySessions:     stickySession,                                            // need to check
-		ForwardingRules:    rules,                                                    // all always be set
-		SSL:                ssl,                                                      // will always be set
-		SSLRedirect:        govultr.BoolToBoolPtr(getSSLRedirect(service)),           // need to check
-		ProxyProtocol:      govultr.BoolToBoolPtr(getProxyProtocol(service)),         // need to check
-		BalancingAlgorithm: getAlgorithm(service),                                    // will always be set
-		FirewallRules:      firewallRules,                                            // need to check
-		VPC:                govultr.StringToStringPtr(vpc),                           // need to check
-		Nodes:              nodeC,                                                    // need to check
+		Label:              name,                                             // will always be set
+		Instances:          instances,                                        // will always be set
+		HealthCheck:        healthCheck,                                      // will always be set
+		StickySessions:     stickySession,                                    // need to check
+		ForwardingRules:    rules,                                            // all always be set
+		SSL:                ssl,                                              // will always be set
+		SSLRedirect:        govultr.BoolToBoolPtr(getSSLRedirect(service)),   // need to check
+		ProxyProtocol:      govultr.BoolToBoolPtr(getProxyProtocol(service)), // need to check
+		BalancingAlgorithm: getAlgorithm(service),                            // will always be set
+		FirewallRules:      firewallRules,                                    // need to check
+		VPC:                govultr.StringToStringPtr(vpc),                   // need to check
+		Nodes:              nodeC,                                            // need to check
 	}, nil
 }
 
