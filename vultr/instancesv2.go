@@ -160,7 +160,6 @@ func (i *instancesv2) InstanceMetadata(ctx context.Context, node *v1.Node) (*clo
 
 	log.Printf("returned node metadata: %v", vultrNode) //nolint
 	return &vultrNode, nil
-
 }
 
 // nodeInstanceAddresses gathers public/private IP addresses and returns a []v1.NodeAddress .

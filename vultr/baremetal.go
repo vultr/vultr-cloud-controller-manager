@@ -4,12 +4,14 @@ package vultr
 import (
 	"context"
 	"fmt"
+	"log"
+	"reflect"
+
 	"github.com/vultr/govultr/v3"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	cloudprovider "k8s.io/cloud-provider"
-	"log"
-	"reflect"
+	"k8s.io/klog/v2"
 )
 
 func (i *instancesv2) getVultrBareMetal(ctx context.Context, node *v1.Node) (*govultr.BareMetalServer, error) {
@@ -107,7 +109,11 @@ func (i *instancesv2) nodeBareMetalAddresses(baremetal *govultr.BareMetalServer)
 		return nil, fmt.Errorf("error getting VPC2 info for bm %s", baremetal.Label)
 	}
 
-	resp.Body.Close()
+	err = resp.Body.Close()
+	if err != nil {
+		klog.V(3).Info("baremetal response body failed to close") //nolint
+	}
+
 	for _, vpc := range vpc2 {
 		addresses = append(addresses,
 			v1.NodeAddress{Type: v1.NodeInternalIP, Address: vpc.IPAddress})
@@ -117,7 +123,10 @@ func (i *instancesv2) nodeBareMetalAddresses(baremetal *govultr.BareMetalServer)
 	if err != nil {
 		return nil, fmt.Errorf("error getting VPC1 info for bm %s", baremetal.Label)
 	}
-	resp.Body.Close()
+	err = resp.Body.Close()
+	if err != nil {
+		klog.V(3).Info("baremetal response body failed to close") //nolint
+	}
 
 	for _, vpc := range vpc1 {
 		addresses = append(addresses,

@@ -300,8 +300,10 @@ func (l *loadbalancers) lbByID(ctx context.Context, lbID string) (*govultr.LoadB
 	if err != nil {
 		return nil, errLbNotFound
 	}
-	resp.Body.Close()
-
+	err = resp.Body.Close()
+	if err != nil {
+		klog.V(3).Info("lbByID response body failed to close") //nolint
+	}
 	return vlb, nil
 }
 
@@ -319,7 +321,6 @@ func (l *loadbalancers) getVultrLB(ctx context.Context, service *v1.Service) (*g
 		return nil, err
 	}
 	return lb, nil
-
 }
 
 func (l *loadbalancers) buildLoadBalancerRequest(service *v1.Service, nodes []*v1.Node) (*govultr.LoadBalancerReq, error) {
