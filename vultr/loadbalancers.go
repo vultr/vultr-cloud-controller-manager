@@ -296,10 +296,11 @@ func (l *loadbalancers) lbByName(ctx context.Context, lbName string) (*govultr.L
 }
 
 func (l *loadbalancers) lbByID(ctx context.Context, lbID string) (*govultr.LoadBalancer, error) {
-	vlb, _, err := l.client.LoadBalancer.Get(ctx, lbID)
+	vlb, resp, err := l.client.LoadBalancer.Get(ctx, lbID)
 	if err != nil {
 		return nil, errLbNotFound
 	}
+	resp.Body.Close()
 
 	return vlb, nil
 }
@@ -311,14 +312,14 @@ func (l *loadbalancers) getVultrLB(ctx context.Context, service *v1.Service) (*g
 			return nil, err
 		}
 		return lb, nil
-	} else {
-		lbName := l.GetLoadBalancerName(ctx, "", service)
-		lb, err := l.lbByName(ctx, lbName)
-		if err != nil {
-			return nil, err
-		}
-		return lb, nil
 	}
+	lbName := l.GetLoadBalancerName(ctx, "", service)
+	lb, err := l.lbByName(ctx, lbName)
+	if err != nil {
+		return nil, err
+	}
+	return lb, nil
+
 }
 
 func (l *loadbalancers) buildLoadBalancerRequest(service *v1.Service, nodes []*v1.Node) (*govultr.LoadBalancerReq, error) {
