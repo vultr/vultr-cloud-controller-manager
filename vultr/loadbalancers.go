@@ -296,14 +296,11 @@ func (l *loadbalancers) lbByName(ctx context.Context, lbName string) (*govultr.L
 }
 
 func (l *loadbalancers) lbByID(ctx context.Context, lbID string) (*govultr.LoadBalancer, error) {
-	vlb, resp, err := l.client.LoadBalancer.Get(ctx, lbID)
+	vlb, _, err := l.client.LoadBalancer.Get(ctx, lbID) //nolint:bodyclose
 	if err != nil {
 		return nil, errLbNotFound
 	}
-	err = resp.Body.Close()
-	if err != nil {
-		klog.V(3).Info("lbByID response body failed to close") //nolint
-	}
+
 	return vlb, nil
 }
 

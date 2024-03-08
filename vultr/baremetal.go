@@ -11,7 +11,6 @@ import (
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	cloudprovider "k8s.io/cloud-provider"
-	"k8s.io/klog/v2"
 )
 
 func (i *instancesv2) getVultrBareMetal(ctx context.Context, node *v1.Node) (*govultr.BareMetalServer, error) {
@@ -104,14 +103,9 @@ func (i *instancesv2) nodeBareMetalAddresses(baremetal *govultr.BareMetalServer)
 		Address: baremetal.Label,
 	})
 
-	vpc2, resp, err := i.client.BareMetalServer.ListVPC2Info(context.Background(), baremetal.ID)
+	vpc2, resp, err := i.client.BareMetalServer.ListVPC2Info(context.Background(), baremetal.ID) //nolint:bodyclose
 	if err != nil {
 		return nil, fmt.Errorf("error getting VPC2 info for bm %s", baremetal.Label)
-	}
-
-	err = resp.Body.Close()
-	if err != nil {
-		klog.V(3).Info("baremetal response body failed to close") //nolint
 	}
 
 	for _, vpc := range vpc2 {
@@ -119,13 +113,9 @@ func (i *instancesv2) nodeBareMetalAddresses(baremetal *govultr.BareMetalServer)
 			v1.NodeAddress{Type: v1.NodeInternalIP, Address: vpc.IPAddress})
 	}
 
-	vpc1, resp, err := i.client.BareMetalServer.ListVPCInfo(context.Background(), baremetal.ID)
+	vpc1, resp, err := i.client.BareMetalServer.ListVPCInfo(context.Background(), baremetal.ID) //nolint:bodyclose
 	if err != nil {
 		return nil, fmt.Errorf("error getting VPC1 info for bm %s", baremetal.Label)
-	}
-	err = resp.Body.Close()
-	if err != nil {
-		klog.V(3).Info("baremetal response body failed to close") //nolint
 	}
 
 	for _, vpc := range vpc1 {
