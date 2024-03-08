@@ -21,13 +21,13 @@ import (
 
 const (
 	// annoVultrLoadBalancerLabel is used to set custom labels for load balancers
-	annoVultrLoadBalancerLabel = "kubernetes.vultr.com/load-balancer-label"
+	annoVultrLoadBalancerLabel = "service.beta.kubernetes.io/load-balancer-label"
 
 	// annoVultrLoadBalancerID is used to identify individual Vultr load balancers, this is managed by the CCM
-	annoVultrLoadBalancerID = "kubernetes.vultr.com/load-balancer-id"
+	annoVultrLoadBalancerID = "service.beta.kubernetes.io/load-balancer-id"
 
 	// annoVultrLoadBalancerCreate defaults to true and is to specify whether or not to create a VLB for the svc
-	annoVultrLoadBalancerCreate = "kubernetes.vultr.com/load-balancer-create"
+	annoVultrLoadBalancerCreate = "service.beta.kubernetes.io/load-balancer-create"
 
 	// annoVultrLBProtocol is the annotation used to specify
 	// which protocol should be used for a Load Balancer.
@@ -375,18 +375,18 @@ func (l *loadbalancers) buildLoadBalancerRequest(service *v1.Service, nodes []*v
 	}
 
 	return &govultr.LoadBalancerReq{
-		Label:              getDefaultLBName(service),                        // will always be set
-		Instances:          instances,                                        // will always be set
-		HealthCheck:        healthCheck,                                      // will always be set
-		StickySessions:     stickySession,                                    // need to check
-		ForwardingRules:    rules,                                            // all always be set
-		SSL:                ssl,                                              // will always be set
-		SSLRedirect:        govultr.BoolToBoolPtr(getSSLRedirect(service)),   // need to check
-		ProxyProtocol:      govultr.BoolToBoolPtr(getProxyProtocol(service)), // need to check
-		BalancingAlgorithm: getAlgorithm(service),                            // will always be set
-		FirewallRules:      firewallRules,                                    // need to check
-		VPC:                govultr.StringToStringPtr(vpc),                   // need to check
-		Nodes:              nodeC,                                            // need to check
+		Label:              l.GetLoadBalancerName(context.Background(), "", service), // will always be set
+		Instances:          instances,                                                // will always be set
+		HealthCheck:        healthCheck,                                              // will always be set
+		StickySessions:     stickySession,                                            // need to check
+		ForwardingRules:    rules,                                                    // all always be set
+		SSL:                ssl,                                                      // will always be set
+		SSLRedirect:        govultr.BoolToBoolPtr(getSSLRedirect(service)),           // need to check
+		ProxyProtocol:      govultr.BoolToBoolPtr(getProxyProtocol(service)),         // need to check
+		BalancingAlgorithm: getAlgorithm(service),                                    // will always be set
+		FirewallRules:      firewallRules,                                            // need to check
+		VPC:                govultr.StringToStringPtr(vpc),                           // need to check
+		Nodes:              nodeC,                                                    // need to check
 	}, nil
 }
 
