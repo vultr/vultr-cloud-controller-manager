@@ -329,16 +329,22 @@ func (l *loadbalancers) getVultrLB(ctx context.Context, service *v1.Service) (*g
 	if id, ok := service.Annotations[annoVultrLoadBalancerID]; ok {
 		lb, err := l.lbByID(ctx, id)
 		if err != nil {
-			return nil, err
+			// Skip check
 		}
 		return lb, nil
 	}
-	lbName := l.GetLoadBalancerName(ctx, "", service)
-	lb, err := l.lbByName(ctx, lbName)
-	if err != nil {
-		return nil, err
+
+	defaultLBName := getDefaultLBName(service)
+	if lb, err := l.lbByName(ctx, defaultLBName); err != nil {
+		lbName := l.GetLoadBalancerName(ctx, "", service)
+		lb, err := l.lbByName(ctx, lbName)
+		if err != nil {
+			return nil, err
+		}
+		return lb, nil
+	} else {
+		return lb, nil
 	}
-	return lb, nil
 }
 
 func (l *loadbalancers) buildLoadBalancerRequest(service *v1.Service, nodes []*v1.Node) (*govultr.LoadBalancerReq, error) {
