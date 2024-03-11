@@ -333,7 +333,10 @@ func (l *loadbalancers) lbByID(ctx context.Context, lbID string) (*govultr.LoadB
 
 func (l *loadbalancers) getVultrLB(ctx context.Context, service *v1.Service) (*govultr.LoadBalancer, error) {
 	if id, ok := service.Annotations[annoVultrLoadBalancerID]; ok {
-		lb, _ := l.lbByID(ctx, id) //nolint
+		lb, err := l.lbByID(ctx, id)
+		if err != nil {
+			return nil, err
+		}
 		return lb, nil
 	}
 
