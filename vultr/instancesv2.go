@@ -140,28 +140,26 @@ func (i *instancesv2) InstanceMetadata(ctx context.Context, node *v1.Node) (*clo
 
 		log.Printf("returned node metadata: %v", vultrNode) //nolint
 		return &vultrNode, nil
-	} else {
-		newNode, err := i.getVultrInstance(ctx, node)
-		if err != nil {
-			log.Printf("instance(%s) metadata check failed: %e", node.Spec.ProviderID, err) //nolint
-			return nil, err
-		}
-		nodeAddress, err := i.nodeInstanceAddresses(newNode)
-		if err != nil {
-			return nil, err
-		}
-
-		vultrNode := cloudprovider.InstanceMetadata{
-			InstanceType:  newNode.Plan,
-			ProviderID:    fmt.Sprintf("vultr://%s", newNode.ID),
-			Region:        newNode.Region,
-			NodeAddresses: nodeAddress,
-		}
-
-		log.Printf("returned node metadata: %v", vultrNode) //nolint
-		return &vultrNode, nil
+	}
+	newNode, err := i.getVultrInstance(ctx, node)
+	if err != nil {
+		log.Printf("instance(%s) metadata check failed: %e", node.Spec.ProviderID, err) //nolint
+		return nil, err
+	}
+	nodeAddress, err := i.nodeInstanceAddresses(newNode)
+	if err != nil {
+		return nil, err
 	}
 
+	vultrNode := cloudprovider.InstanceMetadata{
+		InstanceType:  newNode.Plan,
+		ProviderID:    fmt.Sprintf("vultr://%s", newNode.ID),
+		Region:        newNode.Region,
+		NodeAddresses: nodeAddress,
+	}
+
+	log.Printf("returned node metadata: %v", vultrNode) //nolint
+	return &vultrNode, nil
 }
 
 // nodeInstanceAddresses gathers public/private IP addresses and returns a []v1.NodeAddress .

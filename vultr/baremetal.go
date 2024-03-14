@@ -4,12 +4,13 @@ package vultr
 import (
 	"context"
 	"fmt"
+	"log"
+	"reflect"
+
 	"github.com/vultr/govultr/v3"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	cloudprovider "k8s.io/cloud-provider"
-	"log"
-	"reflect"
 )
 
 func (i *instancesv2) getVultrBareMetal(ctx context.Context, node *v1.Node) (*govultr.BareMetalServer, error) {
@@ -30,6 +31,11 @@ func (i *instancesv2) getVultrBareMetal(ctx context.Context, node *v1.Node) (*go
 			return nil, err
 		}
 		bm, err := vultrByBareMetalID(ctx, i.client, id)
+		if err != nil {
+			log.Printf("baremetal(%s) could not be found: %e", id, err) //nolint
+			return nil, err
+		}
+
 		return bm, nil
 	}
 
@@ -97,7 +103,7 @@ func (i *instancesv2) nodeBareMetalAddresses(baremetal *govultr.BareMetalServer)
 		Address: baremetal.Label,
 	})
 
-	vpc2, _, err := i.client.BareMetalServer.ListVPC2Info(context.Background(), baremetal.ID)
+	vpc2, _, err := i.client.BareMetalServer.ListVPC2Info(context.Background(), baremetal.ID) //nolint:bodyclose
 	if err != nil {
 		return nil, fmt.Errorf("error getting VPC2 info for bm %s", baremetal.Label)
 	}
@@ -107,7 +113,7 @@ func (i *instancesv2) nodeBareMetalAddresses(baremetal *govultr.BareMetalServer)
 			v1.NodeAddress{Type: v1.NodeInternalIP, Address: vpc.IPAddress})
 	}
 
-	vpc1, _, err := i.client.BareMetalServer.ListVPCInfo(context.Background(), baremetal.ID)
+	vpc1, _, err := i.client.BareMetalServer.ListVPCInfo(context.Background(), baremetal.ID) //nolint:bodyclose
 	if err != nil {
 		return nil, fmt.Errorf("error getting VPC1 info for bm %s", baremetal.Label)
 	}
