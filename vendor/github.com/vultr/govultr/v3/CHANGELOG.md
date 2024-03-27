@@ -1,8 +1,23 @@
 # Change Log
-## What's Changed
+## [3.6.4](https://github.com/vultr/govultr/compare/v3.6.3...v3.6.4) (2024-03-07)
+### Enhancement
+* Kubernetes: add labels to the node pool update request struct [PR 302](https://github.com/vultr/govultr/pull/302)
+
+## [3.6.3](https://github.com/vultr/govultr/compare/v3.6.2...v3.6.3) (2024-02-29)
+### Bug Fixes
+* All: add a json struct tag for the meta links field [PR 298](https://github.com/vultr/govultr/pull/298)
+* Startup Scripts: allow empty values in create/update request struct [PR 299](https://github.com/vultr/govultr/pull/299)
+
+### Automation
+* Update codeql runner from v1 to v2 [PR 300](https://github.com/vultr/govultr/pull/300)
+
+## [v3.6.2](https://github.com/vultr/govultr/compare/v3.6.1...v3.6.2) (2024-02-20)
+### Enhancement
+* Kubernetes: add support for nodepool labels [PR 296](https://github.com/vultr/govultr/pull/296)
+
 ## [v3.6.1](https://github.com/vultr/govultr/compare/v3.6.0...v3.6.1) (2024-01-16)
 ### Enhancement
-* Bare Metal: Add functions to allow VPC [PR 293](https://github.com/vultr/govultr/pull/293)
+* Bare Metal: add functions to allow VPC [PR 293](https://github.com/vultr/govultr/pull/293)
 
 ## [v3.6.0](https://github.com/vultr/govultr/compare/v3.5.0...v3.6.0) (2023-12-15)
 ### Enhancement

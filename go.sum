@@ -160,8 +160,8 @@ github.com/stretchr/testify v1.8.0/go.mod h1:yNjHg4UonilssWZ8iaSj1OCr/vHnekPRkoO
 github.com/stretchr/testify v1.8.1/go.mod h1:w2LPCIKwWwSfY2zedu0+kehJoqGctiVI29o6fzry7u4=
 github.com/stretchr/testify v1.8.4 h1:CcVxjf3Q8PM0mHUKJCdn+eZZtm5yQwehR5yeSVQQcUk=
 github.com/tmc/grpc-websocket-proxy v0.0.0-20220101234140-673ab2c3ae75 h1:6fotK7otjonDflCTK0BCfls4SPy3NcCVb5dqqmbRknE=
-github.com/vultr/govultr/v3 v3.6.1 h1:l1hAXGtqWVnobBpLRzW/BxoocYFI7SSBwQHw65ntLk4=
-github.com/vultr/govultr/v3 v3.6.1/go.mod h1:rt9v2x114jZmmLAE/h5N5jnxTmsK9ewwS2oQZ0UBQzM=
+github.com/vultr/govultr/v3 v3.6.4 h1:unvY9eXlBw667ECQZDbBDOIaWB8wkk6Bx+yB0IMKXJ4=
+github.com/vultr/govultr/v3 v3.6.4/go.mod h1:rt9v2x114jZmmLAE/h5N5jnxTmsK9ewwS2oQZ0UBQzM=
 github.com/vultr/metadata v1.1.0 h1:RUjCnH5Mdlz7uuyfb1jOZNkU72zl/HwK76jLzVFdiOo=
 github.com/vultr/metadata v1.1.0/go.mod h1:4yocaI6h2EFJzwN0m1KnnC/vDCx2axIqnyxmtF/LWoQ=
 github.com/xiang90/probing v0.0.0-20190116061207-43a291ad63a2 h1:eY9dn8+vbi4tKz5Qo6v2eYzo7kUS51QINcR5jNpbZS8=
