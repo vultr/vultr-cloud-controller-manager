@@ -125,7 +125,7 @@ spec:
     spec:
       serviceAccountName: vultr-ccm
       nodeSelector:
-        "node-role.kubernetes.io/controlplane": true
+        node-role.kubernetes.io/controlplane: "true"
       tolerations:
         - key: node-role.kubernetes.io/controlplane
           effect: NoSchedule
