@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	github.com/spf13/pflag v1.0.5
-	github.com/vultr/govultr/v3 v3.6.1
+	github.com/vultr/govultr/v3 v3.6.4
 	github.com/vultr/metadata v1.1.0
 	golang.org/x/oauth2 v0.18.0
 	k8s.io/api v0.28.2
