@@ -1,4 +1,25 @@
 # Change Log
+## [v0.12.0](https://github.com/vultr/vultr-cloud-controller-manager/compare/v0.11.0...v0.12.0) (2023-04-02)
+### Enhancements
+* Add ability for load balancer labels to be updated [PR 230](https://github.com/vultr/vultr-cloud-controller-manager/pull/230)
+
+### Documentation
+* Document https value option to LB protocol annotation [PR 231](https://github.com/vultr/vultr-cloud-controller-manager/pull/231)
+
+### Dependencies
+* Bump golang.org/x/crypto from 0.13.0 to 0.17.0 [PR 223](https://github.com/vultr/vultr-cloud-controller-manager/pull/223)
+* Bump golang.org/x/oauth2 from 0.12.0 to 0.18.0 [PR 232](https://github.com/vultr/vultr-cloud-controller-manager/pull/232)
+* Bump google.golang.org/grpc from 1.58.0 to 1.58.3 [PR 216](https://github.com/vultr/vultr-cloud-controller-manager/pull/216)
+* Bump k8s.io/klog/v2 from 2.100.1 to 2.120.1 [PR 233](https://github.com/vultr/vultr-cloud-controller-manager/pull/233)
+* Bump google.golang.org/protobuf from 1.31.0 to 1.33.0 [PR 234](https://github.com/vultr/vultr-cloud-controller-manager/pull/234)
+* Bump github.com/vultr/govultr/v3 from 3.6.1 to 3.6.4 [PR 237](https://github.com/vultr/vultr-cloud-controller-manager/pull/237)
+
+## [v0.11.0](https://github.com/vultr/vultr-cloud-controller-manager/compare/v0.10.0...v0.11.0) (2024-01-16)
+### Enhancements
+* Add annotation to create a load balancer on a service [PR 213](https://github.com/vultr/vultr-cloud-controller-manager/pull/213)
+* Add check for firewall type of IPv6 [PR 212](https://github.com/vultr/vultr-cloud-controller-manager/pull/212)
+* Add support for bare metal nodes [PR 228](https://github.com/vultr/vultr-cloud-controller-manager/pull/228)
+
 ## [v0.10.0](https://github.com/vultr/vultr-cloud-controller-manager/compare/v0.9.0...v0.10.0) (2023-09-18)
 * Update to Go v1.20 [PR #186](https://github.com/vultr/vultr-cloud-controller-manager/pull/186)
 * Update to Go-Vultr v3.1.0 [PR #191](https://github.com/vultr/vultr-cloud-controller-manager/pull/191)
