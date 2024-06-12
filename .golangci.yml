@@ -1,4 +1,3 @@
----
 issues:
   exclude-use-default: false
 
@@ -18,13 +17,22 @@ linters-settings:
       - wrapperFunc
   golint:
     min-confidence: 0
-  gomnd:
-    settings:
-      mnd:
-        # don't include the "operation" and "assign"
-        checks: argument,case,condition,return
+  mnd:
+    # don't include the "operation" and "assign"
+    checks: 
+      - argument
+      - case
+      - condition
+      - return
+    ignored-numbers:
+      - '0'
+      - '1'
+      - '2'
+      - '3'
   govet:
-    check-shadowing: true
+    enable-all: true
+    disable:
+      - fieldalignment
     settings:
       printf:
         funcs:
@@ -50,7 +58,7 @@ linters:
     - gofmt
     - goimports
     - revive
-    - gomnd
+    - mnd
     - goprintffuncname
     - gosec
     - gosimple
