@@ -1,3 +1,4 @@
+version: 2
 before:
   hooks:
     - go mod download
@@ -43,6 +44,3 @@ dockers:
 
 release:
   draft: false
-
-changelog:
-  skip: false
