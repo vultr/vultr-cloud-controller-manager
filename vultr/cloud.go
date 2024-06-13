@@ -19,7 +19,7 @@ import (
 const (
 	// ProviderName defines the cloud provider
 	ProviderName   = "vultr"
-	accessTokenEnv = "VULTR_API_KEY" //nolint
+	accessTokenEnv = "VULTR_API_KEY" //nolint:gosec
 	userAgent      = "CCM_USER_AGENT"
 	apiURL         = "API_URL"
 )
@@ -37,8 +37,9 @@ type cloud struct {
 	loadbalancers cloudprovider.LoadBalancer
 }
 
-func init() { //nolint
-	cloudprovider.RegisterCloudProvider(ProviderName, func(config io.Reader) (i cloudprovider.Interface, err error) {
+//nolint:gochecknoinits
+func init() {
+	cloudprovider.RegisterCloudProvider(ProviderName, func(_ io.Reader) (i cloudprovider.Interface, err error) {
 		return newCloud()
 	})
 }

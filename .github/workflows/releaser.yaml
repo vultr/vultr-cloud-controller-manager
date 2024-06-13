@@ -19,7 +19,7 @@ jobs:
         run: |
           pattern="^Release v[0-9]+.[0-9]+.[0-9]+ #(minor|major|patch)$"
           if [[ "${{ github.event.head_commit.message }}" =~ ${pattern} ]]; then
-              echo ::set-output name=match::true
+              echo match=true >> $GITHUB_OUTPUT
           fi
   create-tag:
     runs-on: ubuntu-latest
@@ -28,9 +28,9 @@ jobs:
     outputs:
       new_tag: ${{ steps.tagger.outputs.new_tag }}
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
       with:
-        fetch-depth: '0'
+        fetch-depth: 0
 
     - name: Bump version and push tag
       id: tagger
@@ -45,13 +45,13 @@ jobs:
     needs: create-tag
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: Set up Go
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v5
         with:
-          go-version: "1.20"
+          go-version: "1.22"
       - name: Docker Login
         env:
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
@@ -59,7 +59,7 @@ jobs:
         run: |
           echo "${DOCKER_PASSWORD}" | docker login --username "${DOCKER_USERNAME}" --password-stdin
       - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v2
+        uses: goreleaser/goreleaser-action@v6
         with:
           distribution: goreleaser
           version: latest
