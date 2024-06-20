@@ -12,7 +12,7 @@ require (
 	k8s.io/client-go v0.28.2
 	k8s.io/cloud-provider v0.28.2
 	k8s.io/component-base v0.28.2
-	k8s.io/klog/v2 v2.120.1
+	k8s.io/klog/v2 v2.130.1
 )
 
 replace github.com/google/cel-go => github.com/google/cel-go v0.16.0
