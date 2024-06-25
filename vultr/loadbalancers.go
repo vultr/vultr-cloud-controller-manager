@@ -168,10 +168,19 @@ func (l *loadbalancers) EnsureLoadBalancer(ctx context.Context, clusterName stri
 
 		// Set the Vultr VLB ID annotation
 		if _, ok := service.Annotations[annoVultrLoadBalancerID]; !ok {
-			service.Annotations[annoVultrLoadBalancerID] = lb2.ID
 			if err = l.GetKubeClient(); err != nil {
 				return nil, fmt.Errorf("failed to get kubeclient to update service: %s", err)
 			}
+			service, err = l.kubeClient.CoreV1().Services(service.Namespace).Get(ctx, service.Name, metav1.GetOptions{})
+			if err != nil {
+				return nil, fmt.Errorf("failed to get service with loadbalancer ID: %s", err)
+			}
+
+			if service.Annotations == nil {
+				service.Annotations = make(map[string]string)
+			}
+			service.Annotations[annoVultrLoadBalancerID] = lb2.ID
+
 			_, err = l.kubeClient.CoreV1().Services(service.Namespace).Update(ctx, service, metav1.UpdateOptions{})
 			if err != nil {
 				return nil, fmt.Errorf("failed to update service with loadbalancer ID: %s", err)
