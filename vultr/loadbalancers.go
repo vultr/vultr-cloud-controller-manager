@@ -4,11 +4,11 @@ package vultr
 import (
 	"context"
 	"fmt"
-	"github.com/asaskevich/govalidator"
 	"net"
 	"strconv"
 	"strings"
 
+	"github.com/asaskevich/govalidator"
 	"github.com/vultr/govultr/v3"
 	"github.com/vultr/metadata"
 	v1 "k8s.io/api/core/v1"
