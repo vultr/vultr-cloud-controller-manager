@@ -1,4 +1,23 @@
 # Change Log
+## [v0.13.0](https://github.com/vultr/vultr-cloud-controller-manager/compare/v0.12.0...v0.13.0) (2023-08-12)
+### Bug Fixes
+* Load Balancers: Get service before checking annotations to resolve nil map errors [PR 262](https://github.com/vultr/vultr-cloud-controller-manager/pull/262)
+
+### Dependencies
+* Update go to v1.21 [PR 248](https://github.com/vultr/vultr-cloud-controller-manager/pull/248)
+* Bump golang.org/x/net from 0.22.0 to 0.23.0 [PR 245](https://github.com/vultr/vultr-cloud-controller-manager/pull/245)
+* Update otel from v1.18.0 to v1.20.0 [PR 258](https://github.com/vultr/vultr-cloud-controller-manager/pull/258)
+* Bump github.com/vultr/govultr/v3 from 3.6.4 to 3.8.1 [PR 259](https://github.com/vultr/vultr-cloud-controller-manager/pull/259)
+* Bump k8s.io/klog/v2 from 2.120.1 to 2.130.1 [PR 261](https://github.com/vultr/vultr-cloud-controller-manager/pull/261)
+
+### Automation
+* Update mattermost notification workflows [PR 246](https://github.com/vultr/vultr-cloud-controller-manager/pull/246)
+* Fix mattermost notifications [PR 247](https://github.com/vultr/vultr-cloud-controller-manager/pull/247)
+* Goreleaser and golangci-lint workflows updates [PR 253](https://github.com/vultr/vultr-cloud-controller-manager/pull/253)
+
+### New Contributors
+* @mondragonfx made their first contribution in [PR 248](https://github.com/vultr/vultr-cloud-controller-manager/pull/248)
+
 ## [v0.12.0](https://github.com/vultr/vultr-cloud-controller-manager/compare/v0.11.0...v0.12.0) (2023-04-02)
 ### Enhancements
 * Add ability for load balancer labels to be updated [PR 230](https://github.com/vultr/vultr-cloud-controller-manager/pull/230)
