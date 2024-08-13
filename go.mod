@@ -4,7 +4,7 @@ go 1.21
 
 require (
 	github.com/spf13/pflag v1.0.5
-	github.com/vultr/govultr/v3 v3.8.1
+	github.com/vultr/govultr/v3 v3.9.0
 	github.com/vultr/metadata v1.1.0
 	golang.org/x/oauth2 v0.18.0
 	k8s.io/api v0.28.2
