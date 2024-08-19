@@ -123,13 +123,14 @@ func (l *loadbalancers) GetLoadBalancer(ctx context.Context, _ string, service *
 	hostname := lb.Label
 
 	// Check if hostname annotation is blank and set if not
-	if _, ok := service.Annotations[annoVultrHostname]; !ok {
+	if _, ok := service.Annotations[annoVultrHostname]; ok {
 		if service.Annotations[annoVultrHostname] != "" {
 			if govalidator.IsDNSName(service.Annotations[annoVultrHostname]) {
 				hostname = service.Annotations[annoVultrHostname]
 			} else {
 				return nil, true, fmt.Errorf("hostname %s is not a valid DNS name", service.Annotations[annoVultrHostname])
 			}
+			klog.Infof("setting hostname for loadbalancer to: %s", hostname)
 			ingress = append(ingress, v1.LoadBalancerIngress{Hostname: hostname})
 		}
 	} else {
@@ -213,13 +214,14 @@ func (l *loadbalancers) EnsureLoadBalancer(ctx context.Context, clusterName stri
 
 		hostname := lb2.Label
 		// Check if hostname annotation is blank and set if not
-		if _, ok := service.Annotations[annoVultrHostname]; !ok {
+		if _, ok := service.Annotations[annoVultrHostname]; ok {
 			if service.Annotations[annoVultrHostname] != "" {
 				if govalidator.IsDNSName(service.Annotations[annoVultrHostname]) {
 					hostname = service.Annotations[annoVultrHostname]
 				} else {
 					return nil, fmt.Errorf("hostname %s is not a valid DNS name", service.Annotations[annoVultrHostname])
 				}
+				klog.Infof("setting hostname for loadbalancer to: %s", hostname)
 				ingress = append(ingress, v1.LoadBalancerIngress{Hostname: hostname})
 
 			}
