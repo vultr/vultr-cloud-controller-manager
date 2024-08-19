@@ -130,13 +130,14 @@ func (l *loadbalancers) GetLoadBalancer(ctx context.Context, _ string, service *
 			} else {
 				return nil, true, fmt.Errorf("hostname %s is not a valid DNS name", service.Annotations[annoVultrHostname])
 			}
+			ingress = append(ingress, v1.LoadBalancerIngress{Hostname: hostname})
 		}
-	}
+	} else {
+		ingress = append(ingress, v1.LoadBalancerIngress{Hostname: hostname, IP: lb.IPV4})
 
-	ingress = append(ingress, v1.LoadBalancerIngress{Hostname: hostname, IP: lb.IPV4})
-
-	if enabledIPv6 {
-		ingress = append(ingress, v1.LoadBalancerIngress{Hostname: hostname, IP: lb.IPV6})
+		if enabledIPv6 {
+			ingress = append(ingress, v1.LoadBalancerIngress{Hostname: hostname, IP: lb.IPV6})
+		}
 	}
 
 	return &v1.LoadBalancerStatus{
@@ -219,13 +220,15 @@ func (l *loadbalancers) EnsureLoadBalancer(ctx context.Context, clusterName stri
 				} else {
 					return nil, fmt.Errorf("hostname %s is not a valid DNS name", service.Annotations[annoVultrHostname])
 				}
+				ingress = append(ingress, v1.LoadBalancerIngress{Hostname: hostname})
+
 			}
-		}
+		} else {
+			ingress = append(ingress, v1.LoadBalancerIngress{IP: lb2.IPV4})
 
-		ingress = append(ingress, v1.LoadBalancerIngress{Hostname: hostname, IP: lb2.IPV4})
-
-		if enabledIPv6 {
-			ingress = append(ingress, v1.LoadBalancerIngress{Hostname: hostname, IP: lb2.IPV6})
+			if enabledIPv6 {
+				ingress = append(ingress, v1.LoadBalancerIngress{IP: lb2.IPV6})
+			}
 		}
 
 		return &v1.LoadBalancerStatus{
