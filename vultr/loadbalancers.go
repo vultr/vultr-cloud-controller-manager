@@ -120,7 +120,7 @@ func (l *loadbalancers) GetLoadBalancer(ctx context.Context, _ string, service *
 
 	enabledIPv6 := checkEnabledIPv6(service)
 	var ingress []v1.LoadBalancerIngress
-	hostname := lb.Label
+	hostname := lb.Label //nolint
 
 	// Check if hostname annotation is blank and set if not
 	if _, ok := service.Annotations[annoVultrHostname]; ok {
@@ -212,7 +212,7 @@ func (l *loadbalancers) EnsureLoadBalancer(ctx context.Context, clusterName stri
 		enabledIPv6 := checkEnabledIPv6(service)
 		var ingress []v1.LoadBalancerIngress
 
-		hostname := lb2.Label
+		hostname := lb2.Label //nolint
 		// Check if hostname annotation is blank and set if not
 		if _, ok := service.Annotations[annoVultrHostname]; ok {
 			if service.Annotations[annoVultrHostname] != "" {
@@ -223,7 +223,6 @@ func (l *loadbalancers) EnsureLoadBalancer(ctx context.Context, clusterName stri
 				}
 				klog.Infof("setting hostname for loadbalancer to: %s", hostname)
 				ingress = append(ingress, v1.LoadBalancerIngress{Hostname: hostname})
-
 			}
 		} else {
 			ingress = append(ingress, v1.LoadBalancerIngress{IP: lb2.IPV4})
