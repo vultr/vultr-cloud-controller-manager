@@ -1,5 +1,5 @@
 # Change Log
-## [v0.13.1](https://github.com/vultr/vultr-cloud-controller-manager/compare/v0.12.0...v0.13.0) (2023-08-19)
+## [v0.13.1](https://github.com/vultr/vultr-cloud-controller-manager/compare/v0.13.0...v0.13.1) (2023-08-19)
 ### Bug Fixes
 * Load Balancers: Resolve issues with hairpinning by introducing hostname workaround [PR 268](https://github.com/vultr/vultr-cloud-controller-manager/pull/268)
 
