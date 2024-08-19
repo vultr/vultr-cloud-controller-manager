@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/asaskevich/govalidator"
 	"github.com/vultr/govultr/v3"
 	"github.com/vultr/metadata"
 	v1 "k8s.io/api/core/v1"
@@ -50,6 +51,9 @@ const (
 
 	// annoVultrLBBackendProtocol backend protocol
 	annoVultrLBBackendProtocol = "service.beta.kubernetes.io/vultr-loadbalancer-backend-protocol"
+
+	// annoVultrHostname is the hostname used for VLB to prevent hairpinning
+	annoVultrHostname = "service.beta.kubernetes.io/vultr-loadbalancer-hostname"
 
 	annoVultrHealthCheckPath               = "service.beta.kubernetes.io/vultr-loadbalancer-healthcheck-path"
 	annoVultrHealthCheckProtocol           = "service.beta.kubernetes.io/vultr-loadbalancer-healthcheck-protocol"
@@ -116,11 +120,25 @@ func (l *loadbalancers) GetLoadBalancer(ctx context.Context, _ string, service *
 
 	enabledIPv6 := checkEnabledIPv6(service)
 	var ingress []v1.LoadBalancerIngress
+	hostname := lb.Label //nolint
 
-	ingress = append(ingress, v1.LoadBalancerIngress{Hostname: lb.Label, IP: lb.IPV4})
+	// Check if hostname annotation is blank and set if not
+	if _, ok := service.Annotations[annoVultrHostname]; ok {
+		if service.Annotations[annoVultrHostname] != "" {
+			if govalidator.IsDNSName(service.Annotations[annoVultrHostname]) {
+				hostname = service.Annotations[annoVultrHostname]
+			} else {
+				return nil, true, fmt.Errorf("hostname %s is not a valid DNS name", service.Annotations[annoVultrHostname])
+			}
+			klog.Infof("setting hostname for loadbalancer to: %s", hostname)
+			ingress = append(ingress, v1.LoadBalancerIngress{Hostname: hostname})
+		}
+	} else {
+		ingress = append(ingress, v1.LoadBalancerIngress{Hostname: hostname, IP: lb.IPV4})
 
-	if enabledIPv6 {
-		ingress = append(ingress, v1.LoadBalancerIngress{Hostname: lb.Label, IP: lb.IPV6})
+		if enabledIPv6 {
+			ingress = append(ingress, v1.LoadBalancerIngress{Hostname: hostname, IP: lb.IPV6})
+		}
 	}
 
 	return &v1.LoadBalancerStatus{
@@ -194,10 +212,24 @@ func (l *loadbalancers) EnsureLoadBalancer(ctx context.Context, clusterName stri
 		enabledIPv6 := checkEnabledIPv6(service)
 		var ingress []v1.LoadBalancerIngress
 
-		ingress = append(ingress, v1.LoadBalancerIngress{Hostname: lb2.Label, IP: lb2.IPV4})
+		hostname := lb2.Label //nolint
+		// Check if hostname annotation is blank and set if not
+		if _, ok := service.Annotations[annoVultrHostname]; ok {
+			if service.Annotations[annoVultrHostname] != "" {
+				if govalidator.IsDNSName(service.Annotations[annoVultrHostname]) {
+					hostname = service.Annotations[annoVultrHostname]
+				} else {
+					return nil, fmt.Errorf("hostname %s is not a valid DNS name", service.Annotations[annoVultrHostname])
+				}
+				klog.Infof("setting hostname for loadbalancer to: %s", hostname)
+				ingress = append(ingress, v1.LoadBalancerIngress{Hostname: hostname})
+			}
+		} else {
+			ingress = append(ingress, v1.LoadBalancerIngress{IP: lb2.IPV4})
 
-		if enabledIPv6 {
-			ingress = append(ingress, v1.LoadBalancerIngress{Hostname: lb2.Label, IP: lb2.IPV6})
+			if enabledIPv6 {
+				ingress = append(ingress, v1.LoadBalancerIngress{IP: lb2.IPV6})
+			}
 		}
 
 		return &v1.LoadBalancerStatus{
@@ -220,6 +252,9 @@ func (l *loadbalancers) EnsureLoadBalancer(ctx context.Context, clusterName stri
 
 	// Set the Vultr VLB ID annotation
 	if _, ok := service.Annotations[annoVultrLoadBalancerID]; !ok {
+		if service.Annotations == nil {
+			service.Annotations = make(map[string]string)
+		}
 		service.Annotations[annoVultrLoadBalancerID] = lb.ID
 		if err = l.GetKubeClient(); err != nil {
 			return nil, fmt.Errorf("failed to get kubeclient to update service: %s", err)
