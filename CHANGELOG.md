@@ -1,9 +1,14 @@
 # Change Log
-## [v0.13.1](https://github.com/vultr/vultr-cloud-controller-manager/compare/v0.13.0...v0.13.1) (2023-08-19)
+## [v0.13.2](https://github.com/vultr/vultr-cloud-controller-manager/compare/v0.13.1...v0.13.2) (2024-10-28)
+
+### Dependencies
+* Update go to v1.23 and github workflows [PR 280](https://github.com/vultr/vultr-cloud-controller-manager/pull/280)
+
+## [v0.13.1](https://github.com/vultr/vultr-cloud-controller-manager/compare/v0.13.0...v0.13.1) (2024-08-19)
 ### Bug Fixes
 * Load Balancers: Resolve issues with hairpinning by introducing hostname workaround [PR 268](https://github.com/vultr/vultr-cloud-controller-manager/pull/268)
 
-## [v0.13.0](https://github.com/vultr/vultr-cloud-controller-manager/compare/v0.12.0...v0.13.0) (2023-08-12)
+## [v0.13.0](https://github.com/vultr/vultr-cloud-controller-manager/compare/v0.12.0...v0.13.0) (2024-08-12)
 ### Bug Fixes
 * Load Balancers: Get service before checking annotations to resolve nil map errors [PR 262](https://github.com/vultr/vultr-cloud-controller-manager/pull/262)
 
@@ -22,7 +27,7 @@
 ### New Contributors
 * @mondragonfx made their first contribution in [PR 248](https://github.com/vultr/vultr-cloud-controller-manager/pull/248)
 
-## [v0.12.0](https://github.com/vultr/vultr-cloud-controller-manager/compare/v0.11.0...v0.12.0) (2023-04-02)
+## [v0.12.0](https://github.com/vultr/vultr-cloud-controller-manager/compare/v0.11.0...v0.12.0) (2024-04-02)
 ### Enhancements
 * Add ability for load balancer labels to be updated [PR 230](https://github.com/vultr/vultr-cloud-controller-manager/pull/230)
 
