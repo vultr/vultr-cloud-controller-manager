@@ -1,4 +1,8 @@
 # Change Log
+## [v0.13.3](https://github.com/vultr/vultr-cloud-controller-manager/compare/v0.13.2...v0.13.3) (2024-11-04)
+
+* Update govultr from v3.9.1 to v3.11.2 [PR 283](https://github.com/vultr/vultr-cloud-controller-manager/pull/283)
+
 ## [v0.13.2](https://github.com/vultr/vultr-cloud-controller-manager/compare/v0.13.1...v0.13.2) (2024-10-28)
 
 ### Dependencies
