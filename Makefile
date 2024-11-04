@@ -12,7 +12,7 @@ build:
 .PHONY: build-linux
 build-linux:
 	@echo "building vultr ccm for linux"
-	GOOS=linux GOARCH=amd64 GCO_ENABLED=0 go build -trimpath -o dist/vultr-cloud-controller-manager .
+	GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -trimpath -o dist/vultr-cloud-controller-manager .
 
 .PHONY: docker-build
 docker-build:
