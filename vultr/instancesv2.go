@@ -166,7 +166,7 @@ func (i *instancesv2) InstanceMetadata(ctx context.Context, node *v1.Node) (*clo
 func (i *instancesv2) nodeInstanceAddresses(instance *govultr.Instance) ([]v1.NodeAddress, error) {
 	var addresses []v1.NodeAddress
 
-	if reflect.DeepEqual(instance, *&govultr.Instance{}) { //nolint
+	if reflect.DeepEqual(instance, govultr.Instance{}) {
 		return nil, fmt.Errorf("instance is empty %v", instance)
 	}
 

@@ -94,7 +94,7 @@ func vultrByBareMetalName(ctx context.Context, client *govultr.Client, nodeName 
 func (i *instancesv2) nodeBareMetalAddresses(baremetal *govultr.BareMetalServer) ([]v1.NodeAddress, error) {
 	var addresses []v1.NodeAddress
 
-	if reflect.DeepEqual(baremetal, *&govultr.BareMetalServer{}) { //nolint
+	if reflect.DeepEqual(baremetal, govultr.BareMetalServer{}) {
 		return nil, fmt.Errorf("baremetal is empty %v", baremetal)
 	}
 
