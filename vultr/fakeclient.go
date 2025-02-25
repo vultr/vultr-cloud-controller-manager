@@ -270,6 +270,16 @@ func (f *fakeLB) Delete(_ context.Context, _ string) error {
 	panic("implement me")
 }
 
+// DeleteAutoSSL deletes AutoSSL (not implemented, yet)
+func (f *fakeLB) DeleteAutoSSL(_ context.Context, _ string) error {
+	panic("implement me")
+}
+
+// DeleteSSL deletes SSL (not implemented, yet)
+func (f *fakeLB) DeleteSSL(_ context.Context, _ string) error {
+	panic("implement me")
+}
+
 // List gets loadbalancers
 func (f *fakeLB) List(_ context.Context, _ *govultr.ListOptions) ([]govultr.LoadBalancer, *govultr.Meta, *http.Response, error) {
 	return []govultr.LoadBalancer{
