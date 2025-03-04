@@ -222,8 +222,8 @@ github.com/spf13/pflag
 # github.com/stoewer/go-strcase v1.3.0
 ## explicit; go 1.11
 github.com/stoewer/go-strcase
-# github.com/vultr/govultr/v3 v3.11.2
-## explicit; go 1.23
+# github.com/vultr/govultr/v3 v3.15.0
+## explicit; go 1.24
 github.com/vultr/govultr/v3
 # github.com/vultr/metadata v1.1.0
 ## explicit; go 1.17

@@ -1,4 +1,37 @@
 # Change Log
+## [3.15.0](https://github.com/vultr/govultr/compare/v3.14.1...v3.15.0) (2025-03-04)
+### Enhancements
+* Add functions for account bandwidth [PR 356](https://github.com/vultr/govultr/pull/356)
+* Add functions for billing pending charges [PR 357](https://github.com/vultr/govultr/pull/357)
+
+### Dependencies
+* Update Go from v1.23 to v1.24 [PR 360](https://github.com/vultr/govultr/pull/360)
+
+### Clean Up
+* Fix whitespace [PR 359](https://github.com/vultr/govultr/pull/359)
+
+### New Contributors
+* @DazWilkin made their first contribution in [PR 356](https://github.com/vultr/govultr/pull/356)
+
+## [3.14.1](https://github.com/vultr/govultr/compare/v3.14.0...v3.14.1) (2025-01-17)
+### Bug Fixes
+* Load Balancers: Add missing SSL fields and AutoSSL struct [PR 352](https://github.com/vultr/govultr/pull/352)
+
+## [3.14.0](https://github.com/vultr/govultr/compare/v3.13.0...v3.14.0) (2025-01-15)
+### Enhancements
+* Load Balancers: Add support for AutoSSL and GlobalRegions [PR 350](https://github.com/vultr/govultr/pull/350)
+
+### Clean Up
+* Database: Remove deprecated Redis references [PR 349](https://github.com/vultr/govultr/pull/349)
+
+## [3.13.0](https://github.com/vultr/govultr/compare/v3.12.0...v3.13.0) (2024-12-17)
+### Enhancements
+* VFS Storage: Add support for virtual file system storages [PR 347](https://github.com/vultr/govultr/pull/347)
+
+## [3.12.0]( https://github.com/vultr/govultr/compare/v3.11.2...v3.12.0) (2024-11-22)
+### Clean Up
+* Database: Deprecate Redis-Named Fields [PR 345](https://github.com/vultr/govultr/pull/345)
+
 ## [3.11.2]( https://github.com/vultr/govultr/compare/v3.11.1...v3.11.2) (2024-10-30)
 ### Bug fixes
 * Database: Fix Kafka advanced config field names [PR 343](https://github.com/vultr/govultr/pull/343)
