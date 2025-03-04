@@ -17,6 +17,8 @@ type LoadBalancerService interface {
 	Get(ctx context.Context, lbID string) (*LoadBalancer, *http.Response, error)
 	Update(ctx context.Context, lbID string, updateReq *LoadBalancerReq) error
 	Delete(ctx context.Context, lbID string) error
+	DeleteSSL(ctx context.Context, lbID string) error
+	DeleteAutoSSL(ctx context.Context, lbID string) error
 	List(ctx context.Context, options *ListOptions) ([]LoadBalancer, *Meta, *http.Response, error)
 	CreateForwardingRule(ctx context.Context, lbID string, rule *ForwardingRule) (*ForwardingRule, *http.Response, error)
 	GetForwardingRule(ctx context.Context, lbID string, ruleID string) (*ForwardingRule, *http.Response, error)
@@ -45,10 +47,12 @@ type LoadBalancer struct {
 	HealthCheck     *HealthCheck     `json:"health_check,omitempty"`
 	GenericInfo     *GenericInfo     `json:"generic_info,omitempty"`
 	SSLInfo         *bool            `json:"has_ssl,omitempty"`
+	AutoSSL         *AutoSSL         `json:"auto_ssl,omitempty"`
 	HTTP2           *bool            `json:"http2,omitempty"`
 	HTTP3           *bool            `json:"http3,omitempty"`
 	ForwardingRules []ForwardingRule `json:"forwarding_rules,omitempty"`
 	FirewallRules   []LBFirewallRule `json:"firewall_rules,omitempty"`
+	GlobalRegions   []string         `json:"global_regions,omitempty"`
 }
 
 // LoadBalancerReq gives options for creating or updating a load balancer
@@ -61,6 +65,7 @@ type LoadBalancerReq struct {
 	StickySessions     *StickySessions  `json:"sticky_session,omitempty"`
 	ForwardingRules    []ForwardingRule `json:"forwarding_rules,omitempty"`
 	SSL                *SSL             `json:"ssl,omitempty"`
+	AutoSSL            *AutoSSL         `json:"auto_ssl,omitempty"`
 	SSLRedirect        *bool            `json:"ssl_redirect,omitempty"`
 	HTTP2              *bool            `json:"http2,omitempty"`
 	HTTP3              *bool            `json:"http3,omitempty"`
@@ -69,6 +74,7 @@ type LoadBalancerReq struct {
 	FirewallRules      []LBFirewallRule `json:"firewall_rules,omitempty"`
 	Timeout            int              `json:"timeout,omitempty"`
 	VPC                *string          `json:"vpc,omitempty"`
+	GlobalRegions      []string         `json:"global_regions,omitempty"`
 }
 
 // InstanceList represents instances that are attached to your load balancer
@@ -126,9 +132,18 @@ type LBFirewallRule struct {
 
 // SSL represents valid SSL config
 type SSL struct {
-	PrivateKey  string `json:"private_key,omitempty"`
-	Certificate string `json:"certificate,omitempty"`
-	Chain       string `json:"chain,omitempty"`
+	PrivateKey     string `json:"private_key,omitempty"`
+	Certificate    string `json:"certificate,omitempty"`
+	Chain          string `json:"chain,omitempty"`
+	PrivateKeyB64  string `json:"private_key_b64,omitempty"`
+	CertificateB64 string `json:"certificate_b64,omitempty"`
+	ChainB64       string `json:"chain_b64,omitempty"`
+}
+
+// AutoSSL represents valid AutoSSL config
+type AutoSSL struct {
+	DomainZone string `json:"domain_zone"`
+	DomainSub  string `json:"domain_sub,omitempty"`
 }
 
 type lbsBase struct {
@@ -347,4 +362,28 @@ func (l *LoadBalancerHandler) ListFirewallRules(ctx context.Context, lbID string
 	}
 
 	return fwRules.FirewallRules, fwRules.Meta, resp, nil
+}
+
+// DeleteSSL removes the SSL configuration from a load balancer subscription.
+func (l *LoadBalancerHandler) DeleteSSL(ctx context.Context, lbID string) error {
+	uri := fmt.Sprintf("%s/%s/ssl", lbPath, lbID)
+	req, err := l.client.NewRequest(ctx, http.MethodDelete, uri, nil)
+	if err != nil {
+		return err
+	}
+
+	_, err = l.client.DoWithContext(ctx, req, nil)
+	return err
+}
+
+// DeleteAutoSSL removes the AutoSSL configuration from a load balancer subscription.
+func (l *LoadBalancerHandler) DeleteAutoSSL(ctx context.Context, lbID string) error {
+	uri := fmt.Sprintf("%s/%s/auto_ssl", lbPath, lbID)
+	req, err := l.client.NewRequest(ctx, http.MethodDelete, uri, nil)
+	if err != nil {
+		return err
+	}
+
+	_, err = l.client.DoWithContext(ctx, req, nil)
+	return err
 }
