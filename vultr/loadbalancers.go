@@ -97,6 +97,8 @@ const (
 	healthCheckUnhealthy = 5
 	healthCheckHealthy   = 5
 
+	defaultLBTimeout = 600
+
 	lbStatusActive = "active"
 )
 
@@ -448,11 +450,6 @@ func (l *loadbalancers) buildLoadBalancerRequest(service *v1.Service, nodes []*v
 		return nil, err
 	}
 
-	globalRegions, err := getGlobalRegions(service)
-	if err != nil {
-		return nil, err
-	}
-
 	nodeC := 1
 
 	if count, ok := service.Annotations[annoVultrNodeCount]; ok {
@@ -483,7 +480,7 @@ func (l *loadbalancers) buildLoadBalancerRequest(service *v1.Service, nodes []*v
 		FirewallRules:      firewallRules,                                    // need to check
 		Timeout:            timeout,                                          // need to check
 		VPC:                govultr.StringToStringPtr(vpc),                   // need to check
-		GlobalRegions:      globalRegions,                                    // need to check
+		GlobalRegions:      getGlobalRegions(service),                        // need to check
 		Nodes:              nodeC,                                            // need to check
 	}, nil
 }
@@ -951,7 +948,7 @@ func getHTTP3(service *v1.Service) bool {
 func getTimeout(service *v1.Service) (int, error) {
 	lbtimeout, ok := service.Annotations[annoVultrLBTimeout]
 	if !ok {
-		return 600, nil
+		return defaultLBTimeout, nil
 	}
 
 	timeout, err := strconv.Atoi(lbtimeout)
@@ -961,18 +958,18 @@ func getTimeout(service *v1.Service) (int, error) {
 	return timeout, nil
 }
 
-func getGlobalRegions(service *v1.Service) ([]string, error) {
-	regions, ok := service.Annotations[annoVultrLBGlobalRegions]
-	if !ok || regions == "" {
-		return nil, nil
-	}
+func getGlobalRegions(service *v1.Service) []string {
+    regions, ok := service.Annotations[annoVultrLBGlobalRegions]
+    if !ok || regions == "" {
+        return nil
+    }
 
-	regionList := strings.Split(regions, ",")
-	for v := range regionList {
-		regionList[v] = strings.TrimSpace(regionList[v])
-	}
+    regionList := strings.Split(regions, ",")
+    for v := range regionList {
+        regionList[v] = strings.TrimSpace(regionList[v])
+    }
 
-	return regionList, nil
+    return regionList
 }
 
 func buildFirewallRules(service *v1.Service) ([]govultr.LBFirewallRule, error) {
