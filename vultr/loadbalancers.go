@@ -959,17 +959,17 @@ func getTimeout(service *v1.Service) (int, error) {
 }
 
 func getGlobalRegions(service *v1.Service) []string {
-    regions, ok := service.Annotations[annoVultrLBGlobalRegions]
-    if !ok || regions == "" {
-        return nil
-    }
+	regions, ok := service.Annotations[annoVultrLBGlobalRegions]
+	if !ok || regions == "" {
+		return nil
+	}
 
-    regionList := strings.Split(regions, ",")
-    for v := range regionList {
-        regionList[v] = strings.TrimSpace(regionList[v])
-    }
+	regionList := strings.Split(regions, ",")
+	for v := range regionList {
+		regionList[v] = strings.TrimSpace(regionList[v])
+	}
 
-    return regionList
+	return regionList
 }
 
 func buildFirewallRules(service *v1.Service) ([]govultr.LBFirewallRule, error) {
