@@ -66,6 +66,9 @@ const (
 	annoVultrAlgorithm     = "service.beta.kubernetes.io/vultr-loadbalancer-algorithm"
 	annoVultrSSLRedirect   = "service.beta.kubernetes.io/vultr-loadbalancer-ssl-redirect"
 	annoVultrProxyProtocol = "service.beta.kubernetes.io/vultr-loadbalancer-proxy-protocol"
+	annoVultrLBHTTP2       = "service.beta.kubernetes.io/vultr-loadbalancer-http2"
+	annoVultrLBHTTP3       = "service.beta.kubernetes.io/vultr-loadbalancer-http3"
+	annoVultrLBTimeout     = "service.beta.kubernetes.io/vultr-loadbalancer-timeout"
 
 	annoVultrStickySessionEnabled    = "service.beta.kubernetes.io/vultr-loadbalancer-sticky-session-enabled"
 	annoVultrStickySessionCookieName = "service.beta.kubernetes.io/vultr-loadbalancer-sticky-session-cookie-name"
@@ -91,6 +94,8 @@ const (
 	healthCheckResponse  = 5
 	healthCheckUnhealthy = 5
 	healthCheckHealthy   = 5
+
+	defaultLBTimeout = 600
 
 	lbStatusActive = "active"
 )
@@ -418,6 +423,11 @@ func (l *loadbalancers) buildLoadBalancerRequest(service *v1.Service, nodes []*v
 		return nil, err
 	}
 
+	timeout, err := getTimeout(service)
+	if err != nil {
+		return nil, err
+	}
+
 	var ssl *govultr.SSL
 	if secretName, ok := service.Annotations[annoVultrLBSSL]; ok {
 		ssl, err = l.GetSSL(service, secretName)
@@ -461,9 +471,12 @@ func (l *loadbalancers) buildLoadBalancerRequest(service *v1.Service, nodes []*v
 		ForwardingRules:    rules,                                            // all always be set
 		SSL:                ssl,                                              // will always be set
 		SSLRedirect:        govultr.BoolToBoolPtr(getSSLRedirect(service)),   // need to check
+		HTTP2:              govultr.BoolToBoolPtr(getHTTP2(service)),         // need to check
+		HTTP3:              govultr.BoolToBoolPtr(getHTTP3(service)),         // need to check
 		ProxyProtocol:      govultr.BoolToBoolPtr(getProxyProtocol(service)), // need to check
 		BalancingAlgorithm: getAlgorithm(service),                            // will always be set
 		FirewallRules:      firewallRules,                                    // need to check
+		Timeout:            timeout,                                          // need to check
 		VPC:                govultr.StringToStringPtr(vpc),                   // need to check
 		Nodes:              nodeC,                                            // need to check
 	}, nil
@@ -899,6 +912,47 @@ func getProxyProtocol(service *v1.Service) bool {
 	}
 
 	return pass
+}
+
+func getHTTP2(service *v1.Service) bool {
+	http2, ok := service.Annotations[annoVultrLBHTTP2]
+	if !ok {
+		return false
+	}
+
+	protocolHTTP2, err := strconv.ParseBool(http2)
+	if err != nil {
+		return false
+	}
+
+	return protocolHTTP2
+}
+
+func getHTTP3(service *v1.Service) bool {
+	http3, ok := service.Annotations[annoVultrLBHTTP3]
+	if !ok {
+		return false
+	}
+
+	protocolHTTP3, err := strconv.ParseBool(http3)
+	if err != nil {
+		return false
+	}
+
+	return protocolHTTP3
+}
+
+func getTimeout(service *v1.Service) (int, error) {
+	lbtimeout, ok := service.Annotations[annoVultrLBTimeout]
+	if !ok {
+		return defaultLBTimeout, nil
+	}
+
+	timeout, err := strconv.Atoi(lbtimeout)
+	if err != nil {
+		return 0, fmt.Errorf("invalid timeout value: %v", err)
+	}
+	return timeout, nil
 }
 
 func buildFirewallRules(service *v1.Service) ([]govultr.LBFirewallRule, error) {
