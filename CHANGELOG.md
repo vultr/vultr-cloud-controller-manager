@@ -1,4 +1,20 @@
 # Change Log
+## [v0.14.0](https://github.com/vultr/vultr-cloud-controller-manager/compare/v0.13.3...v0.14.0) (2025-03-06)
+
+### Dependencies
+* Update go to v1.24 and github workflows [PR 288](https://github.com/vultr/vultr-cloud-controller-manager/pull/280)
+
+* Update govultr to v3.15.0 [PR 290](https://github.com/vultr/vultr-cloud-controller-manager/pull/290) 
+
+### Enhancements
+* Add HTTP2/3 and Timeout annonation support  [PR 230](https://github.com/vultr/vultr-cloud-controller-manager/pull/291)
+
+* Handle "Invalid server" error for bare metal check [PR 287](https://github.com/vultr/vultr-cloud-controller-manager/pull/287)
+
+### Automation
+
+* Remove deprecated linters [PR 289](https://github.com/vultr/vultr-cloud-controller-manager/pull/289)
+
 ## [v0.13.3](https://github.com/vultr/vultr-cloud-controller-manager/compare/v0.13.2...v0.13.3) (2024-11-04)
 
 * Update govultr from v3.9.1 to v3.11.2 [PR 283](https://github.com/vultr/vultr-cloud-controller-manager/pull/283)
