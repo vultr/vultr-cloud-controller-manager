@@ -79,8 +79,6 @@ const (
 
 	annoVultrNodeCount = "service.beta.kubernetes.io/vultr-loadbalancer-node-count"
 
-	annoVultrLBGlobalRegions = "service.beta.kubernetes.io/vultr-loadbalancer-global-regions"
-
 	// annoVultrLBSSLLastUpdatedTime is used to keep track of when a SVC is updated due to the SSL secret being updated
 	annoVultrLBSSLLastUpdatedTime = "service.beta.kubernetes.io/vultr-loadbalancer-ssl-last-updated"
 
@@ -480,7 +478,6 @@ func (l *loadbalancers) buildLoadBalancerRequest(service *v1.Service, nodes []*v
 		FirewallRules:      firewallRules,                                    // need to check
 		Timeout:            timeout,                                          // need to check
 		VPC:                govultr.StringToStringPtr(vpc),                   // need to check
-		GlobalRegions:      getGlobalRegions(service),                        // need to check
 		Nodes:              nodeC,                                            // need to check
 	}, nil
 }
@@ -956,20 +953,6 @@ func getTimeout(service *v1.Service) (int, error) {
 		return 0, fmt.Errorf("invalid timeout value: %v", err)
 	}
 	return timeout, nil
-}
-
-func getGlobalRegions(service *v1.Service) []string {
-	regions, ok := service.Annotations[annoVultrLBGlobalRegions]
-	if !ok || regions == "" {
-		return nil
-	}
-
-	regionList := strings.Split(regions, ",")
-	for v := range regionList {
-		regionList[v] = strings.TrimSpace(regionList[v])
-	}
-
-	return regionList
 }
 
 func buildFirewallRules(service *v1.Service) ([]govultr.LBFirewallRule, error) {
