@@ -167,47 +167,47 @@ func (i *instancesv2) InstanceMetadata(ctx context.Context, node *v1.Node) (*clo
 
 // nodeInstanceAddresses gathers public/private IP addresses and returns a []v1.NodeAddress .
 func (i *instancesv2) nodeInstanceAddresses(instance *govultr.Instance) ([]v1.NodeAddress, error) {
-        var addresses []v1.NodeAddress
+	var addresses []v1.NodeAddress
 
-        if reflect.DeepEqual(instance, *&govultr.Instance{}) { //nolint
-                return nil, fmt.Errorf("instance is empty %v", instance)
-        }
+	if reflect.DeepEqual(instance, *&govultr.Instance{}) { //nolint
+		return nil, fmt.Errorf("instance is empty %v", instance)
+	}
 
-        addresses = append(addresses, v1.NodeAddress{
-                Type:    v1.NodeHostName,
-                Address: instance.Label,
-        })
+	addresses = append(addresses, v1.NodeAddress{
+		Type:    v1.NodeHostName,
+		Address: instance.Label,
+	})
 
-        // Check conditions for internal and main IP
-        if instance.InternalIP == "" && instance.MainIP == "" {
-                return nil, fmt.Errorf("require at least one of internal or public IP")
-        }
+	// Check conditions for internal and main IP
+	if instance.InternalIP == "" && instance.MainIP == "" {
+		return nil, fmt.Errorf("require at least one of internal or public IP")
+	}
 
-        // Handle the case where both IPs are provided
-        if instance.InternalIP != "" && instance.MainIP != "" {
-                addresses = append(addresses,
-                        v1.NodeAddress{Type: v1.NodeInternalIP, Address: instance.InternalIP}, // private IP
-                        v1.NodeAddress{Type: v1.NodeExternalIP, Address: instance.MainIP},     // public IP
-                )
-        } else if instance.InternalIP == "" && instance.MainIP != "" {
-                // If internal IP is empty but main IP is not, use main IP for both
-                addresses = append(addresses,
-                        v1.NodeAddress{Type: v1.NodeInternalIP, Address: instance.MainIP}, // treat main IP as internal IP
-                        v1.NodeAddress{Type: v1.NodeExternalIP, Address: instance.MainIP}, // public IP
-                )
-        } else if instance.InternalIP != "" && instance.MainIP == "" {
-                // If main IP is empty but internal IP is not, use internal IP for both
-                addresses = append(addresses,
-                        v1.NodeAddress{Type: v1.NodeInternalIP, Address: instance.InternalIP}, // private IP
-                        v1.NodeAddress{Type: v1.NodeExternalIP, Address: instance.InternalIP}, // treat internal IP as external IP
-                )
-        }
+	// Handle the case where both IPs are provided
+	if instance.InternalIP != "" && instance.MainIP != "" {
+		addresses = append(addresses,
+			v1.NodeAddress{Type: v1.NodeInternalIP, Address: instance.InternalIP}, // private IP
+			v1.NodeAddress{Type: v1.NodeExternalIP, Address: instance.MainIP},     // public IP
+		)
+	} else if instance.InternalIP == "" && instance.MainIP != "" {
+		// If internal IP is empty but main IP is not, use main IP for both
+		addresses = append(addresses,
+			v1.NodeAddress{Type: v1.NodeInternalIP, Address: instance.MainIP}, // treat main IP as internal IP
+			v1.NodeAddress{Type: v1.NodeExternalIP, Address: instance.MainIP}, // public IP
+		)
+	} else if instance.InternalIP != "" && instance.MainIP == "" {
+		// If main IP is empty but internal IP is not, use internal IP for both
+		addresses = append(addresses,
+			v1.NodeAddress{Type: v1.NodeInternalIP, Address: instance.InternalIP}, // private IP
+			v1.NodeAddress{Type: v1.NodeExternalIP, Address: instance.InternalIP}, // treat internal IP as external IP
+		)
+	}
 
-        if instance.V6MainIP != "" {
-                addresses = append(addresses, v1.NodeAddress{Type: v1.NodeExternalIP, Address: instance.V6MainIP}) // IPv6
-        }
+	if instance.V6MainIP != "" {
+		addresses = append(addresses, v1.NodeAddress{Type: v1.NodeExternalIP, Address: instance.V6MainIP}) // IPv6
+	}
 
-        return addresses, nil
+	return addresses, nil
 }
 
 // getVultrInstance attempts to obtain Vultr Instance from Vultr API
