@@ -125,19 +125,19 @@ spec:
     spec:
       serviceAccountName: vultr-ccm
       tolerations:
-        - key: "node-role.kubernetes.io/control-plane"
-          effect: NoSchedule
         - key: "CriticalAddonsOnly"
           operator: "Exists"
-        - key: "node.cloudprovider.kubernetes.io/uninitialized"
-          value: "true"
+        - operator: "Exists"
+          effect: "NoExecute"
+        - operator: "Exists"
           effect: "NoSchedule"
-        - key: node.kubernetes.io/not-ready
-          operator: Exists
-          effect: NoSchedule
-        - key: node.kubernetes.io/unreachable
-          operator: Exists
-          effect: NoSchedule
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: node-role.kubernetes.io/control-plane
+                    operator: Exists
       hostNetwork: true
       containers:
         - image: vultr/vultr-cloud-controller-manager:v0.14.0
