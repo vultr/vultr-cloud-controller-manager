@@ -2,12 +2,12 @@ package vultr
 
 import (
 	"context"
-	"k8s.io/client-go/kubernetes/fake"
 	"reflect"
 	"testing"
 
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes/fake"
 )
 
 func TestLoadbalancers_GetLoadBalancer(t *testing.T) {

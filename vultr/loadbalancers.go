@@ -110,6 +110,8 @@ type loadbalancers struct {
 	kubeClient kubernetes.Interface
 }
 
+// LBIDValidationError represents an error that occurs during load balancer ID validation
+// and indicates whether the annotation should be updated
 type LBIDValidationError struct {
 	Message      string
 	ShouldUpdate bool
@@ -134,11 +136,11 @@ func (l *loadbalancers) GetLoadBalancer(ctx context.Context, _ string, service *
 
 	enabledIPv6 := checkEnabledIPv6(service)
 	var ingress []v1.LoadBalancerIngress
-	hostname := lb.Label //nolint
 
 	// Check if hostname annotation is blank and set if not
 	if _, ok := service.Annotations[annoVultrHostname]; ok {
 		if service.Annotations[annoVultrHostname] != "" {
+			var hostname string
 			if govalidator.IsDNSName(service.Annotations[annoVultrHostname]) {
 				hostname = service.Annotations[annoVultrHostname]
 			} else {
@@ -148,6 +150,7 @@ func (l *loadbalancers) GetLoadBalancer(ctx context.Context, _ string, service *
 			ingress = append(ingress, v1.LoadBalancerIngress{Hostname: hostname})
 		}
 	} else {
+		hostname := lb.Label
 		ingress = append(ingress, v1.LoadBalancerIngress{Hostname: hostname, IP: lb.IPV4})
 
 		if enabledIPv6 {
@@ -195,14 +198,14 @@ func (l *loadbalancers) EnsureLoadBalancer(ctx context.Context, clusterName stri
 	}
 	klog.Infof("Found load balancer: %q", lb.Label)
 	// Set and validate the Vultr VLB ID annotation
-	if err := l.setAndValidateLBIDAnnotation(ctx, service, lb.ID); err != nil {
+	if setErr := l.setAndValidateLBIDAnnotation(ctx, service, lb.ID); setErr != nil {
 		return nil, err
 	}
 	if lb.Status != lbStatusActive {
 		return nil, fmt.Errorf("load-balancer is not yet active - current status: %s", lb.Status)
 	}
-	if err2 := l.UpdateLoadBalancer(ctx, clusterName, service, nodes); err2 != nil {
-		return nil, err2
+	if updateErr := l.UpdateLoadBalancer(ctx, clusterName, service, nodes); updateErr != nil {
+		return nil, updateErr
 	}
 	lbStatus, _, err := l.GetLoadBalancer(ctx, clusterName, service)
 	if err != nil {
@@ -239,18 +242,16 @@ func (l *loadbalancers) createNewLoadBalancer(ctx context.Context, clusterName s
 
 func (l *loadbalancers) buildLoadBalancerIngress(service *v1.Service, lb *govultr.LoadBalancer) []v1.LoadBalancerIngress {
 	var ingress []v1.LoadBalancerIngress
-	hostname := lb.Label
 
 	// Check if hostname annotation is set and valid
 	if hostnameAnnotation, ok := service.Annotations[annoVultrHostname]; ok && hostnameAnnotation != "" {
 		if govalidator.IsDNSName(hostnameAnnotation) {
-			hostname = hostnameAnnotation
+			hostname := hostnameAnnotation
 			klog.Infof("setting hostname for loadbalancer to: %s", hostname)
 			ingress = append(ingress, v1.LoadBalancerIngress{Hostname: hostname})
 			return ingress
-		} else {
-			klog.Errorf("hostname %s is not a valid DNS name, using IP instead", hostnameAnnotation)
 		}
+		klog.Errorf("hostname %s is not a valid DNS name, using IP instead", hostnameAnnotation)
 	}
 
 	// Use IP addresses if no valid hostname annotation
@@ -261,6 +262,7 @@ func (l *loadbalancers) buildLoadBalancerIngress(service *v1.Service, lb *govult
 
 	return ingress
 }
+
 func (l *loadbalancers) setAndValidateLBIDAnnotation(ctx context.Context, service *v1.Service, expectedLBID string) error {
 	const maxRetries = 3
 
@@ -277,8 +279,8 @@ func (l *loadbalancers) setAndValidateLBIDAnnotation(ctx context.Context, servic
 				return nil // Already correct
 			}
 			// Validate which ID should be used
-			if err := l.validateLBIDConsistency(ctx, service, existingID, expectedLBID); err != nil {
-				return err
+			if validationErr := l.validateLBIDConsistency(ctx, service, existingID, expectedLBID); validationErr != nil {
+				return validationErr
 			}
 		}
 
@@ -352,9 +354,7 @@ func (l *loadbalancers) validateLBIDConsistency(ctx context.Context, service *v1
 			return fmt.Errorf("both load balancers match service name - manual resolution required for service %s/%s", service.Namespace, service.Name)
 		}
 	}
-
 	return fmt.Errorf("unexpected state in load balancer ID validation")
-
 }
 
 func (l *loadbalancers) UpdateLoadBalancer(ctx context.Context, clusterName string, service *v1.Service, nodes []*v1.Node) error {
