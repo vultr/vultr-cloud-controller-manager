@@ -184,6 +184,10 @@ func (l *loadbalancers) EnsureLoadBalancer(ctx context.Context, clusterName stri
 
 	lb, err := l.getVultrLB(ctx, service)
 	if err != nil {
+		if id, ok := service.Annotations[annoVultrLoadBalancerID]; ok && err == errLbNotFound {
+			// LoadBalancer has ID but cannot be found
+			return nil, fmt.Errorf("load balancer ID %s for service %s/%s not found", id, service.Namespace, service.Name)
+		}
 		if err == errLbNotFound {
 			// Load balancer doesn't exist, create new one
 			return l.createNewLoadBalancer(ctx, clusterName, service, nodes)
@@ -420,26 +424,39 @@ func (l *loadbalancers) lbByName(ctx context.Context, lbName string) (*govultr.L
 		PerPage: 25,
 	}
 
+	var matches []govultr.LoadBalancer
+
 	for {
-		lbs, meta, _, err := l.client.LoadBalancer.List(ctx, listOptions) //nolint:bodyclose
+		lbs, meta, _, err := l.client.LoadBalancer.List(ctx, listOptions)
 		if err != nil {
 			return nil, err
 		}
 
-		for _, v := range lbs { //nolint
+		for _, v := range lbs {
 			if v.Label == lbName {
-				return &v, nil
+				matches = append(matches, v)
 			}
 		}
 
 		if meta.Links.Next == "" {
 			break
 		}
-
 		listOptions.Cursor = meta.Links.Next
 	}
 
-	return nil, errLbNotFound
+	if len(matches) == 0 {
+		return nil, errLbNotFound
+	}
+
+	if len(matches) > 1 {
+		var ids []string
+		for _, lb := range matches {
+			ids = append(ids, lb.ID)
+		}
+		return nil, fmt.Errorf("multiple load balancers found with name %q: IDs %v - unique names required", lbName, ids)
+	}
+
+	return &matches[0], nil
 }
 
 func (l *loadbalancers) lbByID(ctx context.Context, lbID string) (*govultr.LoadBalancer, error) {
