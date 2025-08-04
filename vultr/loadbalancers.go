@@ -110,6 +110,15 @@ type loadbalancers struct {
 	kubeClient kubernetes.Interface
 }
 
+type LBIDValidationError struct {
+	Message      string
+	ShouldUpdate bool
+}
+
+func (e *LBIDValidationError) Error() string {
+	return e.Message
+}
+
 func newLoadbalancers(client *govultr.Client, zone string) cloudprovider.LoadBalancer {
 	return &loadbalancers{client: client, zone: zone}
 }
@@ -167,181 +176,185 @@ func (l *loadbalancers) EnsureLoadBalancer(ctx context.Context, clusterName stri
 	if err != nil {
 		return nil, err
 	}
-
 	if create, ok := service.Annotations[annoVultrLoadBalancerCreate]; ok {
 		if strings.EqualFold(create, "false") {
 			return nil, fmt.Errorf("%s set to %s - load balancer will not be created", annoVultrLoadBalancerCreate, create)
 		}
 	}
-
 	// if exists is false and the err above was nil then this is errLbNotFound
 	if !exists {
-		klog.Infof("Load balancer for cluster %q doesn't exist, creating", clusterName)
-		lbReq, err1 := l.buildLoadBalancerRequest(service, nodes)
-		if err1 != nil {
-			return nil, err1
-		}
-
-		lbReq.Region = l.zone
-		lb2, _, err1 := l.client.LoadBalancer.Create(ctx, lbReq) //nolint:bodyclose
-		if err1 != nil {
-			return nil, fmt.Errorf("failed to create load-balancer: %s", err1)
-		}
-		klog.Infof("Created load balancer %q", lb2.ID)
-
-		// Set and validate the Vultr VLB ID annotation
-		if err := l.setAndValidateLBIDAnnotation(ctx, service, lb2.ID); err != nil {
-			return nil, err
-		}
-
-		if lb2.Status != lbStatusActive {
-			return nil, fmt.Errorf("load-balancer is not yet active - current status: %s", lb2.Status)
-		}
-
-		enabledIPv6 := checkEnabledIPv6(service)
-		var ingress []v1.LoadBalancerIngress
-
-		hostname := lb2.Label //nolint
-		// Check if hostname annotation is blank and set if not
-		if _, ok := service.Annotations[annoVultrHostname]; ok {
-			if service.Annotations[annoVultrHostname] != "" {
-				if govalidator.IsDNSName(service.Annotations[annoVultrHostname]) {
-					hostname = service.Annotations[annoVultrHostname]
-				} else {
-					return nil, fmt.Errorf("hostname %s is not a valid DNS name", service.Annotations[annoVultrHostname])
-				}
-				klog.Infof("setting hostname for loadbalancer to: %s", hostname)
-				ingress = append(ingress, v1.LoadBalancerIngress{Hostname: hostname})
-			}
-		} else {
-			ingress = append(ingress, v1.LoadBalancerIngress{IP: lb2.IPV4})
-
-			if enabledIPv6 {
-				ingress = append(ingress, v1.LoadBalancerIngress{IP: lb2.IPV6})
-			}
-		}
-
-		return &v1.LoadBalancerStatus{
-			Ingress: ingress,
-		}, nil
+		return l.createNewLoadBalancer(ctx, clusterName, service, nodes)
 	}
-
 	klog.Infof("Load balancer exists for cluster %q", clusterName)
-
 	lb, err := l.getVultrLB(ctx, service)
 	if err != nil {
 		if err == errLbNotFound {
 			return nil, errLbNotFound
 		}
-
 		return nil, err
 	}
-
 	klog.Infof("Found load balancer: %q", lb.Label)
-
 	// Set and validate the Vultr VLB ID annotation
 	if err := l.setAndValidateLBIDAnnotation(ctx, service, lb.ID); err != nil {
 		return nil, err
 	}
-
 	if lb.Status != lbStatusActive {
 		return nil, fmt.Errorf("load-balancer is not yet active - current status: %s", lb.Status)
 	}
-
 	if err2 := l.UpdateLoadBalancer(ctx, clusterName, service, nodes); err2 != nil {
 		return nil, err2
 	}
-
 	lbStatus, _, err := l.GetLoadBalancer(ctx, clusterName, service)
 	if err != nil {
 		return nil, err
 	}
-
 	return lbStatus, nil
 }
 
+func (l *loadbalancers) createNewLoadBalancer(ctx context.Context, clusterName string, service *v1.Service, nodes []*v1.Node) (*v1.LoadBalancerStatus, error) {
+	klog.Infof("Load balancer for cluster %q doesn't exist, creating", clusterName)
+	lbReq, err := l.buildLoadBalancerRequest(service, nodes)
+	if err != nil {
+		return nil, err
+	}
+	lbReq.Region = l.zone
+	lb, _, err := l.client.LoadBalancer.Create(ctx, lbReq) //nolint:bodyclose
+	if err != nil {
+		return nil, fmt.Errorf("failed to create load-balancer: %s", err)
+	}
+	klog.Infof("Created load balancer %q", lb.ID)
+	// Set and validate the Vultr VLB ID annotation
+	if err := l.setAndValidateLBIDAnnotation(ctx, service, lb.ID); err != nil {
+		return nil, err
+	}
+	if lb.Status != lbStatusActive {
+		return nil, fmt.Errorf("load-balancer is not yet active - current status: %s", lb.Status)
+	}
+
+	ingress := l.buildLoadBalancerIngress(service, lb)
+	return &v1.LoadBalancerStatus{
+		Ingress: ingress,
+	}, nil
+}
+
+func (l *loadbalancers) buildLoadBalancerIngress(service *v1.Service, lb *govultr.LoadBalancer) []v1.LoadBalancerIngress {
+	var ingress []v1.LoadBalancerIngress
+	hostname := lb.Label
+
+	// Check if hostname annotation is set and valid
+	if hostnameAnnotation, ok := service.Annotations[annoVultrHostname]; ok && hostnameAnnotation != "" {
+		if govalidator.IsDNSName(hostnameAnnotation) {
+			hostname = hostnameAnnotation
+			klog.Infof("setting hostname for loadbalancer to: %s", hostname)
+			ingress = append(ingress, v1.LoadBalancerIngress{Hostname: hostname})
+			return ingress
+		} else {
+			klog.Errorf("hostname %s is not a valid DNS name, using IP instead", hostnameAnnotation)
+		}
+	}
+
+	// Use IP addresses if no valid hostname annotation
+	ingress = append(ingress, v1.LoadBalancerIngress{IP: lb.IPV4})
+	if checkEnabledIPv6(service) {
+		ingress = append(ingress, v1.LoadBalancerIngress{IP: lb.IPV6})
+	}
+
+	return ingress
+}
 func (l *loadbalancers) setAndValidateLBIDAnnotation(ctx context.Context, service *v1.Service, expectedLBID string) error {
-	// Check if annotation already exists and is correct
-	if existingID, ok := service.Annotations[annoVultrLoadBalancerID]; ok {
-		if existingID == expectedLBID {
-			return nil // Already set correctly
+	const maxRetries = 3
+
+	for attempt := 0; attempt < maxRetries; attempt++ {
+		// Get fresh service with current ResourceVersion
+		freshService, err := l.kubeClient.CoreV1().Services(service.Namespace).Get(ctx, service.Name, metav1.GetOptions{})
+		if err != nil {
+			return fmt.Errorf("failed to get service: %s", err)
 		}
-		// If annotation exists but has wrong ID, verify which is correct
-		if err := l.validateLBIDConsistency(ctx, service, existingID, expectedLBID); err != nil {
-			return err
+
+		// Check current state
+		if existingID, ok := freshService.Annotations[annoVultrLoadBalancerID]; ok {
+			if existingID == expectedLBID {
+				return nil // Already correct
+			}
+			// Validate which ID should be used
+			if err := l.validateLBIDConsistency(ctx, service, existingID, expectedLBID); err != nil {
+				return err
+			}
 		}
+
+		// Set annotation
+		if freshService.Annotations == nil {
+			freshService.Annotations = make(map[string]string)
+		}
+		freshService.Annotations[annoVultrLoadBalancerID] = expectedLBID
+
+		// Attempt update with ResourceVersion
+		_, err = l.kubeClient.CoreV1().Services(service.Namespace).Update(ctx, freshService, metav1.UpdateOptions{})
+		if err == nil {
+			klog.Infof("Successfully set load balancer ID annotation %s for service %s/%s", expectedLBID, service.Namespace, service.Name)
+			return nil
+		}
+
+		// If conflict, retry
+		if strings.Contains(err.Error(), "conflict") {
+			klog.V(2).Infof("Update conflict, retrying (%d/%d)", attempt+1, maxRetries)
+			continue
+		}
+
+		return fmt.Errorf("failed to update service: %s", err)
 	}
 
-	// Get kube client if needed
-	if err := l.GetKubeClient(); err != nil {
-		return fmt.Errorf("failed to get kubeclient to update service: %s", err)
-	}
-
-	// Get fresh service object to avoid conflicts
-	freshService, err := l.kubeClient.CoreV1().Services(service.Namespace).Get(ctx, service.Name, metav1.GetOptions{})
-	if err != nil {
-		return fmt.Errorf("failed to get service with loadbalancer ID: %s", err)
-	}
-
-	// Double-check if another process already set the correct annotation
-	if existingID, ok := freshService.Annotations[annoVultrLoadBalancerID]; ok && existingID == expectedLBID {
-		return nil
-	}
-
-	// Initialize annotations map if needed
-	if freshService.Annotations == nil {
-		freshService.Annotations = make(map[string]string)
-	}
-
-	// Set the annotation
-	freshService.Annotations[annoVultrLoadBalancerID] = expectedLBID
-
-	// Update the service
-	_, err = l.kubeClient.CoreV1().Services(service.Namespace).Update(ctx, freshService, metav1.UpdateOptions{})
-	if err != nil {
-		return fmt.Errorf("failed to update service with loadbalancer ID: %s", err)
-	}
-
-	klog.Infof("Successfully set load balancer ID annotation %s for service %s/%s", expectedLBID, service.Namespace, service.Name)
-	return nil
+	return fmt.Errorf("failed to update annotation after %d retries", maxRetries)
 }
 
 func (l *loadbalancers) validateLBIDConsistency(ctx context.Context, service *v1.Service, existingID, expectedID string) error {
-	// Verify both IDs exist in Vultr to determine which is correct
-	existingLB, err1 := l.lbByID(ctx, existingID)
-	expectedLB, err2 := l.lbByID(ctx, expectedID)
+	existingLB, existingErr := l.lbByID(ctx, existingID)
+	expectedLB, expectedErr := l.lbByID(ctx, expectedID)
+	serviceLBName := l.GetLoadBalancerName(ctx, "", service)
 
-	// If expected LB doesn't exist but existing does, keep existing
-	if err2 != nil && err1 == nil {
-		klog.Warningf("Expected LB ID %s not found, but existing ID %s is valid for service %s/%s",
-			expectedID, existingID, service.Namespace, service.Name)
-		return nil
+	// Both LBs don't exist - critical error
+	if existingErr != nil && expectedErr != nil {
+		return fmt.Errorf("neither existing ID %s nor expected ID %s correspond to valid load balancers", existingID, expectedID)
 	}
 
-	// If existing LB doesn't exist but expected does, we need to update
-	if err1 != nil && err2 == nil {
-		klog.Warningf("Existing LB ID %s not found, updating to valid ID %s for service %s/%s",
-			existingID, expectedID, service.Namespace, service.Name)
-		return nil // Allow update to proceed
+	// Only expected exists - update needed
+	if existingErr != nil && expectedErr == nil {
+		return nil // Allow update
 	}
 
-	// If both exist, verify they match the service characteristics
-	if err1 == nil && err2 == nil {
-		serviceLBName := l.GetLoadBalancerName(ctx, "", service)
-		if existingLB.Label == serviceLBName && expectedLB.Label != serviceLBName {
-			klog.Warningf("Existing LB ID %s matches service name, keeping it over %s for service %s/%s",
-				existingID, expectedID, service.Namespace, service.Name)
-			return fmt.Errorf("load balancer ID mismatch resolved in favor of existing ID")
-		}
-		if expectedLB.Label == serviceLBName && existingLB.Label != serviceLBName {
-			klog.Warningf("Expected LB ID %s matches service name, updating from %s for service %s/%s",
-				expectedID, existingID, service.Namespace, service.Name)
-			return nil // Allow update to proceed
+	// Only existing exists - keep existing
+	if existingErr == nil && expectedErr != nil {
+		return &LBIDValidationError{
+			Message:      "keeping existing valid load balancer ID",
+			ShouldUpdate: false,
 		}
 	}
 
-	return fmt.Errorf("unable to resolve load balancer ID conflict between %s and %s for service %s/%s",
-		existingID, expectedID, service.Namespace, service.Name)
+	// Both exist - resolve by service name match
+	if existingErr == nil && expectedErr == nil {
+		existingMatches := existingLB.Label == serviceLBName
+		expectedMatches := expectedLB.Label == serviceLBName
+
+		switch {
+		case existingMatches && !expectedMatches:
+			return &LBIDValidationError{
+				Message:      "existing load balancer matches service name",
+				ShouldUpdate: false,
+			}
+		case !existingMatches && expectedMatches:
+			return nil // Allow update
+		case !existingMatches && !expectedMatches:
+			// Neither matches - need manual intervention or policy decision
+			return fmt.Errorf("conflict: neither load balancer %s (label: %s) nor %s (label: %s) matches service name %s for service %s/%s",
+				existingID, existingLB.Label, expectedID, expectedLB.Label, serviceLBName, service.Namespace, service.Name)
+		default: // both match
+			// Could implement additional tie-breaking logic here
+			return fmt.Errorf("both load balancers match service name - manual resolution required for service %s/%s", service.Namespace, service.Name)
+		}
+	}
+
+	return fmt.Errorf("unexpected state in load balancer ID validation")
+
 }
 
 func (l *loadbalancers) UpdateLoadBalancer(ctx context.Context, clusterName string, service *v1.Service, nodes []*v1.Node) error {

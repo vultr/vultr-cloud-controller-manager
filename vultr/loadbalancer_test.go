@@ -2,6 +2,7 @@ package vultr
 
 import (
 	"context"
+	"k8s.io/client-go/kubernetes/fake"
 	"reflect"
 	"testing"
 
@@ -93,6 +94,8 @@ func TestLoadbalancers_GetLoadBalancerName(t *testing.T) {
 func TestLoadbalancers_EnsureLoadBalancer(t *testing.T) {
 	client := newFakeClient()
 	lb := newLoadbalancers(client, "1")
+
+	lb.(*loadbalancers).kubeClient = &fake.Clientset{}
 
 	svc := &v1.Service{
 		ObjectMeta: metav1.ObjectMeta{
