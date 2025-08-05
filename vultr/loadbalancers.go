@@ -386,6 +386,10 @@ func (e *LBRecreationNeededError) Error() string {
 func (l *loadbalancers) setAndValidateLBIDAnnotation(ctx context.Context, service *v1.Service, expectedLBID string) error {
 	const maxRetries = 3
 
+	if err := l.GetKubeClient(); err != nil {
+		return fmt.Errorf("failed to get kubeclient to update service: %s", err)
+	}
+
 	for attempt := 0; attempt < maxRetries; attempt++ {
 		// If conflict, retry with fresh service
 		if attempt > 0 {
