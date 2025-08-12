@@ -9,77 +9,8 @@ permissions:
   contents: write
 
 jobs:
-  check-commit:
-    runs-on: ubuntu-latest
-    outputs:
-      msg_check: ${{ steps.check-msg.outputs.match }}
-    steps:
-      - name: Check Message
-        id: check-msg
-        run: |
-          pattern="^Release v[0-9]+.[0-9]+.[0-9]+ #(minor|major|patch)$"
-          if [[ "${{ github.event.head_commit.message }}" =~ ${pattern} ]]; then
-              echo match=true >> $GITHUB_OUTPUT
-          fi
-  create-tag:
-    runs-on: ubuntu-latest
-    if: needs.check-commit.outputs.msg_check == 'true'
-    needs: check-commit
-    outputs:
-      new_tag: ${{ steps.tagger.outputs.new_tag }}
-    steps:
-    - uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-
-    - name: Bump version and push tag
-      id: tagger
-      uses: anothrNick/github-tag-action@1.71.0
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        WITH_V: true
-        DEFAULT_BUMP: "none"
-
-  goreleaser:
-    runs-on: ubuntu-latest
-    needs: create-tag
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: "1.24"
-      - name: Docker Login
-        env:
-          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-        run: |
-          echo "${DOCKER_PASSWORD}" | docker login --username "${DOCKER_USERNAME}" --password-stdin
-      - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v6
-        with:
-          distribution: goreleaser
-          version: latest
-          args: release --clean
-        env:
-          GITHUB_TOKEN: ${{ secrets.VULTRBOT_TOKEN }}
-          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-      - name: Clear
-        if: always()
-        run: |
-          rm -f ${HOME}/.docker/config.json
-  release:
-    runs-on: ubuntu-latest
-    needs: ["goreleaser", "create-tag"]
-    name: Release Notification
-    steps:
-      - uses: mattermost/action-mattermost-notify@2.0.0
-        with:
-          MATTERMOST_WEBHOOK_URL: ${{ secrets.MATTERMOST_WEBHOOK_URL }}
-          MATTERMOST_USERNAME: ${{ secrets.MATTERMOST_USERNAME}}
-          MATTERMOST_ICON_URL: ${{ secrets.MATTERMOST_ICON }}
-          TEXT: "${{ github.repository }} : Release https://github.com/${{ github.repository }}/releases/tag/${{ needs.create-tag.outputs.new_tag }}"
+  releaser:
+    uses: vultr/shared-actions/.github/workflows/go-releaser.yml@main
+    secrets: inherit
+    with:
+      go_version: "1.24"
