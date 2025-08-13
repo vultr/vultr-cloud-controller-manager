@@ -3,6 +3,8 @@ package vultr
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"net"
 	"strconv"
@@ -13,6 +15,7 @@ import (
 	"github.com/vultr/metadata"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
@@ -235,13 +238,28 @@ func (l *loadbalancers) UpdateLoadBalancer(ctx context.Context, clusterName stri
 func (l *loadbalancers) updateLoadBalancerWithLB(ctx context.Context, _ string, service *v1.Service, nodes []*v1.Node, lb *govultr.LoadBalancer) error {
 	// Set the Vultr VLB ID annotation if not present
 	if _, ok := service.Annotations[annoVultrLoadBalancerID]; !ok {
-		service.Annotations[annoVultrLoadBalancerID] = lb.ID
 		if err := l.GetKubeClient(); err != nil {
 			return fmt.Errorf("failed to get kubeclient to update service: %s", err)
 		}
-		_, err := l.kubeClient.CoreV1().Services(service.Namespace).Update(ctx, service, metav1.UpdateOptions{})
+
+		// Use patch to atomically set the annotation
+		patchData := map[string]interface{}{
+			"metadata": map[string]interface{}{
+				"annotations": map[string]string{
+					annoVultrLoadBalancerID: lb.ID,
+				},
+			},
+		}
+
+		patchBytes, err := json.Marshal(patchData)
 		if err != nil {
-			return fmt.Errorf("failed to update service with loadbalancer ID: %s", err)
+			return fmt.Errorf("failed to marshal patch: %w", err)
+		}
+
+		_, err = l.kubeClient.CoreV1().Services(service.Namespace).
+			Patch(ctx, service.Name, types.StrategicMergePatchType, patchBytes, metav1.PatchOptions{})
+		if err != nil {
+			return fmt.Errorf("failed to patch service with loadbalancer ID: %s", err)
 		}
 	}
 
@@ -352,16 +370,21 @@ func (l *loadbalancers) clearInvalidLBIDAnnotation(ctx context.Context, service 
 		return fmt.Errorf("failed to get kubeclient: %s", err)
 	}
 
-	// Get fresh service to avoid conflicts
-	freshService, err := l.kubeClient.CoreV1().Services(service.Namespace).Get(ctx, service.Name, metav1.GetOptions{})
-	if err != nil {
-		return fmt.Errorf("failed to get service: %s", err)
+	// Use JSON patch to remove the annotation
+	patchData := []map[string]interface{}{
+		{
+			"op":   "remove",
+			"path": "/metadata/annotations/" + strings.ReplaceAll(annoVultrLoadBalancerID, "/", "~1"),
+		},
 	}
 
-	// Clear the invalid annotation
-	delete(freshService.Annotations, annoVultrLoadBalancerID)
+	patchBytes, err := json.Marshal(patchData)
+	if err != nil {
+		return fmt.Errorf("failed to marshal patch: %w", err)
+	}
 
-	_, err = l.kubeClient.CoreV1().Services(service.Namespace).Update(ctx, freshService, metav1.UpdateOptions{})
+	_, err = l.kubeClient.CoreV1().Services(service.Namespace).
+		Patch(ctx, service.Name, types.JSONPatchType, patchBytes, metav1.PatchOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to clear invalid load balancer ID annotation: %s", err)
 	}
@@ -384,68 +407,60 @@ func (e *LBRecreationNeededError) Error() string {
 }
 
 func (l *loadbalancers) setAndValidateLBIDAnnotation(ctx context.Context, service *v1.Service, expectedLBID string) error {
-	const maxRetries = 3
-
 	if err := l.GetKubeClient(); err != nil {
 		return fmt.Errorf("failed to get kubeclient to update service: %s", err)
 	}
 
-	for attempt := 0; attempt < maxRetries; attempt++ {
-		// If conflict, retry with fresh service
-		if attempt > 0 {
-			klog.V(2).Infof("Retrying annotation update (%d/%d)", attempt+1, maxRetries)
-		}
-
-		// Get fresh service with current ResourceVersion
-		freshService, err := l.kubeClient.CoreV1().Services(service.Namespace).Get(ctx, service.Name, metav1.GetOptions{})
-		if err != nil {
-			return fmt.Errorf("failed to get service: %s", err)
-		}
-
-		// Check if annotation already has the correct value
-		if existingID, hasAnnotation := freshService.Annotations[annoVultrLoadBalancerID]; hasAnnotation {
-			if existingID == expectedLBID {
-				return nil // Already correct
-			}
-
-			// Validate the existing ID using the original service for business logic
-			if validationErr := l.validateLBIDConsistency(ctx, service, existingID); validationErr != nil {
-				// Check if this is a re-creation needed error - if so, propagate it up
-				if _, isRecreationNeeded := validationErr.(*LBRecreationNeededError); isRecreationNeeded {
-					return validationErr
-				}
-				// Other validation errors should also be propagated
-				return validationErr
-			}
-
-			// Existing ID is valid but different from expected - this shouldn't happen
-			// in normal flow, but we'll update to expected anyway
-			klog.Warningf("Replacing valid but different load balancer ID %s with %s for service %s/%s",
-				existingID, expectedLBID, service.Namespace, service.Name)
-		}
-
-		// Set the annotation to expected value on the fresh service object
-		if freshService.Annotations == nil {
-			freshService.Annotations = make(map[string]string)
-		}
-		freshService.Annotations[annoVultrLoadBalancerID] = expectedLBID
-
-		// Update using the fresh service with correct ResourceVersion
-		_, err = l.kubeClient.CoreV1().Services(service.Namespace).Update(ctx, freshService, metav1.UpdateOptions{})
-		if err == nil {
-			klog.Infof("Successfully set load balancer ID annotation %s for service %s/%s", expectedLBID, service.Namespace, service.Name)
-			return nil
-		}
-
-		// If not a conflict error, return the error
-		if !strings.Contains(err.Error(), "conflict") {
-			return fmt.Errorf("failed to update service: %s", err)
-		}
-
-		// If conflict, continue to retry (will fetch fresh service at top of loop)
+	// Get current service to check existing annotation
+	currentService, err := l.kubeClient.CoreV1().Services(service.Namespace).Get(ctx, service.Name, metav1.GetOptions{})
+	if err != nil {
+		return fmt.Errorf("failed to get service: %s", err)
 	}
 
-	return fmt.Errorf("failed to update annotation after %d retries", maxRetries)
+	// Check if annotation already has the correct value
+	if existingID, hasAnnotation := currentService.Annotations[annoVultrLoadBalancerID]; hasAnnotation {
+		if existingID == expectedLBID {
+			return nil // Already correct
+		}
+
+		// Validate the existing ID using the original service for business logic
+		if validationErr := l.validateLBIDConsistency(ctx, service, existingID); validationErr != nil {
+			// Check if this is a re-creation needed error - if so, propagate it up
+			var LBRecreationNeededError *LBRecreationNeededError
+			if errors.As(validationErr, &LBRecreationNeededError) {
+				return validationErr
+			}
+			// Other validation errors should also be propagated
+			return validationErr
+		}
+
+		// Existing ID is valid but different from expected - this shouldn't happen
+		// in normal flow, but we'll update to expected anyway
+		klog.Warningf("Replacing valid but different load balancer ID %s with %s for service %s/%s",
+			existingID, expectedLBID, service.Namespace, service.Name)
+	}
+
+	// Patch the annotation atomically
+	patchData := map[string]interface{}{
+		"metadata": map[string]interface{}{
+			"annotations": map[string]string{
+				annoVultrLoadBalancerID: expectedLBID,
+			},
+		},
+	}
+
+	patchBytes, err := json.Marshal(patchData)
+	if err != nil {
+		return fmt.Errorf("failed to marshal patch: %w", err)
+	}
+
+	_, err = l.kubeClient.CoreV1().Services(service.Namespace).Patch(ctx, service.Name, types.StrategicMergePatchType, patchBytes, metav1.PatchOptions{})
+	if err != nil {
+		return fmt.Errorf("failed to patch service: %s", err)
+	}
+
+	klog.Infof("Successfully set load balancer ID annotation %s for service %s/%s", expectedLBID, service.Namespace, service.Name)
+	return nil
 }
 
 func (l *loadbalancers) lbByName(ctx context.Context, lbName string) (*govultr.LoadBalancer, error) {
