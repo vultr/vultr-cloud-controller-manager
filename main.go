@@ -4,9 +4,10 @@ package main
 import (
 	"context"
 	goflag "flag"
-	"k8s.io/cloud-provider/names"
 	"math/rand"
 	"time"
+
+	"k8s.io/cloud-provider/names"
 
 	"github.com/spf13/pflag"
 	"github.com/vultr/vultr-cloud-controller-manager/vultr"
