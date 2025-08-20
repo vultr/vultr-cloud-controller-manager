@@ -14,11 +14,7 @@ import (
 )
 
 func (i *instancesv2) getVultrBareMetal(ctx context.Context, node *v1.Node) (*govultr.BareMetalServer, error) {
-	skipID := false
-
-	if node.Spec.ProviderID == "" {
-		skipID = true
-	}
+	skipID := node.Spec.ProviderID == ""
 
 	if node.Name == "" {
 		return nil, fmt.Errorf("node name cannot be empty")
