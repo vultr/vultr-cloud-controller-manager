@@ -4,8 +4,6 @@ package main
 import (
 	"context"
 	goflag "flag"
-	"math/rand"
-	"time"
 
 	"k8s.io/cloud-provider/names"
 
@@ -24,7 +22,6 @@ import (
 )
 
 func main() {
-	rand.Seed(time.Now().UnixNano())
 
 	ccmOptions, err := options.NewCloudControllerManagerOptions()
 	if err != nil {
