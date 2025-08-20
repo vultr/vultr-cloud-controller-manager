@@ -22,7 +22,6 @@ import (
 )
 
 func main() {
-
 	ccmOptions, err := options.NewCloudControllerManagerOptions()
 	if err != nil {
 		klog.Fatalf("unable to initialize command options: %v", err)
