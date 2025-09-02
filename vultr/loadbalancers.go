@@ -259,7 +259,7 @@ func (l *loadbalancers) updateLoadBalancerWithLB(ctx context.Context, _ string, 
 		_, err = l.kubeClient.CoreV1().Services(service.Namespace).
 			Patch(ctx, service.Name, types.StrategicMergePatchType, patchBytes, metav1.PatchOptions{})
 		if err != nil {
-			return fmt.Errorf("failed to patch service with loadbalancer ID: %q", err)
+			return fmt.Errorf("failed to annotate service with loadbalancer ID %q: %s", lb.ID, err)
 		}
 	}
 
