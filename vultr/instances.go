@@ -183,11 +183,11 @@ func vultrIDFromProviderID(providerID string) (string, error) {
 
 	split := strings.Split(providerID, "://")
 	if len(split) != 2 { //nolint
-		return "", fmt.Errorf("unexpected providerID format %s, expected format to be: vultr://abc123", providerID)
+		return "", fmt.Errorf("unexpected providerID format %q, expected format to be: vultr://abc123", providerID)
 	}
 
 	if split[0] != ProviderName {
-		return "", fmt.Errorf("provider scheme from providerID should be 'vultr://', %s", providerID)
+		return "", fmt.Errorf("provider scheme from providerID %q should be 'vultr://'", providerID)
 	}
 	return split[1], nil
 }

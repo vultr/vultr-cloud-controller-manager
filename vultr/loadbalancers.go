@@ -189,7 +189,7 @@ func (l *loadbalancers) EnsureLoadBalancer(ctx context.Context, clusterName stri
 	if err != nil {
 		if id, ok := service.Annotations[annoVultrLoadBalancerID]; ok && err == errLbNotFound {
 			// LoadBalancer has ID but cannot be found
-			return nil, fmt.Errorf("load balancer ID %s for service %s/%s not found", id, service.Namespace, service.Name)
+			return nil, fmt.Errorf("load balancer ID %q for service '%s/%s' not found", id, service.Namespace, service.Name)
 		}
 		if err == errLbNotFound {
 			// Load balancer doesn't exist, create new one
@@ -259,7 +259,7 @@ func (l *loadbalancers) updateLoadBalancerWithLB(ctx context.Context, _ string, 
 		_, err = l.kubeClient.CoreV1().Services(service.Namespace).
 			Patch(ctx, service.Name, types.StrategicMergePatchType, patchBytes, metav1.PatchOptions{})
 		if err != nil {
-			return fmt.Errorf("failed to patch service with loadbalancer ID: %s", err)
+			return fmt.Errorf("failed to annotate service with loadbalancer ID %q: %s", lb.ID, err)
 		}
 	}
 
@@ -391,7 +391,7 @@ func (l *loadbalancers) clearInvalidLBIDAnnotation(ctx context.Context, service 
 
 	// Return a special error type that signals re-creation is needed
 	return &LBRecreationNeededError{
-		Message: fmt.Sprintf("cleared invalid load balancer ID %s for service %s/%s",
+		Message: fmt.Sprintf("cleared invalid load balancer ID %q for service '%s/%s'",
 			invalidID, service.Namespace, service.Name),
 	}
 }
@@ -848,7 +848,7 @@ func buildInstanceList(nodes []*v1.Node) ([]string, error) {
 	for _, node := range nodes {
 		instanceID, err := vultrIDFromProviderID(node.Spec.ProviderID)
 		if err != nil {
-			return nil, fmt.Errorf("error getting the provider ID %s : %s", node.Spec.ProviderID, err)
+			return nil, fmt.Errorf("error getting the provider ID %q : %s", node.Spec.ProviderID, err)
 		}
 
 		list = append(list, instanceID)
