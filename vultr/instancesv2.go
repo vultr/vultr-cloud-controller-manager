@@ -212,11 +212,7 @@ func (i *instancesv2) nodeInstanceAddresses(instance *govultr.Instance) ([]v1.No
 
 // getVultrInstance attempts to obtain Vultr Instance from Vultr API
 func (i *instancesv2) getVultrInstance(ctx context.Context, node *v1.Node) (*govultr.Instance, error) {
-	skipID := false
-
-	if node.Spec.ProviderID == "" {
-		skipID = true
-	}
+	skipID := node.Spec.ProviderID == ""
 
 	if node.Name == "" {
 		return nil, fmt.Errorf("node name cannot be empty")

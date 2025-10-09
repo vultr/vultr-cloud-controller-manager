@@ -669,13 +669,12 @@ func getStickySessionEnabled(service *v1.Service) string {
 		return "off"
 	}
 
-	if enabled == "off" {
-		return "off"
-	} else if enabled == "on" {
+	switch enabled {
+	case "on":
 		return "on"
+	default:
+		return "off"
 	}
-
-	return "off"
 }
 
 // getCookieName returns the cookie name for loadbalancer sticky sessions

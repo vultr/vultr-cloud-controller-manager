@@ -4,9 +4,8 @@ package main
 import (
 	"context"
 	goflag "flag"
+
 	"k8s.io/cloud-provider/names"
-	"math/rand"
-	"time"
 
 	"github.com/spf13/pflag"
 	"github.com/vultr/vultr-cloud-controller-manager/vultr"
@@ -23,8 +22,6 @@ import (
 )
 
 func main() {
-	rand.Seed(time.Now().UnixNano())
-
 	ccmOptions, err := options.NewCloudControllerManagerOptions()
 	if err != nil {
 		klog.Fatalf("unable to initialize command options: %v", err)
