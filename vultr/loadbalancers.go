@@ -41,7 +41,7 @@ const (
 	// annoVultrLBHTTPSPorts is the annotation used to specify
 	// which ports should be used for HTTPS.
 	// You can pass in a comma separated list: 443,8443
-	annoVultrLbHTTPSPorts = "service.beta.kubernetes.io/vultr-loadbalancer-https-ports"
+	annoVultrLBHTTPSPorts = "service.beta.kubernetes.io/vultr-loadbalancer-https-ports"
 
 	// annoVultrLBSSLPassthrough is the annotation used to specify
 	// whether or not you do not wish to have SSL termination on the load balancer
@@ -51,6 +51,11 @@ const (
 	// annoVultrLBSSL is the annotation used to specify
 	// which TLS secret you want to be used for your load balancers SSL
 	annoVultrLBSSL = "service.beta.kubernetes.io/vultr-loadbalancer-ssl"
+
+	// annoVultrLBAUTOSSL is the annotation used to specify
+	// which kubernetes secret containing the domain zone and sub domain
+	// you want to be used for your load balancers Auto SSL
+	annoVultrLBAutoSSL = "service.beta.kubernetes.io/vultr-loadbalancer-auto-ssl"
 
 	// annoVultrLBBackendProtocol backend protocol
 	annoVultrLBBackendProtocol = "service.beta.kubernetes.io/vultr-loadbalancer-backend-protocol"
@@ -572,6 +577,17 @@ func (l *loadbalancers) buildLoadBalancerRequest(service *v1.Service, nodes []*v
 		ssl = nil
 	}
 
+	var autoSSL *govultr.AutoSSL
+	if secretName, ok := service.Annotations[annoVultrLBAutoSSL]; ok {
+		autoSSL, err = l.GetAutoSSL(service, secretName)
+		if err != nil {
+			return nil, err
+		}
+		SecretWatcher.AddService(service, secretName)
+	} else {
+		autoSSL = nil
+	}
+
 	firewallRules, err := buildFirewallRules(service)
 	if err != nil {
 		return nil, err
@@ -603,6 +619,7 @@ func (l *loadbalancers) buildLoadBalancerRequest(service *v1.Service, nodes []*v
 		StickySessions:     stickySession,                                    // need to check
 		ForwardingRules:    rules,                                            // all always be set
 		SSL:                ssl,                                              // will always be set
+		AutoSSL:            autoSSL,                                          // need to check
 		SSLRedirect:        govultr.BoolToBoolPtr(getSSLRedirect(service)),   // need to check
 		HTTP2:              govultr.BoolToBoolPtr(getHTTP2(service)),         // need to check
 		HTTP3:              govultr.BoolToBoolPtr(getHTTP3(service)),         // need to check
@@ -946,7 +963,7 @@ func getLBProtocol(service *v1.Service) string {
 }
 
 func getHTTPSPorts(service *v1.Service) (map[int32]bool, error) {
-	ports, ok := service.Annotations[annoVultrLbHTTPSPorts]
+	ports, ok := service.Annotations[annoVultrLBHTTPSPorts]
 	if !ok {
 		return nil, nil
 	}
@@ -985,6 +1002,29 @@ func (l *loadbalancers) GetSSL(service *v1.Service, secretName string) (*govultr
 		Certificate: cert,
 	}
 	return &ssl, nil
+}
+
+func (l *loadbalancers) GetAutoSSL(service *v1.Service, secretName string) (*govultr.AutoSSL, error) {
+	if err := l.GetKubeClient(); err != nil {
+		return nil, err
+	}
+
+	secret, err := l.kubeClient.CoreV1().Secrets(service.Namespace).Get(context.Background(), secretName, metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	domainZone := string(secret.Data["domainZone"])
+	domainZone = strings.TrimSpace(domainZone)
+
+	subDomain := string(secret.Data["subDomain"])
+	subDomain = strings.TrimSpace(subDomain)
+
+	autoSSL := govultr.AutoSSL{
+		DomainZone: domainZone,
+		DomainSub:  subDomain,
+	}
+	return &autoSSL, nil
 }
 
 func (l *loadbalancers) GetKubeClient() error {
