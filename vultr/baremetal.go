@@ -99,7 +99,9 @@ func (i *instancesv2) nodeBareMetalAddresses(baremetal *govultr.BareMetalServer)
 		Address: baremetal.Label,
 	})
 
-	vpc2, _, err := i.client.BareMetalServer.ListVPC2Info(context.Background(), baremetal.ID) //nolint:bodyclose
+	// Deprecated: VPC2 is no longer supported and functionality will cease in a
+	// future release.
+	vpc2, _, err := i.client.BareMetalServer.ListVPC2Info(context.Background(), baremetal.ID) //nolint:bodyclose,staticcheck
 	if err != nil {
 		return nil, fmt.Errorf("error getting VPC2 info for bm %s", baremetal.Label)
 	}
