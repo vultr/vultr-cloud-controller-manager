@@ -5,7 +5,7 @@ go 1.24.0
 require (
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2
 	github.com/spf13/pflag v1.0.6
-	github.com/vultr/govultr/v3 v3.15.0
+	github.com/vultr/govultr/v3 v3.24.0
 	github.com/vultr/metadata v1.1.0
 	golang.org/x/oauth2 v0.32.0
 	k8s.io/api v0.34.1
@@ -60,7 +60,7 @@ require (
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.26.3 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
-	github.com/hashicorp/go-retryablehttp v0.7.7 // indirect
+	github.com/hashicorp/go-retryablehttp v0.7.8 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
