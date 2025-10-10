@@ -1,4 +1,28 @@
 # Change Log
+## [v0.15.0](https://github.com/vultr/vultr-cloud-controller-manager/compare/v0.14.0...v0.15.0) (2025-10-10)
+### Dependencies
+* Bump github.com/spf13/pflag from 1.0.6 to 1.0.10 [PR 328](https://github.com/vultr/vultr-cloud-controller-manager/pull/328)
+* Bump github.com/vultr/govultr/v3 from 3.15.0 to 3.24.0 [PR 327](https://github.com/vultr/vultr-cloud-controller-manager/pull/327) 
+* Bump golang.org/x/oauth2 from 0.27.0 to 0.32.0 [PR 327](https://github.com/vultr/vultr-cloud-controller-manager/pull/325) 
+* Bump k8s.io/cloud-provider from 0.31.1 to 0.34.1 [PR 322](https://github.com/vultr/vultr-cloud-controller-manager/pull/322) 
+
+### Enhancements
+* Add Auto SSL annotation support [PR 296](https://github.com/vultr/vultr-cloud-controller-manager/pull/296)
+* Make logs quote IDs in output [PR 320](https://github.com/vultr/vultr-cloud-controller-manager/pull/320)
+* Change kubernetes updates calls to patch [PR 312](https://github.com/vultr/vultr-cloud-controller-manager/pull/312)
+* Add more robust ID checking for load balancers [PR 310](https://github.com/vultr/vultr-cloud-controller-manager/pull/310)
+* Update CCM daemonset tolerations to use affinity [PR 297](https://github.com/vultr/vultr-cloud-controller-manager/pull/297)
+* Support non VPC VM instances [PR 294](https://github.com/vultr/vultr-cloud-controller-manager/pull/294)
+
+### Automation
+* Migrate golangci-lint config to v2 [PR 326](https://github.com/vultr/vultr-cloud-controller-manager/pull/326)
+
+### Documentation
+* Add notice for VPC2 deprecation [PR 329](https://github.com/vultr/vultr-cloud-controller-manager/pull/329)
+
+### New Contributors
+* @vrabbi made their first contribution in [PR 294](https://github.com/vultr/vultr-cloud-controller-manager/pull/294)
+
 ## [v0.14.0](https://github.com/vultr/vultr-cloud-controller-manager/compare/v0.13.3...v0.14.0) (2025-03-06)
 
 ### Dependencies
