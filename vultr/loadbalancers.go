@@ -9,6 +9,7 @@ import (
 	"net"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/asaskevich/govalidator"
 	"github.com/vultr/govultr/v3"
@@ -186,7 +187,7 @@ func (l *loadbalancers) EnsureLoadBalancer(ctx context.Context, clusterName stri
 	// Check if creation is disabled
 	if create, ok := service.Annotations[annoVultrLoadBalancerCreate]; ok {
 		if strings.EqualFold(create, "false") {
-			return nil, fmt.Errorf("%s set to %s - load balancer will not be created", annoVultrLoadBalancerCreate, create)
+			return nil, cloudprovider.ImplementedElsewhere
 		}
 	}
 
@@ -216,12 +217,18 @@ func (l *loadbalancers) EnsureLoadBalancer(ctx context.Context, clusterName stri
 		return nil, fmt.Errorf("load-balancer is not yet active - current status: %s", lb.Status)
 	}
 
-	// Update load balancer configuration (pass the lb to avoid another API call)
 	if updateErr := l.updateLoadBalancerWithLB(ctx, clusterName, service, nodes, lb); updateErr != nil {
+		if isLBActivating(updateErr) {
+			ingress := l.buildLoadBalancerIngress(service, lb)
+			if len(ingress) > 0 {
+				klog.V(2).Infof("LB %s update deferred: nodes still activating; returning current ingress and retrying in background", lb.ID)
+				l.retryLBUpdateAsync(ctx, lb.ID, clusterName, service, nodes)
+				return &v1.LoadBalancerStatus{Ingress: ingress}, nil
+			}
+		}
 		return nil, updateErr
 	}
 
-	// Build and return status from the lb we already have
 	ingress := l.buildLoadBalancerIngress(service, lb)
 	return &v1.LoadBalancerStatus{
 		Ingress: ingress,
@@ -1249,4 +1256,59 @@ func checkEnabledIPv6(service *v1.Service) bool {
 	}
 
 	return false
+}
+
+func isLBActivating(err error) bool {
+	if err == nil {
+		return false
+	}
+	msg := strings.ToLower(err.Error())
+	return strings.Contains(msg, "still activating") ||
+		strings.Contains(msg, "activation in progress") ||
+		strings.Contains(msg, "activating")
+}
+
+func (l *loadbalancers) retryLBUpdateAsync(ctx context.Context, lbID, clusterName string, service *v1.Service, nodes []*v1.Node) {
+	bgCtx, cancel := context.WithTimeout(ctx, 10*time.Minute)
+
+	go func() {
+		defer cancel()
+
+		backoffs := []time.Duration{
+			2 * time.Second,
+			3 * time.Second,
+			5 * time.Second,
+			8 * time.Second,
+			13 * time.Second,
+			21 * time.Second,
+			34 * time.Second,
+		}
+
+		for _, d := range backoffs {
+			select {
+			case <-bgCtx.Done():
+				klog.V(3).Infof("Background LB %s update canceled/expired: %v", lbID, bgCtx.Err())
+				return
+			case <-time.After(d):
+			}
+
+			lb, getErr := l.getVultrLB(bgCtx, service)
+			if getErr != nil {
+				klog.V(4).Infof("Background LB %s: getVultrLB failed, will retry: %v", lbID, getErr)
+				continue
+			}
+
+			if err := l.updateLoadBalancerWithLB(bgCtx, clusterName, service, nodes, lb); err != nil {
+				if isLBActivating(err) {
+					klog.V(4).Infof("Background LB %s update still activating, will retry: %v", lbID, err)
+					continue
+				}
+				klog.V(3).Infof("Background LB %s update stopped (non-activating error): %v", lbID, err)
+				return
+			}
+
+			klog.V(2).Infof("Background LB %s update finalized after activation", lbID)
+			return
+		}
+	}()
 }
