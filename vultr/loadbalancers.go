@@ -95,9 +95,7 @@ const (
 	protocolHTTP  = "http"
 	protocolHTTPS = "https"
 	protocolTCP   = "tcp"
-
-	portProtocolTCP = "TCP" //nolint
-	portProtocolUDP = "UDP"
+	protocolUDP   = "udp"
 
 	healthCheckInterval  = 15
 	healthCheckResponse  = 5
@@ -106,7 +104,15 @@ const (
 
 	defaultLBTimeout = 600
 
+	syncTimeout = 10
+
 	lbStatusActive = "active"
+)
+
+const (
+	logLevelError = 2
+	logLevelDebug = 3
+	logLevelTrace = 4
 )
 
 var errLbNotFound = fmt.Errorf("loadbalancer not found")
@@ -761,6 +767,7 @@ func getHealthCheckProtocol(service *v1.Service) (string, error) {
 	protocol := service.Annotations[annoVultrHealthCheckProtocol]
 
 	// add in https
+	protocol = strings.ToLower(protocol)
 	if protocol == "" {
 		if getHealthCheckPath(service) != "" {
 			return protocolHTTP, nil
@@ -768,8 +775,8 @@ func getHealthCheckProtocol(service *v1.Service) (string, error) {
 		return protocolTCP, nil
 	}
 
-	if protocol != protocolHTTP && protocol != protocolTCP {
-		return "", fmt.Errorf("invalid protocol : %s given in the anootation : %s", protocol, annoVultrHealthCheckProtocol)
+	if protocol != protocolHTTP && protocol != protocolTCP && protocol != protocolUDP {
+		return "", fmt.Errorf("invalid protocol : %s given in the annotation : %s", protocol, annoVultrHealthCheckProtocol)
 	}
 
 	return protocol, nil
@@ -903,25 +910,26 @@ func buildForwardingRules(service *v1.Service) ([]govultr.ForwardingRule, error)
 			}
 		}
 
-		// Check frontend/backend port combinations (listed below what is acceptable)
-		// frontend = tcp: backend must be tcp
-		// frontend = https: backend can be http(s)
-		// frontend = http: backend can be http(s)
 		switch frontendProtocol {
-		case "tcp":
-			if backendProtocol != "tcp" {
+		case protocolUDP:
+			if backendProtocol != protocolUDP {
+				klog.Infof("When frontend proto is udp, backend default is udp, %q is out of supported range, setting backend to udp", backendProtocol)
+				backendProtocol = protocolUDP
+			}
+		case protocolTCP:
+			if backendProtocol != protocolTCP {
 				klog.Infof("When frontend proto is tcp, backend default is tcp, %q is out of supported range, setting backend to tcp", backendProtocol)
-				backendProtocol = "tcp"
+				backendProtocol = protocolTCP
 			}
-		case "http":
-			if backendProtocol != "http" && backendProtocol != "https" {
+		case protocolHTTP:
+			if backendProtocol != protocolHTTP && backendProtocol != protocolHTTPS {
 				klog.Infof("When frontend proto is http, backend default is http, %q is out of supported range, setting backend to http", backendProtocol)
-				backendProtocol = "http" // http is default
+				backendProtocol = protocolHTTP // http is default
 			}
-		case "https":
-			if backendProtocol != "http" && backendProtocol != "https" {
+		case protocolHTTPS:
+			if backendProtocol != protocolHTTP && backendProtocol != protocolHTTPS {
 				klog.Infof("When frontend proto is https, backend default is https, %q is out of supported range, setting backend to https", backendProtocol)
-				backendProtocol = "https" // https is default
+				backendProtocol = protocolHTTPS // https is default
 			}
 		}
 
@@ -931,23 +939,15 @@ func buildForwardingRules(service *v1.Service) ([]govultr.ForwardingRule, error)
 		}
 		klog.Infof("Frontend: %q, Backend: %q", frontendProtocol, backendProtocol)
 
-		rule, err := buildForwardingRule(&port, frontendProtocol, backendProtocol) //nolint
-		if err != nil {
-			return nil, err
-		}
-
+		rule := buildForwardingRule(&port, frontendProtocol, backendProtocol)
 		rules = append(rules, *rule)
 	}
 
 	return rules, nil
 }
 
-func buildForwardingRule(port *v1.ServicePort, protocol, backendProtocol string) (*govultr.ForwardingRule, error) {
+func buildForwardingRule(port *v1.ServicePort, protocol, backendProtocol string) *govultr.ForwardingRule {
 	var rule govultr.ForwardingRule
-
-	if port.Protocol == portProtocolUDP {
-		return nil, fmt.Errorf("TCP protocol is only supported: received %s", port.Protocol)
-	}
 
 	rule.FrontendProtocol = protocol
 	rule.BackendProtocol = backendProtocol
@@ -957,7 +957,7 @@ func buildForwardingRule(port *v1.ServicePort, protocol, backendProtocol string)
 	rule.FrontendPort = int(port.Port)
 	rule.BackendPort = int(port.NodePort)
 
-	return &rule, nil
+	return &rule
 }
 
 func getLBProtocol(service *v1.Service) string {
@@ -1226,6 +1226,7 @@ func getBackendProtocol(service *v1.Service) string {
 		return ""
 	}
 
+	proto = strings.ToLower(proto)
 	switch proto {
 	case "http":
 		return protocolHTTP
@@ -1233,6 +1234,8 @@ func getBackendProtocol(service *v1.Service) string {
 		return protocolHTTPS
 	case "tcp":
 		return protocolTCP
+	case "udp":
+		return protocolUDP
 	default:
 		return ""
 	}
@@ -1269,7 +1272,7 @@ func isLBActivating(err error) bool {
 }
 
 func (l *loadbalancers) retryLBUpdateAsync(ctx context.Context, lbID, clusterName string, service *v1.Service, nodes []*v1.Node) {
-	bgCtx, cancel := context.WithTimeout(ctx, 10*time.Minute)
+	bgCtx, cancel := context.WithTimeout(ctx, syncTimeout*time.Minute)
 
 	go func() {
 		defer cancel()
@@ -1287,27 +1290,27 @@ func (l *loadbalancers) retryLBUpdateAsync(ctx context.Context, lbID, clusterNam
 		for _, d := range backoffs {
 			select {
 			case <-bgCtx.Done():
-				klog.V(3).Infof("Background LB %s update canceled/expired: %v", lbID, bgCtx.Err())
+				klog.V(logLevelDebug).Infof("Background LB %s update canceled/expired: %v", lbID, bgCtx.Err())
 				return
 			case <-time.After(d):
 			}
 
 			lb, getErr := l.getVultrLB(bgCtx, service)
 			if getErr != nil {
-				klog.V(4).Infof("Background LB %s: getVultrLB failed, will retry: %v", lbID, getErr)
+				klog.V(logLevelTrace).Infof("Background LB %s: getVultrLB failed, will retry: %v", lbID, getErr)
 				continue
 			}
 
 			if err := l.updateLoadBalancerWithLB(bgCtx, clusterName, service, nodes, lb); err != nil {
 				if isLBActivating(err) {
-					klog.V(4).Infof("Background LB %s update still activating, will retry: %v", lbID, err)
+					klog.V(logLevelTrace).Infof("Background LB %s update still activating, will retry: %v", lbID, err)
 					continue
 				}
-				klog.V(3).Infof("Background LB %s update stopped (non-activating error): %v", lbID, err)
+				klog.V(logLevelDebug).Infof("Background LB %s update stopped (non-activating error): %v", lbID, err)
 				return
 			}
 
-			klog.V(2).Infof("Background LB %s update finalized after activation", lbID)
+			klog.V(logLevelError).Infof("Background LB %s update finalized after activation", lbID)
 			return
 		}
 	}()
