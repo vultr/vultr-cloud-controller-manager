@@ -24,7 +24,7 @@ builds:
 
 archives:
   -
-    format: zip
+    formats: zip
     files:
       - none*
     name_template: '{{ .ProjectName }}_v{{ .Version }}_{{ .Os }}_{{ .Arch }}'
