@@ -1,4 +1,19 @@
 # Change Log
+## [v0.17.0](https://github.com/vultr/vultr-cloud-controller-manager/compare/v0.16.0...v0.17.0) (2026-03-13)
+### Dependencies
+* Update go version from v1.24 to v1.26 [PR 342](https://github.com/vultr/vultr-cloud-controller-manager/pull/342)
+
+### Enhancements
+* Add UDP support to CCM [PR 340](https://github.com/vultr/vultr-cloud-controller-manager/pull/340)
+
+### Automation
+* Update github action workflow versions [PR 341](https://github.com/vultr/vultr-cloud-controller-manager/pull/341)
+* Replace deprecated goreleaser template [PR 343](https://github.com/vultr/vultr-cloud-controller-manager/pull/343)
+
+## [v0.16.0](https://github.com/vultr/vultr-cloud-controller-manager/compare/v0.15.0...v0.16.0) (2025-11-07)
+### Bug Fixes
+* Resolve Vultr Load Balancer status update failures during activation 
+
 ## [v0.15.0](https://github.com/vultr/vultr-cloud-controller-manager/compare/v0.14.0...v0.15.0) (2025-10-10)
 ### Dependencies
 * Bump github.com/spf13/pflag from 1.0.6 to 1.0.10 [PR 328](https://github.com/vultr/vultr-cloud-controller-manager/pull/328)
