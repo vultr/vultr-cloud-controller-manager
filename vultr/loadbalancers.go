@@ -767,6 +767,7 @@ func getHealthCheckProtocol(service *v1.Service) (string, error) {
 	protocol := service.Annotations[annoVultrHealthCheckProtocol]
 
 	// add in https
+	protocol = strings.ToLower(protocol)
 	if protocol == "" {
 		if getHealthCheckPath(service) != "" {
 			return protocolHTTP, nil
@@ -1225,6 +1226,7 @@ func getBackendProtocol(service *v1.Service) string {
 		return ""
 	}
 
+	proto = strings.ToLower(proto)
 	switch proto {
 	case "http":
 		return protocolHTTP
