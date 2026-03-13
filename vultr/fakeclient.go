@@ -28,7 +28,7 @@ func (f *FakeInstance) ListVPCInfo(_ context.Context, _ string, _ *govultr.ListO
 }
 
 // ListVPC2Info returns VPC info (not implemented, yet)
-func (f *FakeInstance) ListVPC2Info(_ context.Context, _ string, _ *govultr.ListOptions) ([]govultr.VPC2Info, *govultr.Meta, *http.Response, error) {
+func (f *FakeInstance) ListVPC2Info(_ context.Context, _ string, _ *govultr.ListOptions) ([]govultr.VPC2Info, *govultr.Meta, *http.Response, error) { //nolint:staticcheck
 	panic("implement me")
 }
 
@@ -38,7 +38,7 @@ func (f *FakeInstance) AttachVPC(_ context.Context, _, _ string) error {
 }
 
 // AttachVPC2 attaches VPC (not implemented, yet)
-func (f *FakeInstance) AttachVPC2(_ context.Context, _ string, _ *govultr.AttachVPC2Req) error {
+func (f *FakeInstance) AttachVPC2(_ context.Context, _ string, _ *govultr.AttachVPC2Req) error { //nolint:staticcheck
 	panic("implement me")
 }
 
