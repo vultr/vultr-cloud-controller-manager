@@ -104,7 +104,15 @@ const (
 
 	defaultLBTimeout = 600
 
+	syncTimeout = 10
+
 	lbStatusActive = "active"
+)
+
+const (
+	logLevelError = 2
+	logLevelDebug = 3
+	logLevelTrace = 4
 )
 
 var errLbNotFound = fmt.Errorf("loadbalancer not found")
@@ -930,18 +938,14 @@ func buildForwardingRules(service *v1.Service) ([]govultr.ForwardingRule, error)
 		}
 		klog.Infof("Frontend: %q, Backend: %q", frontendProtocol, backendProtocol)
 
-		rule, err := buildForwardingRule(&port, frontendProtocol, backendProtocol) //nolint
-		if err != nil {
-			return nil, err
-		}
-
+		rule := buildForwardingRule(&port, frontendProtocol, backendProtocol)
 		rules = append(rules, *rule)
 	}
 
 	return rules, nil
 }
 
-func buildForwardingRule(port *v1.ServicePort, protocol, backendProtocol string) (*govultr.ForwardingRule, error) {
+func buildForwardingRule(port *v1.ServicePort, protocol, backendProtocol string) *govultr.ForwardingRule {
 	var rule govultr.ForwardingRule
 
 	rule.FrontendProtocol = protocol
@@ -952,7 +956,7 @@ func buildForwardingRule(port *v1.ServicePort, protocol, backendProtocol string)
 	rule.FrontendPort = int(port.Port)
 	rule.BackendPort = int(port.NodePort)
 
-	return &rule, nil
+	return &rule
 }
 
 func getLBProtocol(service *v1.Service) string {
@@ -1266,7 +1270,7 @@ func isLBActivating(err error) bool {
 }
 
 func (l *loadbalancers) retryLBUpdateAsync(ctx context.Context, lbID, clusterName string, service *v1.Service, nodes []*v1.Node) {
-	bgCtx, cancel := context.WithTimeout(ctx, 10*time.Minute)
+	bgCtx, cancel := context.WithTimeout(ctx, syncTimeout*time.Minute)
 
 	go func() {
 		defer cancel()
@@ -1284,27 +1288,27 @@ func (l *loadbalancers) retryLBUpdateAsync(ctx context.Context, lbID, clusterNam
 		for _, d := range backoffs {
 			select {
 			case <-bgCtx.Done():
-				klog.V(3).Infof("Background LB %s update canceled/expired: %v", lbID, bgCtx.Err())
+				klog.V(logLevelDebug).Infof("Background LB %s update canceled/expired: %v", lbID, bgCtx.Err())
 				return
 			case <-time.After(d):
 			}
 
 			lb, getErr := l.getVultrLB(bgCtx, service)
 			if getErr != nil {
-				klog.V(4).Infof("Background LB %s: getVultrLB failed, will retry: %v", lbID, getErr)
+				klog.V(logLevelTrace).Infof("Background LB %s: getVultrLB failed, will retry: %v", lbID, getErr)
 				continue
 			}
 
 			if err := l.updateLoadBalancerWithLB(bgCtx, clusterName, service, nodes, lb); err != nil {
 				if isLBActivating(err) {
-					klog.V(4).Infof("Background LB %s update still activating, will retry: %v", lbID, err)
+					klog.V(logLevelTrace).Infof("Background LB %s update still activating, will retry: %v", lbID, err)
 					continue
 				}
-				klog.V(3).Infof("Background LB %s update stopped (non-activating error): %v", lbID, err)
+				klog.V(logLevelDebug).Infof("Background LB %s update stopped (non-activating error): %v", lbID, err)
 				return
 			}
 
-			klog.V(2).Infof("Background LB %s update finalized after activation", lbID)
+			klog.V(logLevelError).Infof("Background LB %s update finalized after activation", lbID)
 			return
 		}
 	}()
