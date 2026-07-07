@@ -32,6 +32,7 @@ The annotations are listed below. Please note that all annotations listed below 
 | `sticky-session-enabled`           | `on`, `off`                       | `off`                                                    | Enables Sticky Sessions. If enabled you must provide `sticky-session-cookie-name`                                                                                                                                |
 | `sticky-session-cookie-name"`      | string                            |                                                          | Name of sticky session                                                                                                                                                                                           |
 | `firewall-rules`                   | string                            |                                                          | This is used to let you define your firewall rules. They must be supplied with "ip-with-with-subnet,port" format with `;` breaking up firewall rules. Example: `0.0.0.0/0,80;0.0.0.0/0,90`                       |
+| `firewall-rules-cm`                | string                            |                                                          | Name of a ConfigMap in the Service namespace containing firewall rules YAML in the `firewallRules` key. If both firewall rule annotations are set, this ConfigMap annotation is used.                              |
 | ~~`private-network`~~ (deprecated) | ~~`true` or `false`~~             | ~~`false`~~                                              | **Deprecated Please use vpc**. ~~This is used to attach your load balancer to a private network. If `true` the CCM will pull the `private_network_id` that is attached to the node that the CCM is running on.~~ |
 | `vpc`                              | `true` or `false`                 | `false`                                                  | This is used to attach your load balancer to a private network. If `true` the CCM will pull the `vpc_id` that is attached to the node that the CCM is running on.                                                |
 | `node-count`                       | int                               | 1                                                        | Number of LoadBalancer nodes to have. Only odd numbers are supported.                                                                                                                                            |
@@ -39,6 +40,25 @@ The annotations are listed below. Please note that all annotations listed below 
 | `label`                            | string                            |                                                          | Custom label for the Vultr Loadbalancer rather than the default generated name                                                                                                                                   |
 | `hostname`                         | string                            |                                                          | Custom domain to be used for the load balancer. Ex: `example.vultr.com`
 | `timeout`                          | int                               | `600`                                                    | Load balancer connection timeout (in seconds)
+
+### Firewall Rules ConfigMap
+
+Use `firewall-rules-cm` when firewall rules are too large for a Service annotation. The ConfigMap must be in the same namespace as the Service and must contain a `firewallRules` key with YAML grouped by IP type:
+
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: lb-firewall-rules
+data:
+  firewallRules: |
+    v4:
+      - source: 0.0.0.0/0
+        port: 80
+    v6:
+      - source: "::/0"
+        port: 80
+```
 
 
 ## Using UDP

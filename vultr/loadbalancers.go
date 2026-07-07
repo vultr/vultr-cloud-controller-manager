@@ -14,6 +14,7 @@ import (
 	"github.com/asaskevich/govalidator"
 	"github.com/vultr/govultr/v3"
 	"github.com/vultr/metadata"
+	"go.yaml.in/yaml/v3"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -82,9 +83,11 @@ const (
 	annoVultrStickySessionEnabled    = "service.beta.kubernetes.io/vultr-loadbalancer-sticky-session-enabled"
 	annoVultrStickySessionCookieName = "service.beta.kubernetes.io/vultr-loadbalancer-sticky-session-cookie-name"
 
-	annoVultrFirewallRules  = "service.beta.kubernetes.io/vultr-loadbalancer-firewall-rules"
-	annoVultrPrivateNetwork = "service.beta.kubernetes.io/vultr-loadbalancer-private-network"
-	annoVultrVPC            = "service.beta.kubernetes.io/vultr-loadbalancer-vpc"
+	annoVultrFirewallRules   = "service.beta.kubernetes.io/vultr-loadbalancer-firewall-rules"
+	annoVultrFirewallRulesCM = "service.beta.kubernetes.io/vultr-loadbalancer-firewall-rules-cm"
+	firewallRulesCMKey       = "firewallRules"
+	annoVultrPrivateNetwork  = "service.beta.kubernetes.io/vultr-loadbalancer-private-network"
+	annoVultrVPC             = "service.beta.kubernetes.io/vultr-loadbalancer-vpc"
 
 	annoVultrNodeCount = "service.beta.kubernetes.io/vultr-loadbalancer-node-count"
 
@@ -281,7 +284,7 @@ func (l *loadbalancers) updateLoadBalancerWithLB(ctx context.Context, _ string, 
 		}
 	}
 
-	lbReq, err := l.buildLoadBalancerRequest(service, nodes)
+	lbReq, err := l.buildLoadBalancerRequest(ctx, service, nodes)
 	if err != nil {
 		return fmt.Errorf("failed to create load balancer request: %s", err)
 	}
@@ -480,7 +483,7 @@ func sameService(a, b *v1.Service) bool {
 
 func (l *loadbalancers) createNewLoadBalancer(ctx context.Context, clusterName string, service *v1.Service, nodes []*v1.Node) (*v1.LoadBalancerStatus, error) {
 	klog.Infof("Load balancer for cluster %q doesn't exist, creating", clusterName)
-	lbReq, err := l.buildLoadBalancerRequest(service, nodes)
+	lbReq, err := l.buildLoadBalancerRequest(ctx, service, nodes)
 	if err != nil {
 		return nil, err
 	}
@@ -721,7 +724,7 @@ func (l *loadbalancers) findLoadBalancerByName(ctx context.Context, service *v1.
 	lbName := l.GetLoadBalancerName(ctx, "", service)
 	return l.lbByName(ctx, lbName)
 }
-func (l *loadbalancers) buildLoadBalancerRequest(service *v1.Service, nodes []*v1.Node) (*govultr.LoadBalancerReq, error) {
+func (l *loadbalancers) buildLoadBalancerRequest(ctx context.Context, service *v1.Service, nodes []*v1.Node) (*govultr.LoadBalancerReq, error) {
 	stickySession, err := buildStickySession(service)
 	if err != nil {
 		return nil, err
@@ -769,7 +772,7 @@ func (l *loadbalancers) buildLoadBalancerRequest(service *v1.Service, nodes []*v
 		autoSSL = nil
 	}
 
-	firewallRules, err := buildFirewallRules(service)
+	firewallRules, err := l.buildFirewallRules(ctx, service)
 	if err != nil {
 		return nil, err
 	}
@@ -1302,8 +1305,12 @@ func getTimeout(service *v1.Service) (int, error) {
 	return timeout, nil
 }
 
-func buildFirewallRules(service *v1.Service) ([]govultr.LBFirewallRule, error) {
+func (l *loadbalancers) buildFirewallRules(ctx context.Context, service *v1.Service) ([]govultr.LBFirewallRule, error) {
 	lbFWRules := []govultr.LBFirewallRule{}
+	if _, ok := service.Annotations[annoVultrFirewallRulesCM]; ok {
+		return l.getFirewallRulesFromConfigMap(ctx, service)
+	}
+
 	fwRules := getFirewallRules(service)
 	if fwRules == "" {
 		return lbFWRules, nil
@@ -1350,6 +1357,93 @@ func getFirewallRules(service *v1.Service) string {
 	}
 
 	return fwRules
+}
+
+func (l *loadbalancers) getFirewallRulesFromConfigMap(ctx context.Context, service *v1.Service) ([]govultr.LBFirewallRule, error) {
+	cmName := strings.TrimSpace(service.Annotations[annoVultrFirewallRulesCM])
+	if cmName == "" {
+		return nil, fmt.Errorf("%s annotation must not be empty", annoVultrFirewallRulesCM)
+	}
+
+	if err := l.GetKubeClient(); err != nil {
+		return nil, err
+	}
+
+	cm, err := l.kubeClient.CoreV1().ConfigMaps(service.Namespace).Get(ctx, cmName, metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	fwRulesYAML, ok := cm.Data[firewallRulesCMKey]
+	if !ok {
+		return nil, fmt.Errorf("configmap %s/%s is missing %q key", service.Namespace, cmName, firewallRulesCMKey)
+	}
+
+	var fwRulesConfig struct {
+		FirewallRules firewallRulesByIPType `yaml:"firewallRules"`
+	}
+	if err := yaml.Unmarshal([]byte(fwRulesYAML), &fwRulesConfig.FirewallRules); err != nil {
+		return nil, fmt.Errorf("configmap %s/%s has invalid firewall rules YAML: %w", service.Namespace, cmName, err)
+	}
+
+	if len(fwRulesConfig.FirewallRules.V4) == 0 && len(fwRulesConfig.FirewallRules.V6) == 0 {
+		if err := yaml.Unmarshal([]byte(fwRulesYAML), &fwRulesConfig); err != nil {
+			return nil, fmt.Errorf("configmap %s/%s has invalid firewall rules YAML: %w", service.Namespace, cmName, err)
+		}
+	}
+
+	fwRules := make([]govultr.LBFirewallRule, 0, len(fwRulesConfig.FirewallRules.V4)+len(fwRulesConfig.FirewallRules.V6))
+	for _, fwRule := range fwRulesConfig.FirewallRules.V4 {
+		fwRule.IPType = "v4"
+		if err := validateFirewallRule(fwRule); err != nil {
+			return nil, err
+		}
+		fwRules = append(fwRules, fwRule)
+	}
+	for _, fwRule := range fwRulesConfig.FirewallRules.V6 {
+		fwRule.IPType = "v6"
+		if err := validateFirewallRule(fwRule); err != nil {
+			return nil, err
+		}
+		fwRules = append(fwRules, fwRule)
+	}
+
+	return fwRules, nil
+}
+
+type firewallRulesByIPType struct {
+	V4 []govultr.LBFirewallRule `yaml:"v4"`
+	V6 []govultr.LBFirewallRule `yaml:"v6"`
+}
+
+func validateFirewallRule(fwRule govultr.LBFirewallRule) error {
+	if fwRule.Source == "" {
+		return fmt.Errorf("loadbalancer fw rules : source is required")
+	}
+
+	if fwRule.Source != "cloudflare" {
+		ip, _, err := net.ParseCIDR(fwRule.Source)
+		if err != nil {
+			return fmt.Errorf("loadbalancer fw rules : source %s is invalid", fwRule.Source)
+		}
+
+		if fwRule.IPType == "v4" && ip.To4() == nil {
+			return fmt.Errorf("loadbalancer fw rules : source %s is not a v4 CIDR", fwRule.Source)
+		}
+		if fwRule.IPType == "v6" && ip.To4() != nil {
+			return fmt.Errorf("loadbalancer fw rules : source %s is not a v6 CIDR", fwRule.Source)
+		}
+	}
+
+	if fwRule.IPType != "v4" && fwRule.IPType != "v6" {
+		return fmt.Errorf("loadbalancer fw rules : ip_type %s is invalid", fwRule.IPType)
+	}
+
+	if fwRule.Port == 0 {
+		return fmt.Errorf("loadbalancer fw rules : port is required")
+	}
+
+	return nil
 }
 
 func getVPC(service *v1.Service) (string, error) {

@@ -209,6 +209,63 @@ func TestLoadbalancers_UpdateLoadBalancer(t *testing.T) {
 	}
 }
 
+func TestLoadbalancers_BuildLoadBalancerRequest_FirewallRulesConfigMap(t *testing.T) {
+	lb := &loadbalancers{
+		client: &govultr.Client{LoadBalancer: &fakeLB{}},
+		zone:   "ewr",
+		kubeClient: fake.NewClientset(&v1.ConfigMap{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "lb-firewall-rules",
+				Namespace: v1.NamespaceDefault,
+			},
+			Data: map[string]string{
+				firewallRulesCMKey: "v4:\n- source: 192.168.1.1/16\n  port: 80\nv6:\n- source: cloudflare\n  port: 443\n",
+			},
+		}),
+	}
+
+	svc := &v1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "lb-name",
+			Namespace: v1.NamespaceDefault,
+			UID:       "lb-name",
+			Annotations: map[string]string{
+				annoVultrFirewallRules:   "10.0.0.0/8,80",
+				annoVultrFirewallRulesCM: "lb-firewall-rules",
+			},
+		},
+		Spec: v1.ServiceSpec{
+			Ports: []v1.ServicePort{
+				{
+					Name:     "test",
+					Protocol: "TCP",
+					Port:     int32(443),
+					NodePort: int32(30443),
+				},
+			},
+		},
+	}
+	nodes := []*v1.Node{
+		{
+			ObjectMeta: metav1.ObjectMeta{Name: "node1"},
+			Spec:       v1.NodeSpec{ProviderID: "vultr://123"},
+		},
+	}
+
+	req, err := lb.buildLoadBalancerRequest(context.Background(), svc, nodes)
+	if err != nil {
+		t.Fatalf("expected nil got %s", err.Error())
+	}
+
+	expected := []govultr.LBFirewallRule{
+		{Source: "192.168.1.1/16", IPType: "v4", Port: 80},
+		{Source: "cloudflare", IPType: "v6", Port: 443},
+	}
+	if !reflect.DeepEqual(req.FirewallRules, expected) {
+		t.Fatalf("expected %+v got %+v", expected, req.FirewallRules)
+	}
+}
+
 func TestLoadbalancers_EnsureLoadBalancerDeleted(t *testing.T) {
 	client := newFakeClient()
 	lb := newLoadbalancers(client, "1")
