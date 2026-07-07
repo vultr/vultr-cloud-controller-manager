@@ -241,11 +241,23 @@ func (f *FakeInstance) GetUpgrades(_ context.Context, _ string) (*govultr.Upgrad
 
 type fakeLB struct {
 	client *govultr.Client
+
+	forwardingRules []govultr.ForwardingRule
+	createdRules    []govultr.ForwardingRule
+	deletedRules    []string
+	updatedReq      *govultr.LoadBalancerReq
+	deletedLB       bool
 }
 
 // Create creates loadbalancer
 func (f *fakeLB) Create(_ context.Context, _ *govultr.LoadBalancerReq) (*govultr.LoadBalancer, *http.Response, error) {
-	panic("implement me")
+	return &govultr.LoadBalancer{
+		ID:     "6334f227-6d96-4cbd-9bcb-5be0759354fa",
+		Region: "ewr",
+		Label:  "albname",
+		Status: "active",
+		IPV4:   "192.168.0.1",
+	}, nil, nil
 }
 
 // Get gets loadbalancer
@@ -261,13 +273,15 @@ func (f *fakeLB) Get(_ context.Context, _ string) (*govultr.LoadBalancer, *http.
 }
 
 // Update updates loadbalancer
-func (f *fakeLB) Update(_ context.Context, _ string, _ *govultr.LoadBalancerReq) error {
+func (f *fakeLB) Update(_ context.Context, _ string, req *govultr.LoadBalancerReq) error {
+	f.updatedReq = req
 	return nil
 }
 
 // Delete deletes loadbalancer
 func (f *fakeLB) Delete(_ context.Context, _ string) error {
-	panic("implement me")
+	f.deletedLB = true
+	return nil
 }
 
 // DeleteAutoSSL deletes AutoSSL (not implemented, yet)
@@ -300,8 +314,9 @@ func (f *fakeLB) List(_ context.Context, _ *govultr.ListOptions) ([]govultr.Load
 }
 
 // CreateForwardingRule adds forwarding rule
-func (f *fakeLB) CreateForwardingRule(_ context.Context, _ string, _ *govultr.ForwardingRule) (*govultr.ForwardingRule, *http.Response, error) {
-	panic("implement me")
+func (f *fakeLB) CreateForwardingRule(_ context.Context, _ string, rule *govultr.ForwardingRule) (*govultr.ForwardingRule, *http.Response, error) {
+	f.createdRules = append(f.createdRules, *rule)
+	return rule, nil, nil
 }
 
 // GetForwardingRule returns forwarding rule
@@ -310,12 +325,23 @@ func (f *fakeLB) GetForwardingRule(_ context.Context, _, _ string) (*govultr.For
 }
 
 // DeleteForwardingRule deletes forwarding rule
-func (f *fakeLB) DeleteForwardingRule(_ context.Context, _, _ string) error {
-	panic("implement me")
+func (f *fakeLB) DeleteForwardingRule(_ context.Context, _, ruleID string) error {
+	f.deletedRules = append(f.deletedRules, ruleID)
+	return nil
 }
 
 // ListForwardingRules gets forwarding rules
 func (f *fakeLB) ListForwardingRules(_ context.Context, _ string, _ *govultr.ListOptions) ([]govultr.ForwardingRule, *govultr.Meta, *http.Response, error) {
+	if f.forwardingRules != nil {
+		return f.forwardingRules, &govultr.Meta{
+			Total: len(f.forwardingRules),
+			Links: &govultr.Links{
+				Next: "",
+				Prev: "",
+			},
+		}, nil, nil
+	}
+
 	return []govultr.ForwardingRule{{
 			RuleID:           "1234",
 			FrontendProtocol: "tcp",

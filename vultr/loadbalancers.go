@@ -285,9 +285,19 @@ func (l *loadbalancers) updateLoadBalancerWithLB(ctx context.Context, _ string, 
 	if err != nil {
 		return fmt.Errorf("failed to create load balancer request: %s", err)
 	}
+	sharedLB := hasSharedLoadBalancerLabel(service)
+	if sharedLB {
+		lbReq.ForwardingRules = nil
+	}
 
 	if err := l.client.LoadBalancer.Update(ctx, lb.ID, lbReq); err != nil {
 		return fmt.Errorf("failed to update LB: %s", err)
+	}
+
+	if sharedLB {
+		if err := l.reconcileSharedForwardingRules(ctx, lb.ID, service); err != nil {
+			return fmt.Errorf("failed to reconcile shared LB forwarding rules: %s", err)
+		}
 	}
 
 	return nil
@@ -302,12 +312,170 @@ func (l *loadbalancers) EnsureLoadBalancerDeleted(ctx context.Context, _ string,
 		return err
 	}
 
+	if hasSharedLoadBalancerLabel(service) {
+		referenced, referenceErr := l.sharedLoadBalancerStillReferenced(ctx, service, lb.ID)
+		if referenceErr != nil {
+			return referenceErr
+		}
+
+		if referenced {
+			return l.deleteServiceForwardingRules(ctx, lb.ID, service)
+		}
+	}
+
 	err = l.client.LoadBalancer.Delete(ctx, lb.ID)
 	if err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func hasSharedLoadBalancerLabel(service *v1.Service) bool {
+	label, ok := service.Annotations[annoVultrLoadBalancerLabel]
+	return ok && label != ""
+}
+
+func (l *loadbalancers) reconcileSharedForwardingRules(ctx context.Context, lbID string, service *v1.Service) error {
+	desiredRules, err := buildForwardingRules(service)
+	if err != nil {
+		return err
+	}
+
+	existingRules, err := l.listForwardingRules(ctx, lbID)
+	if err != nil {
+		return err
+	}
+
+	existingByFrontend := map[string]govultr.ForwardingRule{}
+	for _, rule := range existingRules {
+		existingByFrontend[forwardingRuleFrontendKey(rule)] = rule
+	}
+
+	for _, desired := range desiredRules {
+		existing, ok := existingByFrontend[forwardingRuleFrontendKey(desired)]
+		if !ok {
+			if _, _, err := l.client.LoadBalancer.CreateForwardingRule(ctx, lbID, &desired); err != nil { //nolint:bodyclose
+				return err
+			}
+			continue
+		}
+
+		if forwardingRulesEqual(existing, desired) {
+			continue
+		}
+
+		if err := l.client.LoadBalancer.DeleteForwardingRule(ctx, lbID, existing.RuleID); err != nil {
+			return err
+		}
+		if _, _, err := l.client.LoadBalancer.CreateForwardingRule(ctx, lbID, &desired); err != nil { //nolint:bodyclose
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (l *loadbalancers) deleteServiceForwardingRules(ctx context.Context, lbID string, service *v1.Service) error {
+	desiredRules, err := buildForwardingRules(service)
+	if err != nil {
+		return err
+	}
+
+	serviceRuleFrontends := map[string]struct{}{}
+	for _, rule := range desiredRules {
+		serviceRuleFrontends[forwardingRuleFrontendKey(rule)] = struct{}{}
+	}
+
+	existingRules, err := l.listForwardingRules(ctx, lbID)
+	if err != nil {
+		return err
+	}
+
+	for _, rule := range existingRules {
+		if _, ok := serviceRuleFrontends[forwardingRuleFrontendKey(rule)]; !ok {
+			continue
+		}
+
+		if err := l.client.LoadBalancer.DeleteForwardingRule(ctx, lbID, rule.RuleID); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (l *loadbalancers) listForwardingRules(ctx context.Context, lbID string) ([]govultr.ForwardingRule, error) {
+	listOptions := &govultr.ListOptions{PerPage: 25}
+	var rules []govultr.ForwardingRule
+
+	for {
+		pageRules, meta, resp, err := l.client.LoadBalancer.ListForwardingRules(ctx, lbID, listOptions)
+		if resp != nil {
+			if closeErr := resp.Body.Close(); closeErr != nil {
+				return nil, closeErr
+			}
+		}
+		if err != nil {
+			return nil, err
+		}
+
+		rules = append(rules, pageRules...)
+		if meta == nil || meta.Links == nil || meta.Links.Next == "" {
+			break
+		}
+		listOptions.Cursor = meta.Links.Next
+	}
+
+	return rules, nil
+}
+
+func forwardingRuleFrontendKey(rule govultr.ForwardingRule) string {
+	return fmt.Sprintf("%s/%d", strings.ToLower(rule.FrontendProtocol), rule.FrontendPort)
+}
+
+func forwardingRulesEqual(a, b govultr.ForwardingRule) bool {
+	return strings.EqualFold(a.FrontendProtocol, b.FrontendProtocol) &&
+		a.FrontendPort == b.FrontendPort &&
+		strings.EqualFold(a.BackendProtocol, b.BackendProtocol) &&
+		a.BackendPort == b.BackendPort
+}
+
+func (l *loadbalancers) sharedLoadBalancerStillReferenced(ctx context.Context, service *v1.Service, lbID string) (bool, error) {
+	label := service.Annotations[annoVultrLoadBalancerLabel]
+	if err := l.GetKubeClient(); err != nil {
+		return false, fmt.Errorf("failed to get kubeclient: %s", err)
+	}
+
+	services, err := l.kubeClient.CoreV1().Services(metav1.NamespaceAll).List(ctx, metav1.ListOptions{})
+	if err != nil {
+		return false, fmt.Errorf("failed to list services referencing shared load balancer label %q: %s", label, err)
+	}
+
+	for i := range services.Items {
+		candidate := &services.Items[i]
+		if sameService(candidate, service) {
+			continue
+		}
+
+		if candidate.Annotations[annoVultrLoadBalancerLabel] == label {
+			return true, nil
+		}
+
+		if candidate.Annotations[annoVultrLoadBalancerID] == lbID && candidate.Annotations[annoVultrLoadBalancerLabel] != "" {
+			return true, nil
+		}
+	}
+
+	return false, nil
+}
+
+func sameService(a, b *v1.Service) bool {
+	if a.UID != "" && b.UID != "" {
+		return a.UID == b.UID
+	}
+
+	return a.Namespace == b.Namespace && a.Name == b.Name
 }
 
 func (l *loadbalancers) createNewLoadBalancer(ctx context.Context, clusterName string, service *v1.Service, nodes []*v1.Node) (*v1.LoadBalancerStatus, error) {
