@@ -27,7 +27,7 @@ func (f *FakeInstance) ListVPCInfo(_ context.Context, _ string, _ *govultr.ListO
 	panic("implement me")
 }
 
-// ListVPC2Info returns VPC info (not implemented, yet)
+// ListVPC2Info satisfies govultr.InstanceService until govultr removes it.
 func (f *FakeInstance) ListVPC2Info(_ context.Context, _ string, _ *govultr.ListOptions) ([]govultr.VPC2Info, *govultr.Meta, *http.Response, error) { //nolint:staticcheck
 	panic("implement me")
 }
@@ -37,7 +37,7 @@ func (f *FakeInstance) AttachVPC(_ context.Context, _, _ string) error {
 	panic("implement me")
 }
 
-// AttachVPC2 attaches VPC (not implemented, yet)
+// AttachVPC2 satisfies govultr.InstanceService until govultr removes it.
 func (f *FakeInstance) AttachVPC2(_ context.Context, _ string, _ *govultr.AttachVPC2Req) error { //nolint:staticcheck
 	panic("implement me")
 }
@@ -47,7 +47,7 @@ func (f *FakeInstance) DetachVPC(_ context.Context, _, _ string) error {
 	panic("implement me")
 }
 
-// DetachVPC2 detaches VPC (not implemented, yet)
+// DetachVPC2 satisfies govultr.InstanceService until govultr removes it.
 func (f *FakeInstance) DetachVPC2(_ context.Context, _, _ string) error {
 	panic("implement me")
 }
