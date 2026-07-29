@@ -99,18 +99,6 @@ func (i *instancesv2) nodeBareMetalAddresses(baremetal *govultr.BareMetalServer)
 		Address: baremetal.Label,
 	})
 
-	// Deprecated: VPC2 is no longer supported and functionality will cease in a
-	// future release.
-	vpc2, _, err := i.client.BareMetalServer.ListVPC2Info(context.Background(), baremetal.ID) //nolint:bodyclose,staticcheck
-	if err != nil {
-		return nil, fmt.Errorf("error getting VPC2 info for bm %s", baremetal.Label)
-	}
-
-	for _, vpc := range vpc2 {
-		addresses = append(addresses,
-			v1.NodeAddress{Type: v1.NodeInternalIP, Address: vpc.IPAddress})
-	}
-
 	vpc1, _, err := i.client.BareMetalServer.ListVPCInfo(context.Background(), baremetal.ID) //nolint:bodyclose
 	if err != nil {
 		return nil, fmt.Errorf("error getting VPC1 info for bm %s", baremetal.Label)
