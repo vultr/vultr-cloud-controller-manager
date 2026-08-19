@@ -60,6 +60,8 @@ data:
         port: 80
 ```
 
+The referenced ConfigMap does not need to be managed by the same tool that manages the Service. For dynamic allowlists, a controller or Deployment can create and update the referenced ConfigMap while keeping a separate Git-managed base ConfigMap for static rules.
+
 
 ## Using UDP
 
