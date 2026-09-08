@@ -47,9 +47,9 @@ func (i *instancesv2) InstanceExists(ctx context.Context, node *v1.Node) (bool, 
 			if strings.Contains(err.Error(), "invalid baremetal ID") {
 				return false, nil
 			}
-			if strings.Contains(err.Error(), "baremetal not found") {
+			if strings.Contains(err.Error(), "not found") {
 				return false, nil
-			}
+			}			
 			if strings.Contains(err.Error(), "Invalid server") {
 				return false, nil
 			}
