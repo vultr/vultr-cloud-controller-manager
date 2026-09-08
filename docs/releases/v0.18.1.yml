@@ -140,7 +140,7 @@ spec:
                     operator: Exists
       hostNetwork: true
       containers:
-        - image: vultr/vultr-cloud-controller-manager:v0.18.2
+        - image: vultr/vultr-cloud-controller-manager:v0.18.1
           imagePullPolicy: Always
           name: vultr-cloud-controller-manager
           command:

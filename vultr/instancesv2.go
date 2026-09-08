@@ -49,7 +49,7 @@ func (i *instancesv2) InstanceExists(ctx context.Context, node *v1.Node) (bool, 
 			}
 			if strings.Contains(err.Error(), "not found") {
 				return false, nil
-			}			
+			}
 			if strings.Contains(err.Error(), "Invalid server") {
 				return false, nil
 			}

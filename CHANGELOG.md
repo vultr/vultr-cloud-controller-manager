@@ -1,4 +1,17 @@
 # Change Log
+## [v0.18.2](https://github.com/vultr/vultr-cloud-controller-manager/compare/v0.18.1...v0.18.2) (2026-09-08)
+### Bug Fixes
+* Update bare metal not-found error matching [PR 351](https://github.com/vultr/vultr-cloud-controller-manager/pull/351)
+
+## [v0.18.1](https://github.com/vultr/vultr-cloud-controller-manager/compare/v0.18.0...v0.18.1) (2026-07-29)
+### Bug Fixes
+* Remove deprecated VPC2 lookups for bare metal instances
+
+## [v0.18.0](https://github.com/vultr/vultr-cloud-controller-manager/compare/v0.17.0...v0.18.0) (2026-07-08)
+### Enhancements
+* Add ConfigMap support for load balancer firewall rules [PR 348](https://github.com/vultr/vultr-cloud-controller-manager/pull/348)
+* Add multi-service load balancer support [PR 347](https://github.com/vultr/vultr-cloud-controller-manager/pull/347)
+
 ## [v0.17.0](https://github.com/vultr/vultr-cloud-controller-manager/compare/v0.16.0...v0.17.0) (2026-03-13)
 ### Dependencies
 * Update go version from v1.24 to v1.26 [PR 342](https://github.com/vultr/vultr-cloud-controller-manager/pull/342)
@@ -245,4 +258,3 @@
     * ZoneController
 
 [CCM Container v0.0.1](https://hub.docker.com/layers/vultr/vultr-cloud-controller-manager/v0.0.1/images/sha256-fc4e02792fa9794b41bedf2a9472ba755f6c68c7eca59d1951f53d2b61cd48a8?context=repo)
-
