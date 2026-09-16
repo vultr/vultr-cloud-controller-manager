@@ -87,26 +87,26 @@ func (f *FakeInstance) Delete(_ context.Context, _ string) error {
 // List lists instances
 func (f *FakeInstance) List(_ context.Context, _ *govultr.ListOptions) ([]govultr.Instance, *govultr.Meta, *http.Response, error) {
 	return []govultr.Instance{
-			{
-				ID:           "75b95d83-47e2-4c0f-b273-cc9ce2b456f8",
-				MainIP:       "149.28.225.110",
-				VCPUCount:    4,
-				Region:       "ewr",
-				Status:       "running",
-				NetmaskV4:    "255.255.254.0",
-				GatewayV4:    "149.28.224.1",
-				ServerStatus: "",
-				Plan:         "vc2-4c-8gb",
-				Label:        "ccm-test",
-				InternalIP:   "10.1.95.4",
-			},
-		}, &govultr.Meta{
-			Total: 0,
-			Links: &govultr.Links{
-				Next: "",
-				Prev: "",
-			},
-		}, nil, nil
+		{
+			ID:           "75b95d83-47e2-4c0f-b273-cc9ce2b456f8",
+			MainIP:       "149.28.225.110",
+			VCPUCount:    4,
+			Region:       "ewr",
+			Status:       "running",
+			NetmaskV4:    "255.255.254.0",
+			GatewayV4:    "149.28.224.1",
+			ServerStatus: "",
+			Plan:         "vc2-4c-8gb",
+			Label:        "ccm-test",
+			InternalIP:   "10.1.95.4",
+		},
+	}, &govultr.Meta{
+		Total: 0,
+		Links: &govultr.Links{
+			Next: "",
+			Prev: "",
+		},
+	}, nil, nil
 }
 
 // Start starts an instance
@@ -297,20 +297,20 @@ func (f *fakeLB) DeleteSSL(_ context.Context, _ string) error {
 // List gets loadbalancers
 func (f *fakeLB) List(_ context.Context, _ *govultr.ListOptions) ([]govultr.LoadBalancer, *govultr.Meta, *http.Response, error) {
 	return []govultr.LoadBalancer{
-			{
-				ID:     "6334f227-6d96-4cbd-9bcb-5be0759354fa",
-				Region: "ewr",
-				Label:  "albname",
-				Status: "active",
-				IPV4:   "192.168.0.1",
-			},
-		}, &govultr.Meta{
-			Total: 0,
-			Links: &govultr.Links{
-				Next: "",
-				Prev: "",
-			},
-		}, nil, nil
+		{
+			ID:     "6334f227-6d96-4cbd-9bcb-5be0759354fa",
+			Region: "ewr",
+			Label:  "albname",
+			Status: "active",
+			IPV4:   "192.168.0.1",
+		},
+	}, &govultr.Meta{
+		Total: 0,
+		Links: &govultr.Links{
+			Next: "",
+			Prev: "",
+		},
+	}, nil, nil
 }
 
 // CreateForwardingRule adds forwarding rule
@@ -343,18 +343,18 @@ func (f *fakeLB) ListForwardingRules(_ context.Context, _ string, _ *govultr.Lis
 	}
 
 	return []govultr.ForwardingRule{{
-			RuleID:           "1234",
-			FrontendProtocol: "tcp",
-			FrontendPort:     80,
-			BackendProtocol:  "tcp",
-			BackendPort:      80,
-		}}, &govultr.Meta{
-			Total: 0,
-			Links: &govultr.Links{
-				Next: "",
-				Prev: "",
-			},
-		}, nil, nil
+		RuleID:           "1234",
+		FrontendProtocol: "tcp",
+		FrontendPort:     80,
+		BackendProtocol:  "tcp",
+		BackendPort:      80,
+	}}, &govultr.Meta{
+		Total: 0,
+		Links: &govultr.Links{
+			Next: "",
+			Prev: "",
+		},
+	}, nil, nil
 }
 
 // ListFirewallRules gets forwarding rules
