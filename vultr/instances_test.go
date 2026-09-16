@@ -3,10 +3,38 @@ package vultr
 import (
 	"context"
 	"reflect"
+	"strings"
 	"testing"
 
+	"github.com/vultr/govultr/v3"
 	v1 "k8s.io/api/core/v1"
 )
+
+func TestInstancesV2_NodeInstanceAddressesRejectsEmptyInstance(t *testing.T) {
+	instances := &instancesv2{}
+
+	for _, instance := range []*govultr.Instance{nil, {}} {
+		_, err := instances.nodeInstanceAddresses(instance)
+		if err == nil {
+			t.Errorf("expected an error for empty instance %v", instance)
+		} else if !strings.Contains(err.Error(), "instance is empty") {
+			t.Errorf("expected empty instance error, got %v", err)
+		}
+	}
+}
+
+func TestInstancesV2_NodeBareMetalAddressesRejectsEmptyServer(t *testing.T) {
+	instances := &instancesv2{}
+
+	for _, server := range []*govultr.BareMetalServer{nil, {}} {
+		_, err := instances.nodeBareMetalAddresses(server)
+		if err == nil {
+			t.Errorf("expected an error for empty bare metal server %v", server)
+		} else if !strings.Contains(err.Error(), "baremetal is empty") {
+			t.Errorf("expected empty bare metal server error, got %v", err)
+		}
+	}
+}
 
 func TestInstances_InstanceExistsByProviderID(t *testing.T) {
 	client := newFakeClient()

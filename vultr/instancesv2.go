@@ -131,7 +131,8 @@ func (i *instancesv2) InstanceMetadata(ctx context.Context, node *v1.Node) (*clo
 		}
 		nodeAddress, err := i.nodeBareMetalAddresses(newNode)
 		if err != nil {
-			return nil, err
+			log.Printf("baremetal(%s) does not have addresses: %v", node.Name, err)
+			return nil, fmt.Errorf("baremetal %q does not have addresses: %w", node.Name, err)
 		}
 
 		vultrNode := cloudprovider.InstanceMetadata{
@@ -151,7 +152,8 @@ func (i *instancesv2) InstanceMetadata(ctx context.Context, node *v1.Node) (*clo
 	}
 	nodeAddress, err := i.nodeInstanceAddresses(newNode)
 	if err != nil {
-		return nil, err
+		log.Printf("instance(%s) does not have addresses: %v", node.Name, err)
+		return nil, fmt.Errorf("instance %q does not have addresses: %w", node.Name, err)
 	}
 
 	vultrNode := cloudprovider.InstanceMetadata{
@@ -169,7 +171,7 @@ func (i *instancesv2) InstanceMetadata(ctx context.Context, node *v1.Node) (*clo
 func (i *instancesv2) nodeInstanceAddresses(instance *govultr.Instance) ([]v1.NodeAddress, error) {
 	var addresses []v1.NodeAddress
 
-	if reflect.DeepEqual(instance, *&govultr.Instance{}) { //nolint
+	if instance == nil || reflect.DeepEqual(instance, &govultr.Instance{}) {
 		return nil, fmt.Errorf("instance is empty %v", instance)
 	}
 

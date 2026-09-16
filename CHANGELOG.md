@@ -1,4 +1,9 @@
 # Change Log
+## [v0.18.3](https://github.com/vultr/vultr-cloud-controller-manager/compare/v0.18.2...v0.18.3) (2026-09-16)
+### Bug Fixes
+* Prevent instance address lookup from panicking on empty Vultr API responses
+* Return and log clear errors when instances or bare metal servers have no address data
+
 ## [v0.18.2](https://github.com/vultr/vultr-cloud-controller-manager/compare/v0.18.1...v0.18.2) (2026-09-08)
 ### Bug Fixes
 * Update bare metal not-found error matching [PR 351](https://github.com/vultr/vultr-cloud-controller-manager/pull/351)
