@@ -1,6 +1,6 @@
 module github.com/vultr/vultr-cloud-controller-manager
 
-go 1.26
+go 1.26.0
 
 require (
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2
@@ -8,7 +8,7 @@ require (
 	github.com/vultr/govultr/v3 v3.28.1
 	github.com/vultr/metadata v1.1.0
 	go.yaml.in/yaml/v3 v3.0.4
-	golang.org/x/oauth2 v0.36.0
+	golang.org/x/oauth2 v0.37.0
 	k8s.io/api v0.35.2
 	k8s.io/apimachinery v0.35.2
 	k8s.io/client-go v0.35.2
