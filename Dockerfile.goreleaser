@@ -1,5 +1,4 @@
-FROM alpine:3.12
+FROM dhi.io/static:20260909-alpine3.24@sha256:296ab7284ac616e1f03b9ae929852b968315242311da974c57de342894276418
 
-RUN apk add --no-cache ca-certificates
-COPY vultr-cloud-controller-manager .
-ENTRYPOINT ["./vultr-cloud-controller-manager"]
+COPY vultr-cloud-controller-manager /vultr-cloud-controller-manager
+ENTRYPOINT ["/vultr-cloud-controller-manager"]

@@ -55,6 +55,8 @@ or if you chose to run it manually
 
 `docker build . -t vultr-cloud-controller-manager`
 
+Building the image requires authentication to the Docker Hardened Images registry. Run `docker login dhi.io` before either build command.
+
 Running the image
 
 `docker run -ti vultr/vultr-cloud-controller-manager`
@@ -70,5 +72,3 @@ To deploy the versioned CCM that Vultr providers you will need to apply two yaml
 - Secret.yml will take in the region ID in which your cluster is deployed in and your API key.
 
 - v0.X.X.yml is a preconfigured set of kubernetes resources which will help get the CCM installed.
-
-

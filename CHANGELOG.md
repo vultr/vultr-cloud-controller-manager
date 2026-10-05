@@ -1,4 +1,10 @@
 # Change Log
+## [v0.18.4](https://github.com/vultr/vultr-cloud-controller-manager/compare/v0.18.3...v0.18.4) (2026-10-05)
+### Security
+* Replace the end-of-life Alpine runtime with a digest-pinned Docker Hardened static image
+* Update google.golang.org/grpc from 1.79.2 to 1.83.2 [PR 355](https://github.com/vultr/vultr-cloud-controller-manager/pull/355)
+* Update the Go build toolchain to 1.26.6
+
 ## [v0.18.3](https://github.com/vultr/vultr-cloud-controller-manager/compare/v0.18.2...v0.18.3) (2026-09-16)
 ### Bug Fixes
 * Prevent instance address lookup from panicking on empty Vultr API responses
