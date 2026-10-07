@@ -781,7 +781,10 @@ func (l *loadbalancers) buildLoadBalancerRequest(ctx context.Context, service *v
 		return nil, err
 	}
 
-	nodeC := 1
+	// Default to 3 nodes for high availability. A single-node VLB is a SPOF
+	// for all ingress traffic to the cluster. Customers who want a single-node
+	// LB for dev/test can set the annotation to "1".
+	nodeC := 3
 
 	if count, ok := service.Annotations[annoVultrNodeCount]; ok {
 		nodeC, err = strconv.Atoi(count)
