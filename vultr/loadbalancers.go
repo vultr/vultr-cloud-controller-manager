@@ -65,6 +65,9 @@ const (
 	// annoVultrHostname is the hostname used for VLB to prevent hairpinning
 	annoVultrHostname = "service.beta.kubernetes.io/vultr-loadbalancer-hostname"
 
+	// annoVultrUseCNAME publishes the Vultr-managed DNS name instead of IP addresses.
+	annoVultrUseCNAME = "service.beta.kubernetes.io/vultr-loadbalancer-use-cname"
+
 	annoVultrHealthCheckPath               = "service.beta.kubernetes.io/vultr-loadbalancer-healthcheck-path"
 	annoVultrHealthCheckProtocol           = "service.beta.kubernetes.io/vultr-loadbalancer-healthcheck-protocol"
 	annoVultrHealthCheckPort               = "service.beta.kubernetes.io/vultr-loadbalancer-healthcheck-port"
@@ -152,28 +155,9 @@ func (l *loadbalancers) GetLoadBalancer(ctx context.Context, _ string, service *
 		return nil, false, err
 	}
 
-	enabledIPv6 := checkEnabledIPv6(service)
-	var ingress []v1.LoadBalancerIngress
-
-	// Check if hostname annotation is blank and set if not
-	if _, ok := service.Annotations[annoVultrHostname]; ok {
-		if service.Annotations[annoVultrHostname] != "" {
-			var hostname string
-			if govalidator.IsDNSName(service.Annotations[annoVultrHostname]) {
-				hostname = service.Annotations[annoVultrHostname]
-			} else {
-				return nil, true, fmt.Errorf("hostname %s is not a valid DNS name", service.Annotations[annoVultrHostname])
-			}
-			klog.Infof("setting hostname for loadbalancer to: %s", hostname)
-			ingress = append(ingress, v1.LoadBalancerIngress{Hostname: hostname})
-		}
-	} else {
-		hostname := lb.Label
-		ingress = append(ingress, v1.LoadBalancerIngress{Hostname: hostname, IP: lb.IPV4})
-
-		if enabledIPv6 {
-			ingress = append(ingress, v1.LoadBalancerIngress{Hostname: hostname, IP: lb.IPV6})
-		}
+	ingress, err := l.buildLoadBalancerIngress(service, lb)
+	if err != nil {
+		return nil, true, err
 	}
 
 	return &v1.LoadBalancerStatus{
@@ -228,7 +212,10 @@ func (l *loadbalancers) EnsureLoadBalancer(ctx context.Context, clusterName stri
 
 	if updateErr := l.updateLoadBalancerWithLB(ctx, clusterName, service, nodes, lb); updateErr != nil {
 		if isLBActivating(updateErr) {
-			ingress := l.buildLoadBalancerIngress(service, lb)
+			ingress, err := l.buildLoadBalancerIngress(service, lb)
+			if err != nil {
+				return nil, err
+			}
 			if len(ingress) > 0 {
 				klog.V(2).Infof("LB %s update deferred: nodes still activating; returning current ingress and retrying in background", lb.ID)
 				l.retryLBUpdateAsync(ctx, lb.ID, clusterName, service, nodes)
@@ -238,7 +225,10 @@ func (l *loadbalancers) EnsureLoadBalancer(ctx context.Context, clusterName stri
 		return nil, updateErr
 	}
 
-	ingress := l.buildLoadBalancerIngress(service, lb)
+	ingress, err := l.buildLoadBalancerIngress(service, lb)
+	if err != nil {
+		return nil, err
+	}
 	return &v1.LoadBalancerStatus{
 		Ingress: ingress,
 	}, nil
@@ -501,13 +491,16 @@ func (l *loadbalancers) createNewLoadBalancer(ctx context.Context, clusterName s
 		return nil, fmt.Errorf("load-balancer is not yet active - current status: %s", lb.Status)
 	}
 
-	ingress := l.buildLoadBalancerIngress(service, lb)
+	ingress, err := l.buildLoadBalancerIngress(service, lb)
+	if err != nil {
+		return nil, err
+	}
 	return &v1.LoadBalancerStatus{
 		Ingress: ingress,
 	}, nil
 }
 
-func (l *loadbalancers) buildLoadBalancerIngress(service *v1.Service, lb *govultr.LoadBalancer) []v1.LoadBalancerIngress {
+func (l *loadbalancers) buildLoadBalancerIngress(service *v1.Service, lb *govultr.LoadBalancer) ([]v1.LoadBalancerIngress, error) {
 	var ingress []v1.LoadBalancerIngress
 	enabledIPv6 := checkEnabledIPv6(service)
 
@@ -517,9 +510,26 @@ func (l *loadbalancers) buildLoadBalancerIngress(service *v1.Service, lb *govult
 			hostname := hostnameAnnotation
 			klog.Infof("setting hostname for loadbalancer to: %s", hostname)
 			ingress = append(ingress, v1.LoadBalancerIngress{Hostname: hostname})
-			return ingress
+			return ingress, nil
 		}
-		klog.Errorf("hostname %s is not a valid DNS name, using default behavior", hostnameAnnotation)
+		return nil, fmt.Errorf("hostname %s is not a valid DNS name", hostnameAnnotation)
+	}
+
+	if value := service.Annotations[annoVultrUseCNAME]; value != "" {
+		enabled, err := strconv.ParseBool(value)
+		if err != nil {
+			return nil, fmt.Errorf("invalid %s value %q: %w", annoVultrUseCNAME, value, err)
+		}
+		if enabled {
+			hostname := lb.CNAME
+			if hostname == "" {
+				return nil, fmt.Errorf("load balancer %s CNAME is not yet available", lb.ID)
+			}
+			if !govalidator.IsDNSName(hostname) {
+				return nil, fmt.Errorf("load balancer %s returned invalid CNAME %q", lb.ID, hostname)
+			}
+			return []v1.LoadBalancerIngress{{Hostname: hostname}}, nil
+		}
 	}
 
 	hostname := lb.Label
@@ -529,7 +539,7 @@ func (l *loadbalancers) buildLoadBalancerIngress(service *v1.Service, lb *govult
 		ingress = append(ingress, v1.LoadBalancerIngress{Hostname: hostname, IP: lb.IPV6})
 	}
 
-	return ingress
+	return ingress, nil
 }
 
 func (l *loadbalancers) validateLBIDConsistency(ctx context.Context, service *v1.Service, annotatedID string) error {
