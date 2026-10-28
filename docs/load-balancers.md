@@ -39,7 +39,22 @@ The annotations are listed below. Please note that all annotations listed below 
 | `create`                           | `true` or `false`                 | `true`                                                   | This is used to determine whether or not to create a Vultr loadbalancer                                                                                                                                          |
 | `label`                            | string                            |                                                          | Custom label for the Vultr Loadbalancer rather than the default generated name                                                                                                                                   |
 | `hostname`                         | string                            |                                                          | Custom domain to be used for the load balancer. Ex: `example.vultr.com`
+| `use-cname`                        | `true`, `false`                   | `false`                                                  | Publish the Vultr-managed CNAME target as the Service ingress hostname instead of IP addresses. A non-empty `hostname` annotation takes precedence.
 | `timeout`                          | int                               | `600`                                                    | Load balancer connection timeout (in seconds)
+
+### Vultr-managed CNAME
+
+To publish the load balancer's managed DNS name in `status.loadBalancer.ingress`, add:
+
+```yaml
+metadata:
+  annotations:
+    service.beta.kubernetes.io/vultr-loadbalancer-use-cname: "true"
+```
+
+The Service reports a hostname such as `vlb-<id>.vultrlb.com`, with no IP entries, including for dual-stack Services. DNS determines the addresses returned for this hostname. You can point a CNAME record for your own domain at this target; this annotation does not create records in your DNS zone.
+
+The CCM reads the `cname` returned by Vultr. If it is not yet available, reconciliation retries rather than publishing an IP fallback. A non-empty `hostname` annotation overrides `use-cname`. Remove `use-cname` or set it to `"false"` to restore the default IP-based status.
 
 ### Firewall Rules ConfigMap
 

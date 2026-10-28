@@ -5,7 +5,7 @@ go 1.26.0
 require (
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2
 	github.com/spf13/pflag v1.0.10
-	github.com/vultr/govultr/v3 v3.28.1
+	github.com/vultr/govultr/v3 v3.33.3-0.20261028201422-65c4658c246c
 	github.com/vultr/metadata v1.1.0
 	go.yaml.in/yaml/v3 v3.0.4
 	golang.org/x/oauth2 v0.37.0
