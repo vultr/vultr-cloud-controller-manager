@@ -27,28 +27,13 @@ func (f *FakeInstance) ListVPCInfo(_ context.Context, _ string, _ *govultr.ListO
 	panic("implement me")
 }
 
-// ListVPC2Info satisfies govultr.InstanceService until govultr removes it.
-func (f *FakeInstance) ListVPC2Info(_ context.Context, _ string, _ *govultr.ListOptions) ([]govultr.VPC2Info, *govultr.Meta, *http.Response, error) { //nolint:staticcheck
-	panic("implement me")
-}
-
 // AttachVPC attaches VPC (not implemented, yet)
 func (f *FakeInstance) AttachVPC(_ context.Context, _, _ string) error {
 	panic("implement me")
 }
 
-// AttachVPC2 satisfies govultr.InstanceService until govultr removes it.
-func (f *FakeInstance) AttachVPC2(_ context.Context, _ string, _ *govultr.AttachVPC2Req) error { //nolint:staticcheck
-	panic("implement me")
-}
-
 // DetachVPC detaches VPC (not implemented, yet)
 func (f *FakeInstance) DetachVPC(_ context.Context, _, _ string) error {
-	panic("implement me")
-}
-
-// DetachVPC2 satisfies govultr.InstanceService until govultr removes it.
-func (f *FakeInstance) DetachVPC2(_ context.Context, _, _ string) error {
 	panic("implement me")
 }
 
@@ -86,7 +71,7 @@ func (f *FakeInstance) Delete(_ context.Context, _ string) error {
 
 // List lists instances
 func (f *FakeInstance) List(_ context.Context, _ *govultr.ListOptions) ([]govultr.Instance, *govultr.Meta, *http.Response, error) {
-	return []govultr.Instance{
+	instances := []govultr.Instance{
 		{
 			ID:           "75b95d83-47e2-4c0f-b273-cc9ce2b456f8",
 			MainIP:       "149.28.225.110",
@@ -100,7 +85,8 @@ func (f *FakeInstance) List(_ context.Context, _ *govultr.ListOptions) ([]govult
 			Label:        "ccm-test",
 			InternalIP:   "10.1.95.4",
 		},
-	}, &govultr.Meta{
+	}
+	return instances, &govultr.Meta{
 		Total: 0,
 		Links: &govultr.Links{
 			Next: "",
@@ -296,7 +282,7 @@ func (f *fakeLB) DeleteSSL(_ context.Context, _ string) error {
 
 // List gets loadbalancers
 func (f *fakeLB) List(_ context.Context, _ *govultr.ListOptions) ([]govultr.LoadBalancer, *govultr.Meta, *http.Response, error) {
-	return []govultr.LoadBalancer{
+	lbs := []govultr.LoadBalancer{
 		{
 			ID:     "6334f227-6d96-4cbd-9bcb-5be0759354fa",
 			Region: "ewr",
@@ -304,7 +290,8 @@ func (f *fakeLB) List(_ context.Context, _ *govultr.ListOptions) ([]govultr.Load
 			Status: "active",
 			IPV4:   "192.168.0.1",
 		},
-	}, &govultr.Meta{
+	}
+	return lbs, &govultr.Meta{
 		Total: 0,
 		Links: &govultr.Links{
 			Next: "",
@@ -342,13 +329,14 @@ func (f *fakeLB) ListForwardingRules(_ context.Context, _ string, _ *govultr.Lis
 		}, nil, nil
 	}
 
-	return []govultr.ForwardingRule{{
+	rules := []govultr.ForwardingRule{{
 		RuleID:           "1234",
 		FrontendProtocol: "tcp",
 		FrontendPort:     80,
 		BackendProtocol:  "tcp",
 		BackendPort:      80,
-	}}, &govultr.Meta{
+	}}
+	return rules, &govultr.Meta{
 		Total: 0,
 		Links: &govultr.Links{
 			Next: "",
@@ -365,4 +353,14 @@ func (f *fakeLB) ListFirewallRules(_ context.Context, _ string, _ *govultr.ListO
 // GetFirewallRule gets firewall rules
 func (f *fakeLB) GetFirewallRule(_ context.Context, _, _ string) (*govultr.LBFirewallRule, *http.Response, error) {
 	return nil, nil, nil
+}
+
+// CreateFirewallRules creates firewall rules (not implemented, yet).
+func (f *fakeLB) CreateFirewallRules(_ context.Context, _ string, _ []govultr.LBFirewallRule) error {
+	panic("implement me")
+}
+
+// DeleteFirewallRule deletes a firewall rule (not implemented, yet).
+func (f *fakeLB) DeleteFirewallRule(_ context.Context, _, _ string) error {
+	panic("implement me")
 }
