@@ -212,9 +212,9 @@ func (l *loadbalancers) EnsureLoadBalancer(ctx context.Context, clusterName stri
 
 	if updateErr := l.updateLoadBalancerWithLB(ctx, clusterName, service, nodes, lb); updateErr != nil {
 		if isLBActivating(updateErr) {
-			ingress, err := l.buildLoadBalancerIngress(service, lb)
-			if err != nil {
-				return nil, err
+			ingress, ingressErr := l.buildLoadBalancerIngress(service, lb)
+			if ingressErr != nil {
+				return nil, ingressErr
 			}
 			if len(ingress) > 0 {
 				klog.V(2).Infof("LB %s update deferred: nodes still activating; returning current ingress and retrying in background", lb.ID)
@@ -484,8 +484,8 @@ func (l *loadbalancers) createNewLoadBalancer(ctx context.Context, clusterName s
 	}
 	klog.Infof("Created load balancer %q", lb.ID)
 	// Set and validate the Vultr VLB ID annotation
-	if err := l.setAndValidateLBIDAnnotation(ctx, service, lb.ID); err != nil {
-		return nil, err
+	if setErr := l.setAndValidateLBIDAnnotation(ctx, service, lb.ID); setErr != nil {
+		return nil, setErr
 	}
 	if lb.Status != lbStatusActive {
 		return nil, fmt.Errorf("load-balancer is not yet active - current status: %s", lb.Status)
