@@ -1,4 +1,15 @@
 # Change Log
+## [v0.19.0](https://github.com/vultr/vultr-cloud-controller-manager/compare/v0.18.4...v0.19.0) (2026-11-05)
+### Enhancements
+* Add managed CNAME support for load balancers [PR 360](https://github.com/vultr/vultr-cloud-controller-manager/pull/360)
+
+### Dependencies
+* Update govultr from v3.28.1 to v3.34.0 [PR 361](https://github.com/vultr/vultr-cloud-controller-manager/pull/361)
+* Bump go.opentelemetry.io/otel/sdk from 1.44.0 to 1.45.0 [PR 358](https://github.com/vultr/vultr-cloud-controller-manager/pull/358)
+* Bump go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc from 1.42.0 to 1.45.0 [PR 357](https://github.com/vultr/vultr-cloud-controller-manager/pull/357)
+* Bump github.com/google/cel-go from 0.27.0 to 0.29.0 [PR 353](https://github.com/vultr/vultr-cloud-controller-manager/pull/353)
+* Update k8s components from v0.35.2 to v0.37.2 [PR 362](https://github.com/vultr/vultr-cloud-controller-manager/pull/362)
+
 ## [v0.18.4](https://github.com/vultr/vultr-cloud-controller-manager/compare/v0.18.3...v0.18.4) (2026-10-05)
 ### Security
 * Replace the end-of-life Alpine runtime with a digest-pinned Docker Hardened static image
