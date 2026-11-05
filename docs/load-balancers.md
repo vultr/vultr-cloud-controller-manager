@@ -56,6 +56,8 @@ The Service reports a hostname such as `vlb-<id>.vultrlb.com`, with no IP entrie
 
 The CCM reads the `cname` returned by Vultr. If it is not yet available, reconciliation retries rather than publishing an IP fallback. A non-empty `hostname` annotation overrides `use-cname`. Remove `use-cname` or set it to `"false"` to restore the default IP-based status.
 
+Vultr may return the CNAME before its DNS records are ready. The hostname can appear in Service status before it resolves; DNS provisioning is separate from CCM reconciliation.
+
 ### Firewall Rules ConfigMap
 
 Use `firewall-rules-cm` when firewall rules are too large for a Service annotation. The ConfigMap must be in the same namespace as the Service and must contain a `firewallRules` key with YAML grouped by IP type:
