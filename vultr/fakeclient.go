@@ -76,7 +76,8 @@ func (f *FakeInstance) Delete(_ context.Context, _ string) error {
 
 // List lists instances
 func (f *FakeInstance) List(_ context.Context, _ *govultr.ListOptions) ([]govultr.Instance, *govultr.Meta, *http.Response, error) {
-	return []govultr.Instance{{
+	theList := []govultr.Instance{
+		{
 			ID:           "75b95d83-47e2-4c0f-b273-cc9ce2b456f8",
 			MainIP:       "149.28.225.110",
 			VCPUCount:    4,
@@ -89,13 +90,17 @@ func (f *FakeInstance) List(_ context.Context, _ *govultr.ListOptions) ([]govult
 			Label:        "ccm-test",
 			InternalIP:   "10.1.95.4",
 		},
-		}, &govultr.Meta{
-			Total: 0,
-			Links: &govultr.Links{
-				Next: "",
-				Prev: "",
-			},
-		}, nil, nil
+	}
+
+	theMeta := &govultr.Meta{
+		Total: 0,
+		Links: &govultr.Links{
+			Next: "",
+			Prev: "",
+		},
+	}
+
+	return theList, theMeta, nil, nil
 }
 
 // Start starts an instance
