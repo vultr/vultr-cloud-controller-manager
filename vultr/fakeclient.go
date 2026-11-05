@@ -292,21 +292,25 @@ func (f *fakeLB) DeleteSSL(_ context.Context, _ string) error {
 
 // List gets loadbalancers
 func (f *fakeLB) List(_ context.Context, _ *govultr.ListOptions) ([]govultr.LoadBalancer, *govultr.Meta, *http.Response, error) {
-	return []govultr.LoadBalancer{
-			{
-				ID:     "6334f227-6d96-4cbd-9bcb-5be0759354fa",
-				Region: "ewr",
-				Label:  "albname",
-				Status: "active",
-				IPV4:   "192.168.0.1",
-			},
-		}, &govultr.Meta{
-			Total: 0,
-			Links: &govultr.Links{
-				Next: "",
-				Prev: "",
-			},
-		}, nil, nil
+	theList := []govultr.LoadBalancer{
+		{
+			ID:     "6334f227-6d96-4cbd-9bcb-5be0759354fa",
+			Region: "ewr",
+			Label:  "albname",
+			Status: "active",
+			IPV4:   "192.168.0.1",
+		},
+	}
+
+	theMeta := &govultr.Meta{
+		Total: 0,
+		Links: &govultr.Links{
+			Next: "",
+			Prev: "",
+		},
+	}
+
+	return theList, theMeta, nil, nil
 }
 
 // CreateForwardingRule adds forwarding rule
@@ -338,19 +342,23 @@ func (f *fakeLB) ListForwardingRules(_ context.Context, _ string, _ *govultr.Lis
 		}, nil, nil
 	}
 
-	return []govultr.ForwardingRule{{
-			RuleID:           "1234",
-			FrontendProtocol: "tcp",
-			FrontendPort:     80,
-			BackendProtocol:  "tcp",
-			BackendPort:      80,
-		}}, &govultr.Meta{
-			Total: 0,
-			Links: &govultr.Links{
-				Next: "",
-				Prev: "",
-			},
-		}, nil, nil
+	theRules := []govultr.ForwardingRule{{
+		RuleID:           "1234",
+		FrontendProtocol: "tcp",
+		FrontendPort:     80,
+		BackendProtocol:  "tcp",
+		BackendPort:      80,
+	}}
+
+	theMeta := &govultr.Meta{
+		Total: 0,
+		Links: &govultr.Links{
+			Next: "",
+			Prev: "",
+		},
+	}
+
+	return theRules, theMeta, nil, nil
 }
 
 // ListFirewallRules gets forwarding rules
