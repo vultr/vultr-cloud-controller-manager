@@ -1160,7 +1160,7 @@ func getHTTPSPorts(service *v1.Service) (map[int32]bool, error) {
 	portInt := map[int32]bool{}
 
 	for _, port := range portStrings {
-		p, err := strconv.Atoi(port)
+		p, err := strconv.Atoi(strings.TrimSpace(port))
 		if err != nil {
 			return nil, err
 		}
@@ -1327,6 +1327,9 @@ func (l *loadbalancers) buildFirewallRules(ctx context.Context, service *v1.Serv
 	}
 
 	for _, v := range strings.Split(fwRules, ";") {
+		if strings.TrimSpace(v) == "" {
+			continue
+		}
 		fwRule := govultr.LBFirewallRule{}
 
 		rules := strings.Split(v, ",")
@@ -1334,7 +1337,7 @@ func (l *loadbalancers) buildFirewallRules(ctx context.Context, service *v1.Serv
 			return nil, fmt.Errorf("loadbalancer fw rules : %s invalid configuration", rules)
 		}
 
-		source := rules[0]
+		source := strings.TrimSpace(rules[0])
 		ipType := "v4"
 		if source != "cloudflare" {
 			ip, _, err := net.ParseCIDR(source)
@@ -1347,9 +1350,9 @@ func (l *loadbalancers) buildFirewallRules(ctx context.Context, service *v1.Serv
 			}
 		}
 
-		port, err := strconv.Atoi(rules[1])
+		port, err := strconv.Atoi(strings.TrimSpace(rules[1]))
 		if err != nil {
-			return nil, fmt.Errorf("loadbalancer fw rules : port %d is invalid", port)
+			return nil, fmt.Errorf("loadbalancer fw rules : port %s is invalid", rules[1])
 		}
 
 		fwRule.Source = source
