@@ -7,7 +7,7 @@ require (
 	github.com/spf13/pflag v1.0.10
 	github.com/vultr/govultr/v3 v3.34.0
 	github.com/vultr/metadata v1.1.0
-	go.yaml.in/yaml/v3 v3.0.4
+	go.yaml.in/yaml/v3 v3.0.6
 	golang.org/x/oauth2 v0.37.0
 	k8s.io/api v0.37.2
 	k8s.io/apimachinery v0.37.2
